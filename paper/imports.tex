@@ -1,0 +1,36 @@
+\usepackage[utf8]{inputenc}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\usepackage[a4paper]{geometry}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{minted}     % For fancy code highlighting
+\usepackage{enumitem}
+\usepackage{mathtools} %To make align* work
+\usepackage{amssymb} %To denote the set of integers with correct type of letter
+
+
+
+\usepackage{stmaryrd} %Double brackets
+
+\usepackage{bussproofs}
+
+\newenvironment{scprooftree}[1]%
+  {\gdef\scalefactor{#1}\begin{center}\proofSkipAmount \leavevmode}%
+  {\scalebox{\scalefactor}{\DisplayProof}\proofSkipAmount \end{center} }
+
+
+%For defintion of fancy A
+\newcommand{\twopartdef}[3]
+{
+	\left\{
+		\begin{array}{ll}
+			#1 & \mbox{if } #2 \\
+			#3 & \mbox{otherwise } 
+		\end{array}
+	\right.
+}
+
+
+\newcommand{\letterfunc}[2]{\mathcal{#1} \llbracket #2 \rrbracket}
