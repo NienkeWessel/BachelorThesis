@@ -1,0 +1,62 @@
+\section{Borrowing}
+We will now add an extra feature to our language, namely borrowing. Borrowing presents us with new challenges, as we need to make sure that the variable which is borrowed from in accessible during the borrow, but becomes accessible again after the borrow. That is why we need to keep track of what variables were borrowed from when they go out of scope. 
+
+For borrowing, the language we have the following expressions: 
+$$e ::= x \mid i \mid e_1 + e_2 \mid \&a~e$$
+
+We will first start with defining the evaluation function $\mathcal{A}$. In order to do that, we also need to know the type of the state $s$. We can leave the evaluation function for the first three types of expressions the same as in the previous section. However, we need to think of what we want $\&a~e$ to evaluate to. There are two possible logical answers. We can let it evaluate to e itself, and thus let the result of the evaluation be a pointer of some sort in the model as well. We can also recursively calculate the evaluation of $e$ and set that as the evaluation of $\&a~e$ as well. This latter model thus does not model pointers as such. In the two sections below, both models are worked out and described. We will start with the latter model, which we will call the ``non-pointer'' model. After that, the ``pointer'' model will be described. 
+
+\subsection{Non-pointer model}
+In this model, a state $s$ is a function with signature $\textbf{Var} \to \mathbb{Z}_{ext}$, just as before. The evaluation function is defined as:
+\begin{align*}
+    \letterfunc{A}{i}s          &= \letterfunc{N}{i}
+\\  \letterfunc{A}{x}s          &= s(x)
+\\  \letterfunc{A}{e_1 + e_2}s  &= \letterfunc{A}{e_1}s + \letterfunc{A}{e_2}s
+\\ \letterfunc{A}{\&a~x}s       &= \letterfunc{A}{x}s
+\end{align*}
+Notice it is the same as above, except for the added last line. 
+
+However, besides the state that assigns a value to a variable, we also need a way to keep track of what variables \verb|x| borrows from. In a program such as 
+\begin{minted}[linenos, frame=lines]{rust}
+let y;
+{
+    let x;
+    {
+        y = 5;
+        x = &y
+        //do other stuff?
+    }
+}
+\end{minted}
+we need to return ownership to \verb|y| at the end of the inner brackets. However, at the end of the brackets, we have no easy way in natural semantics to see that when \verb|x| goes out of scope, it has borrowed from \verb|y|. Natural semantics does not know what happens in the brackets. Therefore we define a second function, $\mathcal{B}$, that when passed a variable \verb|x|, returns all the variables \verb|x| borrowed from. The signature of $\mathcal{B}$ is \textbf{Var} $\to \mathcal{P}(\textbf{Var})$. That means the signature of a rule becomes 
+
+$$\langle S, s, \mathcal{B} \rangle \to s, \mathcal{B}$$
+
+The semantics for this model now become:
+
+\medskip
+\begin{tabular}{p{5em}p{18em}p{13em}}
+[skip$_{\textrm{ns}}$] &
+\centering$\langle$ \texttt{skip} $, s, \mathcal{B} \rangle \to s, \mathcal{B}$ & \medskip\\
+
+[comp$_{\textrm{ns}}$] &
+\centering \AxiomC{$\langle S_1, s, \mathcal{B} \rangle \to s', \mathcal{B}' $}
+\AxiomC{$\langle S_2, s', \mathcal{B}' \rangle \to s'', \mathcal{B}''$}
+\BinaryInfC{$\langle S_1$; $S_2, s, \mathcal{B} \rangle \to s'', \mathcal{B}''$}
+\DisplayProof \medskip& \\
+
+[let$_{\textrm{ns}}$] &
+\centering
+\AxiomC{$\langle S, s[x\mapsto \perp], \mathcal{B} \rangle \to s', \mathcal{B}'$}
+\UnaryInfC{$\langle a : \texttt{let x } : \tau \texttt{ in } S, s, \mathcal{B} \rangle \to s'[\mathcal{B}'(x) \mapsto s\mathcal{B}'(x)][x \mapsto s(x)], \mathcal{B}'[x \mapsto *]$}
+\DisplayProof \medskip& \\
+
+[ass$_{\textrm{ns}}$] &
+\centering$\langle$ \texttt{x := } e$, s \rangle \to s[x \mapsto \letterfunc{A}{e}s][ev(e)\mapsto-]$ & if $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e} \neq \perp$ and $\letterfunc{A}{e} \neq -$\medskip\\
+\end{tabular} 
+
+
+\subsection{Pointer model}
+
+
+
