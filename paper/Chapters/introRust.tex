@@ -1,12 +1,13 @@
 This chapter provides an introduction to Rust, specifically to the features that are considered interesting for this thesis. 
 
-Rust is an imperative programming language, with some functional aspects. The language coins similarities to C and especially C++, but is different in that it claims to provide memory safety. One of the most important concepts in this \emph{RAII}, which stands for Resource Acquisition Is Initialization. 
+Rust is an imperative programming language, with some functional aspects. The language coins similarities to C and especially C++, but is different in that it claims to provide memory safety whereas C and C++ do not. One of the most important concepts in this \emph{RAII}, which stands for Resource Acquisition Is Initialization. 
 
-The idea behind RAII is that a resource is allocated during the creation (initialization) of the data and a resource is deallocated during the the destruction of the data. Thus if there are no data leaks there are no memory leaks.  
+The idea behind RAII is that a resource is allocated during the creation (initialization) of the data and a resource is deallocated during the the destruction of the data. This makes that makes that as long the programmer does not ``lose'' the data, there are no memory leaks. To help the programmer do this, there are several important terms/concepts which will be discussed here. We start with \textbf{ownership} and \textbf{borrowing}. At the end of this chapter, we briefly also discuss \textbf{lifetimes}, as this is an important aspect of memory safety in Rust. This will only very briefly return in the rest of this thesis. 
 
 \section{Ownership} %http://theburningmonk.com/2015/05/rust-memory-safety-without-gc/
-Since variables are in charge of freeing their own resources, resources can only have one owner. This way, a resource cannot be freed more than once by different owners. This concept is called \textbf{ownership} in Rust terminology. 
-When thinking about this, one can see some problems though. Sometimes you would want a variable to have the information from another variable, for example. This is possible by moving the ownership of that variable. In Rust, this is called a \textbf{move}. After moving the ownership, the previous owner can no longer use the resource. 
+Since variables are in charge of freeing their own resources, resources must have exactly one owner. This way, a resource cannot be freed more than once by different owners or left to dangle if there are no owners at all. This concept is called \textbf{ownership} in Rust terminology. 
+
+Of course, when programming, this is not very helpful. Sometimes you would want a variable to have the information from another variable, for example. So you need to access this variable, but then there are two owners, which is not allowed. Luckily, there are several ways in Rust to deal with this. The most basic is moving the ownership of a variable. In Rust, this is called a \textbf{move}. After moving the ownership, the previous owner can no longer use the resource. 
 
 To illustrate this, take a look at the following piece of code. 
 \begin{minted}[linenos, frame=lines]{rust}
@@ -16,9 +17,9 @@ println!("vector[0] + vector[1] = {}", vector[0] + vector[1]);
 \end{minted}
 This program gives the compile error \verb|error: use of moved value: `vector`|. 
 
-So what is happening here? The variable \verb|vector| is initialized in line 1. That means \verb|vector| owns a piece of memory to store the values of the vector. Next, the ownership is transferred to \verb|vector2|. That means \verb|vector2| now owns the piece of memory and \verb|vector| cannot do anything with it anymore. So when \verb|vector| tries to access that piece of memory in line 3 to print its value, this is not possible because the ownership is already transferred. The interesting thing about Rust is that these things are not checked at run tine, but already at compile time.
+So what is happening here? The variable \verb|vector| is initialized in line 1. That means \verb|vector| owns a piece of memory to store the values of the vector. Next, the ownership is transferred to \verb|vector2|. That means \verb|vector2| now owns the piece of memory and \verb|vector| cannot do anything with it anymore. So when \verb|vector| tries to access that piece of memory in line 3 to print its value, this is not possible because the ownership has already been transferred. The interesting thing about Rust is that these things are not checked at run tine, but already at compile time.
 
-There are also other ways to take ownership of a piece of memory. Another frequently occurring one is passing the variable as an argument to a function. For example:
+There are also other methods to take ownership of a piece of memory. Another frequently occurring method is passing the variable as an argument to a function. For example:
 
 \begin{minted}[linenos, frame=lines]{rust}
 fn function(v : Vec<i32>) {
@@ -31,10 +32,10 @@ println!("vector[0] + vector[1] = {}", vector[0] + vector[1]);
 \end{minted}
 This gives the same error as above, \verb|error: use of moved value: vector|. 
 
-Here, the ownership is moved to the variable \verb|v| in the function \verb|function|. When \verb|function| is finished, all local variables release their resources. Later on, \verb|vector| wants access to the resource, but it gave away ownership in the function call, so it can no longer access the resource. Besides, the resource was removed after the function returned, so there is also nothing left to access. Again, this is error is given at compile time. 
+Here, the ownership is moved to the variable \verb|v| in the function \verb|function|. When \verb|function| is finished, all local variables release their resources. So \verb|v| releases the memory space it had for its vector. Later on, \verb|vector| wants access to the resource, but it gave away ownership in the function call, so it can no longer access the resource. Besides, the resource was removed after the function returned, so there is also nothing left to access. Again, this is error is given already at compile time instead of run time. 
 
 \section{Borrowing}
-It seems impractical, however, to always move the ownership so that the original owner cannot use the variable anymore. That is why the concept of \textbf{borrowing} was introduced. %This is where it gets interesting, because the compiler will have to check at compile time if all references point to valid objects. It should also be impossible to destroy an object while there is some pointer to it, even if it is a borrowed pointer. 
+It seems impractical, however, to always move the ownership so that the original owner cannot use the variable anymore. That is why the concept of \textbf{borrowing} was introduced. This way, the original owner only temporarily gives up its access to the resource only to have it returned later on. This ensures that only one variable owns a resource at a time,  %This is where it gets interesting, because the compiler will have to check at compile time if all references point to valid objects. It should also be impossible to destroy an object while there is some pointer to it, even if it is a borrowed pointer. 
 
 To illustrate the concept of borrowing, we take a look at the following piece code. The code is almost the same as the example above, but here we give \verb|function| the variable \verb|vector| only to borrow by putting an \verb|&| in front of it when giving it as an argument to the function. 
 

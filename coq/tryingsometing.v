@@ -98,7 +98,8 @@ apply ae_num.
 apply s_up1.
 apply s_up5.
 apply ae_var1.
-admit. (*I get stuck here!*)
+intro.
+inversion H.
 Qed.
 
 (* let_in a (avar "z") (assign (avar "z") 5)
@@ -127,9 +128,44 @@ Qed.
 
 
 Lemma eval_deterministic :
- forall s e n n1, aeval s e n -> aeval s e n1 -> n = n1
+ forall s e n n', aeval s e n -> aeval s e n' -> n = n'
 .
 Proof.
-admit.
+intros s e n n' aev; revert n'.
+induction aev.
+* intros n' aev'; inversion aev'; reflexivity.
+* intros n' aev'; inversion aev'.
+  auto. destruct H4. trivial.
+* intros.
+  apply IHaev.
+  inversion H0.
+  + subst.
+    destruct H.
+    auto.
+  + subst.
+    auto.
+* intros.
+  inversion H1. subst.
+  replace w0 with w1.
+  replace w3 with w2.
+  auto.  
+  assert (val w2 = val w3).
+  apply IHaev2.
+  auto.
+  injection H.
+  auto.
+  assert (val w1 = val w0).
+  apply IHaev1.
+  auto.
+  injection H.
+  auto.
+  
+  subst.
+  exfalso.
+  admit.
+
+* intros.
+  
+  
 Qed.
 
