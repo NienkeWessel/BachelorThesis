@@ -6,9 +6,20 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{minted}     % For fancy code highlighting
-\usepackage{enumitem}
+\usepackage{enumitem}[shortlabels]
 \usepackage{mathtools} %To make align* work
 \usepackage{amssymb} %To denote the set of integers with correct type of letter
+\usepackage{amsthm}
+
+%Numbering for theorems, definitions, corollaries, etc.
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}[theorem]{Lemma}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{infdefinition}{Informal definition}[section]
+
 
 %\usepackage{rutitlepage/rutitlepage.dtx}
 
@@ -34,3 +45,7 @@
 
 
 \newcommand{\letterfunc}[2]{\mathcal{#1} \llbracket #2 \rrbracket}
+
+
+
+

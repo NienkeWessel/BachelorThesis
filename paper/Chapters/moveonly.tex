@@ -1,18 +1,28 @@
 \section{Introduction}
-In the remainder of this thesis, we will look at subsets of Rust and determine, for each of those, the syntax, semantics and some interesting properties. Each time, we will translate the syntax and semantics to Coq, in order to proof these properties. This first chapter will go into detail at every step. Later chapters will not do this anymore and assume that what was mentioned here is known to the reader. 
+In the next two (?) chapters of this thesis, we will look at subsets of Rust. Of these subsets, we will define the syntax and will try to form a semantics as well. With these semantics, we will try to prove some interesting properties. This first chapter will go into detail at every step. Later chapters will not do this anymore and assume that what was mentioned here is known to the reader.
+
+The subset of Rust that interests us in this chapter will be dubbed as `move only', which is also the name of this chapter. In this subset of Rust, you can only assign variables. If you do so, the ownership of the resource will be moved to that variable. You cannot borrow and nothing is mutable. That means everything is constant. While this does not seem like a very useful language, it will provide a good base to work from when adding new features.
+
+We will first look at the syntax of our `move only' language.
 
 \section{Syntax}
-We will look at a very simple subset of Rust. In this subset of Rust, you can only assign variables. If you do so, the ownership of the resource will be moved to that variable. Hence, the name of this chapter `move only'. 
-You cannot borrow and nothing is mutable. That means everything is constant. While this does not seem like a very useful language, it will provide a good base to work from when adding new features. This language has the following types of statements:
-Statements ($s$):
-$$S ::= \textrm{skip} \mid S_1; S_2 \mid a: \textrm{let } x:\tau \textrm{ in } S \mid x := e$$
-Where e can be one of the following expressions:
-$$e ::= x \mid i \mid e_1 + e_2$$
-Lastly, $\tau$ is defined as 
-$$\tau ::= \textrm{Int}$$
-We now only have one possibility for the types, but later on, we will add others as well.
+\begin{definition}
+A statement $S$ is defined recursively by:
+$$S ::= \textrm{skip} \mid S_1; S_2 \mid a: \textrm{let } x:\tau \textrm{ in } S' \mid x := e$$
+where $e$ is an expression as defined below, $\tau$ is a type as defined below and $S_1$, $S_2$ and $S'$ are again statements.
+\end{definition}
 
-This syntax is very simple, but enough for us to say something useful about ownership. We use only one data type, as more data types will add no additional interesting facts for ownership, but will cloud our syntax definitions. 
+\begin{definition}
+An expression $e$ is defined recursively by:
+$$e ::= x \mid i \mid e_1 + e_2$$
+\end{definition}
+
+\begin{definition}
+A type $\tau$ is
+$$\tau ::= \textrm{Int}$$
+\end{definition}
+
+This syntax is very simple, but enough for us to say something useful about ownership. We use only one data type, as more data types will add no additional interesting facts for ownership. However, this syntax can be expanded to include more types. 
 
 In particular, take note of the syntax for let. We split a statement such as \verb|let x = 5| in \verb|let x in (x = 5)| (brackets added for clearity). This can be done for every type of let-statement. It was done to show that there are actually two steps in a statement such as \verb|let x = 5|. First of all, the variable \verb|x| is declared. Then, a value is assigned to this \verb|x|. 
 
@@ -35,49 +45,113 @@ a: {
 }
 \end{minted}
 
-This looks a lot like the desugaring in \ref{desugar}, but has no \verb|'| to indicate lifetimes. 
- 
+This looks a lot like the desugaring in \ref{desugar}, but has no \verb|'| to indicate lifetimes, in order to simplify the syntax.
 
-\section{Semantics}
-First, we will explore the general framework that we will use to give the semantics of the given syntax. Then we will give the actual rules. 
 
-\subsection{Framework}
-We use natural semantics to give meaning to our programs. This is a form of big steps semantics. In general, a rule has the following form:
+\section{Semantics: Framework}
+In this chapter we will look at two types of semantics. The first is a big step semantics and the second a small steps semantics. Both are based on the exposition in Nielson and Nielson [citation needed]. 
+
+Our big step semantics is called `natural semantics'. Its rules are of the form: 
 
 $$\langle S, s \rangle \to s'$$
 
 Where $S$ is a statement as defined in the previous section. $s$ and $s'$ are states, for which an exact definition will be given shortly. 
 
-First we define a couple of sets and symbols.  
+Our small step semantics is called `structural operational semantics'. Its rules are of the form:
 
-\subsubsection{Symbols}
-The first newly defined symbol is $-$, which will be used to indicate that a variable has not been declared at all. Intuitively, it therefore is some special kind of value a variable can have. Also, $\perp$ will be used to indicate that a variable has been declared using \verb|let|, but has not been assigned a value.
+$$\langle S, L, s \rangle \Rightarrow \langle S', L', s' \rangle$$
 
-\subsubsection{Sets}
-As is conventional, the set $\mathbb{Z}$ will be used to denote the set of integers. We extent $\mathbb{Z}$ with two new symbols mentioned in the previous section, to get $\mathbb{Z}_{ext}$. So $\mathbb{Z}_{ext} := \mathbb{Z} ~\cup ~ \{\perp, -\}$.
+Where $S$, $S'$ and $s$, $s'$ are again statements and states respectively. $L$ and $L'$ are lists of program parts, which will also be defined later on. 
 
-\subsubsection{Expressions}
-We also have \textbf{Var} to denote the set of all variables and \textbf{Num} to denote the set of all numbers in the form they are represented in in Rust.
+In order to work with these rules, we need some more mathematical definitions of different kinds of sets and functions we are interested in. Therefore, we will first define a framework in this section, and then move on to the actual rules in the next two sections. 
 
-We also define a set \textbf{Add}, which consists of tuples. Now we combine several sets to form $\textbf{Exp} = \textbf{Num} \cup \textbf{Add}$. We said \textbf{Add} consisted of tuples, but we did not say what was in these tuples. We are now able to state that each element of the tuple should be an element of the set \textbf{Exp}. Now we have recursively defined a set that contains representations for all possible syntactic structures. Note that elements from \textbf{Add} will usually be denoted as ``$e_1 + e_2$'' instead of ``$(e_1, e_2)$''.
+In this section we will need to distinguish actual definitions from pseudo-definitions. The latter means we give an intended interpretation for a symbol or a set in natural language. This is done to show what the symbol or set is supposed to represent in the real world. However, the actual meaning of the symbol or set will depend on how we will use it in other definitions later on. They are added nonetheless to help the reader navigate through the many difficult notations introduced in the chapter and to give them some intuition to what is happening. To distinguish between actual definitions and these pseudo-definitions, the latter is preceded by `Informal', as below. 
 
-\subsubsection{Functions}
-The function $\mathcal{N}$ is a function from $\textbf{Num}$ to $\mathbb{Z}$ which translates a Rust representation for a number to the actual number. We also have an evaluation functions $\mathcal{A}$, which gives for an element from \textbf{Exp} and a state $s$ the value. Here, value is an element of $\mathbb{Z}_{ext}$
+\subsection*{Variable values}
+The symbols in this subsection will be defined informally.  
 
-\subsubsection{State and evaluation}
-Here, we define the state as a function $s: \textbf{Var} \to \mathbb{Z}_{ext}$. Then we define our evaluation function $\mathcal{A}$ as:
+\begin{infdefinition}
+We will need the following symbols 
+\begin{enumerate}[noitemsep, label={\roman*)}]
+    \item $-$ will be used to indicate that a variable has not been declared at all.
+    \item $\perp$ will be used to indicate that a variable has been declared using \verb|let|, but has not been assigned a value.
+\end{enumerate}
+\end{infdefinition}
 
+Intuitively, these are some special kind of values a variable can have. 
+
+As is conventional, the set $\mathbb{Z}$ will be used to denote the set of integers. We extent $\mathbb{Z}$ with two new symbols mentioned in the previous section, to get $\mathbb{Z}_{ext}$. Therefore: 
+
+\begin{definition}
+$\mathbb{Z}_{ext} := \mathbb{Z} ~\cup ~ \{\perp, -\}$.
+\end{definition}
+
+\subsection*{Expressions}
+\begin{definition}
+We have the following sets:
+\begin{enumerate}[noitemsep, label={\roman*)}]
+    \item \textbf{Var} denotes the set of all variables in Rust.
+    \item \textbf{Num} denotes the set of all numbers in the form of how they are represented in Rust.
+    \item \textbf{Add} denotes the set of all tuples from \textbf{Exp}, i.e. $\textbf{Add} = \textbf{Exp} \times \textbf{Exp}$ . 
+    \item $\textbf{Exp} = \textbf{Num} \cup \textbf{Var} \cup \textbf{Add}$
+\end{enumerate}
+\end{definition}
+
+Notice that we have a recursive definition of \textbf{Exp}. \textbf{Exp} should be interpreted as a representation for all possible syntactic expressions. Note that elements from \textbf{Add} will usually be denoted as ``$e_1 + e_2$'' instead of ``$(e_1, e_2)$''.
+
+As \textbf{Exp} is a recursive set, it will turn out to be useful to also be able to gather all the variables that are in an expression $e$. We do this by defining a new function $\mathcal{V}$.
+
+\begin{definition}
+We define the function $\mathcal{V}: \textbf{Exp} \to \mathcal{P}(\textbf{Var})$ recursively by:
+\begin{align*}
+    \mathcal{V}(i)          &= \emptyset
+\\  \mathcal{V}(x)          &= \{ x \}
+\\  \mathcal{V}(e_1 + e_2)  &= \mathcal{V}(e_1) \cup \mathcal{V}(e_2)
+\end{align*}
+\end{definition}
+
+We see that this definition recursively walks through the expression to gather all variable mentions and join them together into a single set. 
+
+Now we need a way to go from a Rust representation for a number to an actual number.
+
+\begin{definition}
+$\mathcal{N}$: $\textbf{Num} \to \mathbb{Z}$ translates a Rust representation for a number to the actual number
+\end{definition}
+
+We leave the details of this function out, as it is cumbersome and not relevant for the remainder of this thesis. We will simply assume that we have such a function and that it behaves as we would expect. For a detailed exposition on this function, we refer the reader to Nielson and Nielson [citation needed]. 
+
+\subsection*{State and evaluation}
+The state is a function that maps a variable to a value. Therefore, we can define the set \textbf{State} which contains all possible states. 
+
+\begin{definition}
+\textbf{State} is the set of all functions $s: \textbf{Var} \to \mathbb{Z}_{ext}$
+\end{definition}
+
+We also have an evaluation functions $\mathcal{A}$, which gives for an element from \textbf{Exp} and a state $s$ the value. Here, value is an element of $\mathbb{Z}_{ext}$
+
+\begin{definition}
+The evaluation function $\mathcal{A}: \textbf{Exp} \times \textbf{State} \to \mathbb{Z}_{ext}$ is defined by:
 \begin{align*}
     \letterfunc{A}{i}s          &= \letterfunc{N}{i}
 \\  \letterfunc{A}{x}s          &= s(x)
 \\  \letterfunc{A}{e_1 + e_2}s  &= \letterfunc{A}{e_1}s + \letterfunc{A}{e_2}s \textrm{ if } \letterfunc{A}{e_1}s \in \mathbb{Z} \textrm{ and } \letterfunc{A}{e_2}s \in \mathbb{Z}
 \\  \letterfunc{A}{e_1 + e_2}s  &= - \textrm{ otherwise}
 \end{align*}
+\end{definition}
 
-\subsection{Rules}
-Now we get the following semantic rules for each of the different statements. 
+We now have sufficient apparatus to continue with the actual semantic rules. 
 
-\medskip
+\section{Semantics: Big step}
+As mentioned earlier on, our big step semantics are called natural semantics with rules of the form 
+$$\langle S, s \rangle \to s'$$
+
+Where $S$ is a statement and $s$, $s'$ are states. We now know what that means, so we can start to define our actual rules. 
+
+\subsection{Natural semantics rules}
+
+\begin{definition} 
+We define the following natural semantics rules (name on the left)
+
 \begin{tabular}{p{5em}p{18em}p{13em}}
 [skip$_{\textrm{ns}}$] &
 \centering$\langle$ \texttt{skip} $, s \rangle \to s$ & \medskip\\
@@ -95,9 +169,10 @@ Now we get the following semantic rules for each of the different statements.
 \DisplayProof \medskip& \\
 
 [ass$_{\textrm{ns}}$] &
-\centering$\langle$ \texttt{x := } e$, s \rangle \to s[x \mapsto \letterfunc{A}{e}s][ev(e)\mapsto-]$ & if $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e} \neq \perp$ and $\letterfunc{A}{e} \neq -$\medskip\\
-
+\centering$\langle$ \texttt{x := } $e, s \rangle \to s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$ & if $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e}s \neq \perp$ and $\letterfunc{A}{e}s \neq -$\medskip\\
 \end{tabular} 
+Where $\mathcal{V}(e)\mapsto-$ is an abbreviation for `for all $x \in \mathcal{V}(e)$, $x \mapsto -$'.
+\end{definition} 
 
 The rules for skip and composition are assumed to be self-explanatory. The rule for let is derived from the idea that a let-statement should put the variable \verb|x| at $\perp$ (declared but not assigned). When the body of a let-statement is finished, \verb|x| should be put at whatever it was before we encountered the let-statement. 
 
@@ -105,112 +180,70 @@ As for the assignment rule, there are several conditions that need to apply befo
 
 Note that these rules are important to model Rust in the best possible way. It is not possible to assign to a value that has not been declared and it is also not possible to assign a value to a non-mutable variable that already has a value. 
 
-\section{Translation to Coq}
-Now, we will translate the syntax, framework and rules to Coq. The whole code can be found in some appendix I guess. 
+\subsection{Properties of our natural semantics rules}
+In this subsection, we will look at and prove some interesting properties of our natural semantics. 
 
-\subsection{Syntax}
-We let the types out, since there was only one type. The arithmetic expressions:
-\begin{minted}[linenos, frame=lines]{rust}
-(*Arithmetic expressions: x | n | e1 + e2 *)
-Inductive aexpr : Type := avar (s : string) | anum (n :Z) | aplus (a1 a2:aexpr).
-\end{minted}
-and the instruction set:
-\begin{minted}[linenos, frame=lines]{rust}
-(*Instruction set: x := e | S1;S2 | skip | a:let x:t in S *)
-Inductive instr : Type :=
-  assign (_ : string) (_ : aexpr) | sequence (_ _: instr)
- | skip | let_in (_ : lifetime) (_ : string) (_: instr).
-\end{minted}
-where 
-\begin{minted}[linenos, frame=lines]{rust}
-Variable string : Type.
-Variable lifetime : Type.
-\end{minted}
+\subsubsection*{Determinism}
 
-\subsection{Semantics}
-\subsubsection{Framework for semantics}
-We used the \verb|ZArith List| library to denote the set of Integers. From that, we made $\mathbb{Z}_{ext}$
-\begin{minted}[linenos, frame=lines]{rust}
-Inductive zext : Type :=  (*This is Zext*)
-nondec  (*To denote a variable has not been declarated*)
-| dec  (*To denote a variable has been declarated*)
-| val (_ : Z).
-\end{minted}
+The first will be that our program is deterministic. This means that if we run a program multiple times with the same starting state, the end state will always be the same. This is of course a desirable property in most programs.
 
-Instead of seeing the state as a function, we defined the state as a list of tuples. The first argument in the tuple is the variable and the second is the value (so an element of $\mathbb{Z}_{ext}$):
-\begin{minted}[linenos, frame=lines]{rust}
-(*The state is a list of pairs, where the first denotes a variable and the second a value*)
-Definition state := list (string * zext).
-\end{minted}
+\begin{theorem}
+For every statement $S$, every state $s, s', s''$, if $\langle S, s \rangle \to s'$ and $\langle S, s \rangle \to s''$, then $s' = s''$.
+\end{theorem}
 
-\subsubsection{Functions}
-The function $\mathcal{A}$ is defined as follows:
-\begin{minted}[linenos, frame=lines]{rust}
-Inductive aeval : state -> aexpr -> zext -> Prop :=
-ae_num : forall s n, aeval s (anum n) (val n) (*n evaluates to n*)
-| ae_var1 : forall s x v, aeval ((x,v)::s) (avar x) v
-| ae_var2 : forall s x y v1 v2 , x <> y -> aeval s (avar x) v2 ->
-aeval ((y,v1)::s) (avar x) v2
-| (*e1 + e2 evaluates to n1 + n2 if e1->n1 and e2->n2*) 
-ae_plus : forall s e1 e2 v1 v2 w1 w2, 
-v1 = (val w1) -> v2 = (val w2) ->
-aeval s e1 v1 -> aeval s e2 v2 ->
-aeval s (aplus e1 e2) (val (w1 + w2))
-| (*either e1 or e2 evaluates to nothing*) 
-ae_plus_fail : forall s e1 e2 v1 v2, 
-v1 = nondec \/ v2 = nondec \/ v1 = dec \/ v2 = dec ->
-aeval s (aplus e1 e2) nondec
-.
-\end{minted}
-When an expression $e$ is a numeral, $\mathcal{A}$ should evaluate to that numeral. When $e$ is a variable, we will look for this variable in the list. It can either be at the top of the list (\verb|ae_var1|) or deeper down the list (\verb|ae_var2|). When the expression is an addition, we have the possibility where it is well-defined or not well-defined. In the case it is well-defined, we add the values the two parts evaluate to. If it is not well-defined, the result has to be equal to not declared (\verb|nondec|). 
+\begin{proof}
+The proof proceeds by induction on the structure of $S$. We distinguish the following cases:
+\begin{itemize}[noitemsep]
+    \item $S$ = \texttt{skip} : if $\langle \texttt{skip}, s \rangle \to s'$ and $\langle \texttt{skip}, s \rangle \to s''$, then this can only be achieved by [skip$_{\textrm{ns}}$], which means $s=s'$ and $s=s''$, so $s' = s''$. 
+    \item Blah \emph{details will be filled in later, currently don't have the proof with me and enough other things to focuss on first}.
+\end{itemize}
+\end{proof}
 
+\subsubsection*{Variable allocation}
 
-We also need something to update the state. The first one, which is called \verb|update| is used when we wrote something like $s[x \mapsto y]$ in the previous section. I.e. it is used when we want to update only one variable. Its definition is:
+While this first theorem is one that is generally considered useful to prove, the next is very specific to Rust and the way we defined our semantics. It states that a program no longer has any variables in memory after it terminates. 
 
-\begin{minted}[linenos, frame=lines]{rust}
-Inductive update : state -> string -> zext-> state -> Prop :=
-| s_up1 : forall s x v v1, update ((x,v)::s) x v1 ((x,v1):: s)
-| s_up2 : forall s s1 x y v v1, update s x v1 s1 ->
-x <> y -> update ((y,v)::s) x v1 ((y,v)::s1).
-\end{minted}
-This traverses the list in a similar way to the previous section. 
+\begin{theorem}
+For every statement $S$, every state $s, s'$, if $\langle S, s \rangle \to s'$, then for all variables $x$, if $\letterfunc{A}{x}s = -$ then $\letterfunc{A}{x}s' = -$.
+\end{theorem}
 
-We also have an update function that looks for all variables in an expression and then updates every one of them to $-$. This does what we previously denoted with $s[ev(e)\mapsto-]$
+\begin{proof}
+The proof proceeds by induction on the structure of $S$. We distinguish the following cases:
+\begin{itemize}[noitemsep]
 
-\begin{minted}[linenos, frame=lines]{rust}
-Inductive updateE : state -> aexpr -> state -> Prop :=
-| s_up3: forall s x s1, update s x nondec s1 -> updateE s (avar x) s1 (*variables*)
-| s_up4: forall s x y s1 s2, (updateE s x s1) -> (updateE s1 y s2) -> 
-updateE s (aplus x y) s2(*addition*)
-| s_up5: forall s i, updateE s (anum i) s(*integers*)
-.
-\end{minted}
-If the expression is a variable, update that variable. If the expression consists of an addition, apply the same principle to either side. If the expression is a numeral, do nothing (as a numeral does not contain variables that would need to be updated. 
+    \item $S$ = \texttt{skip} : if $\langle \texttt{skip}, s \rangle \to s'$, then this can only be achieved by [skip$_{\textrm{ns}}$], which means $s=s'$. Therefore if $\letterfunc{A}{x}s = -$ then $\letterfunc{A}{x}s' = -$. 
+    
+    \item $S$ = \texttt{x := } $e$ : assume $\langle \texttt{x := } e, s \rangle \to s'$. Then the only rule that can have been applied is [ass$_{\textrm{ns}}$], so  $s'$ must be $s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$ and $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e}s \neq \perp$ and $\letterfunc{A}{e}s \neq -$. If one of these things had not been the case, we could not have applied any rules, and therefore our assumption `$\langle S, s \rangle \to s'$' would be false. So we can assume these things. Now we look at a variable $y$, chosen randomly. We distinguish two cases:
+    \begin{itemize}[noitemsep]
+        \item $x=y$ : if $\letterfunc{A}{x}s \not = -$ there is nothing to prove. So assume $\letterfunc{A}{x}s = -$. However, this is contradictory to our assumption. So this is not possible.
+        \item $x\not = y$ : we again assume $\letterfunc{A}{y}s = -$, as otherwise there is nothing to prove. Then we can again distinguish two cases: 
+        \begin{itemize}
+            \item $y \in \mathcal{V}(e)$ \footnote{Note: in practice, it will not be possible for $y$ to be both an element of $\mathcal{V}(e)$ and $\letterfunc{A}{y}s = -$, as one of the assumptions of the rule [ass$_{\textrm{ns}}$] assumes $\letterfunc{A}{e}s \neq -$. However, we would need to prove this with induction on the shape of an expression and it turns out not to be necessary as the proof is rather simple anyways.} : in $s'$, we have $\mathcal{V}(e)\mapsto-$, so $y \mapsto -$, which means $\letterfunc{A}{y}s = -$.
+            \item $y \not \in \mathcal{V}(e)$ : as $x \not = y$ and $y \not \in \mathcal{V}(e)$, the assignment of $y$ is not any different from $s$ in $s'=s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$, so $\letterfunc{A}{y}s' = -$
+        \end{itemize}
+    \end{itemize}
+    This exhausts all possible cases, so this proves the case $S$ = \texttt{x := } $e$.
+    
+    \item  $S$ = a : \texttt{let x } : $\tau$ \texttt{ in } $S$ : assume $\langle a : \texttt{let x } : \tau \texttt{ in } $S$, s \rangle \to s'$. Then the rule that has been aplied last must be [let$_{\textrm{ns}}$]. This has the following derivation tree \AxiomC{$\langle S, s[x\mapsto \perp] \rangle \to s''$}
+\UnaryInfC{$\langle a : \texttt{let x } : \tau \texttt{ in } S, s \rangle \to s''[x \mapsto s(x)]$}
+\DisplayProof
+. We again look at a random variable $y$ and assume $\letterfunc{A}{y}s' = -$ (otherwise we have nothing to prove). We again distinguish two cases:
+    \begin{itemize}
+        \item $x=y$ : then $s' = s''[x \mapsto s(x)]$. As $\letterfunc{A}{x}s = -$ and $x$ in $s''$ maps to $s(x)$, we can conclude $\letterfunc{A}{x}s'' = -$
+        \item $x\neq y$ : we are now interested in $\letterfunc{A}{y}s''$. However, we can apply the induction hypothesis to $\langle S, s[x\mapsto \perp] \rangle \to s''$ as $\letterfunc{A}{y}s[x\mapsto \perp] = \letterfunc{A}{y}s = -$. So $\letterfunc{A}{y}s'' = -$. As $s' = s''[x \mapsto s(x)]$, which changes nothing to the value of $y$, we can conclude $\letterfunc{A}{y}s' = -$
+    \end{itemize}
+    \item $S$ = $S_1$; $S_2$ : assume $\langle S_1$; $S_2, s \rangle \to s'$ (Note the accents $'$). Then the last rule that has been applied must be [comp$_{\textrm{ns}}$], so that gives the following derivation tree \AxiomC{$\langle S_1, s \rangle \to s'' $}
+\AxiomC{$\langle S_2, s'' \rangle \to s'$}
+\BinaryInfC{$\langle S_1$; $S_2, s \rangle \to s'$}
+\DisplayProof .
+Now assume $x$ to be a random variable and $\letterfunc{A}{x}s = -$. We can apply the induction hypothesis to $\langle S_1, s \rangle \to s''$, so we know $\letterfunc{A}{x}s'' = -$. We can then again apply the induction hypothesis to $\langle S_2, s'' \rangle \to s'$. So we know $\letterfunc{A}{x}s' = -$, which was what was to be proven.
+\end{itemize} 
+This exhausts all possible shapes of our statement $S$, and hence proves the theorem.
+\end{proof}
 
-\subsubsection{Rules}
-Now, we have finally arrived at the part where we can give the derivation rules:
-\begin{minted}[linenos, frame=lines]{rust}
-Inductive exec : state->instr->state->Prop :=
-| exec_skip : forall s, exec s skip s (*skip rule*)
-| exec_ass : forall s x e v s1 s2,
-aeval s e v -> update s x v s1 -> updateE s1 e s2
--> aeval s (avar x) dec (*A[x]s := dec*)
--> not (aeval s e nondec)
--> exec s (assign x e) s2
-(*assignment*)
-| exec_let : forall s x s1 s2 s3 y i a, (*s is starting state*)
-update s x dec s1 (*s[x |-> dec] = s1*)
--> exec s1 i s2 (*<S, s1> -> s2 = s'*)
--> aeval s (avar x) y (*y = s(x)*)
--> update s2 x y s3 (*s3 = s'[x |-> s(x)]*)
--> exec s (let_in a x i) s3(*let-statement*)
-| exec_comp : forall s s1 s2 i1 i2,
-exec s i1 s1 -> exec s1 i2 s2 
--> exec s (sequence i1 i2) s2 (*composition*).
-\end{minted}
+Note that this means that after a program terminates, none of the results are available anymore. To make use of the data, you would have to write it to a file or some other IO device. This is a significant break from the exposition of Nielson and Nielson [citation needed] where the state of a terminated program shows the values of the variables at the end and you can thus `access' the results of the calculations. However, as this is not how a computer normally works, we have chosen to not do this. 
+
+ 
 
 
-
-
-
-
+\section{Semantics: Small step}
