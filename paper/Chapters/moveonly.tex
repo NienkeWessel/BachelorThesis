@@ -214,7 +214,7 @@ The proof proceeds by induction on the structure of $S$. We distinguish the foll
     \item $S$ = \texttt{skip} : if $\langle \texttt{skip}, s \rangle \to s'$, then this can only be achieved by [skip$_{\textrm{ns}}$], which means $s=s'$. Therefore if $\letterfunc{A}{x}s = -$ then $\letterfunc{A}{x}s' = -$. 
     
     \item $S$ = \texttt{x := } $e$ : assume $\langle \texttt{x := } e, s \rangle \to s'$. Then the only rule that can have been applied is [ass$_{\textrm{ns}}$], so  $s'$ must be $s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$ and $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e}s \neq \perp$ and $\letterfunc{A}{e}s \neq -$. If one of these things had not been the case, we could not have applied any rules, and therefore our assumption `$\langle S, s \rangle \to s'$' would be false. So we can assume these things. Now we look at a variable $y$, chosen randomly. We distinguish two cases:
-    \begin{itemize}[noitemsep]
+    \begin{itemize}
         \item $x=y$ : if $\letterfunc{A}{x}s \not = -$ there is nothing to prove. So assume $\letterfunc{A}{x}s = -$. However, this is contradictory to our assumption. So this is not possible.
         \item $x\not = y$ : we again assume $\letterfunc{A}{y}s = -$, as otherwise there is nothing to prove. Then we can again distinguish two cases: 
         \begin{itemize}
@@ -243,7 +243,132 @@ This exhausts all possible shapes of our statement $S$, and hence proves the the
 
 Note that this means that after a program terminates, none of the results are available anymore. To make use of the data, you would have to write it to a file or some other IO device. This is a significant break from the exposition of Nielson and Nielson [citation needed] where the state of a terminated program shows the values of the variables at the end and you can thus `access' the results of the calculations. However, as this is not how a computer normally works, we have chosen to not do this. 
 
- 
-
 
 \section{Semantics: Small step}
+We now move onto a small step semantics. We use mostly the same framework as in the big step semnatics, unless stated otherwise. Our small step semantics, as stated above, has rules of the form $\langle S, L, s \rangle \Rightarrow \langle S', L', s' \rangle$, where $S$, $S'$ are statements and $s$, $s'$ are states as defined above. To properly define what kind of things $L$ and $L'$ are, we first need to define what we mean by `a program instruction'. 
+
+\begin{definition}
+A program instruction $I$ has the following form:
+$$I ::= S \mid (x,v)$$
+where $S$ is a statement, $x$ a variable from \textbf{Var} and $v$ an element from $\mathbb{Z}_{ext}$.
+\end{definition}
+
+Now we can look at our \emph{lists}:
+
+\begin{definition}
+\label{lists}
+A L is a list then, L is of the form 
+\begin{itemize}[noitemsep]
+    \item L = \texttt{Nil}
+    \item L = I::L', where I is a program instruction and L' is again a list. 
+\end{itemize}
+\end{definition}
+
+So now we can state that our $L$ and $L'$ from the rule should be lists as defined in definition \ref{lists}. We will use this list as a sort of stack to keep track of program parts that we will want to execute later on. 
+
+\subsection{Operational semantics rules}
+\begin{definition} 
+\label{os}
+We define the following semantic derivation rules (name on the left):
+
+\begin{tabular}{p{5em}p{18em}p{13em}}
+[load$_{\textrm{os}}$] &
+\centering$\langle$ \texttt{skip} $, I::L, s \rangle \Rightarrow \langle I, L, s \rangle$ & \medskip\\
+
+[comp$_{\textrm{os}}$] &
+\centering$\langle S_1; S_2, L, s \rangle \Rightarrow \langle S_1, S_2::L, s \rangle$ & \medskip\\
+
+[ass$_{\textrm{os}}$] &
+\centering $\langle \texttt{x := } e, L, s \rangle \Rightarrow \langle \texttt{skip}, L, s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-] \rangle$ & \medskip\\
+
+[let$_{\textrm{os}}$] &
+\centering $\langle a : \texttt{let x } : \tau \texttt{ in } S, L, s \rangle \Rightarrow \langle S, (x,s(x))::L, s[x\mapsto \perp] \rangle$ & \medskip\\
+
+[free$_{\textrm{os}}$] &
+\centering$\langle (x,v), L, s \rangle \Rightarrow \langle \texttt{skip}, L, s[x\mapsto v] \rangle$ & \medskip\\
+\end{tabular} 
+Where $\mathcal{V}(e)\mapsto-$ is an abbreviation for `for all $x \in \mathcal{V}(e)$, $x \mapsto -$'.
+\end{definition} 
+Note that $\langle \texttt{skip}, \texttt{Nil}, s \rangle$ has no derivation; this is the/an end state. 
+
+We will be using $\langle S, L, s \rangle \Rightarrow ^{*} \langle S', L', s' \rangle$ to indicate we can go from $\langle S, L, s \rangle$ to $\langle S', L', s' \rangle$ in zero or more steps. We will be using $\langle S, L, s \rangle \Rightarrow ^{n} \langle S', L', s' \rangle$ with $n$ a natural number to indicate we can go from $\langle S, L, s \rangle$ to $\langle S', L', s' \rangle$ in exactly $n$ steps. In both cases, a step is one of the rules from definition \ref{os} .
+
+
+\subsection{Properties of our semantic rules}
+
+\subsubsection*{Determinism}
+
+\begin{theorem}
+For every statement $S$, every state $s, s', s''$, every list $L$, if $\langle S, L, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, L, s' \rangle$ and $\langle S, L, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, L, s'' \rangle$, then $s' = s''$.
+\end{theorem}
+
+\begin{proof}
+The proof proceeds by induction on the structure of $S$. We distinguish the following cases:
+\begin{itemize}[noitemsep]
+    \item $S$ = \texttt{skip} : 
+    \item Blah \emph{details will be filled in later, shouldn't be too hard I hope...}.
+\end{itemize}
+\end{proof}
+
+\subsubsection*{Concerning lists and compositions}
+First, we will see that it is irrelevant what is in the list for a statement currently executing. In order to prove that, we will need to prove a lemma that states that if a composition evaluates in a certain amount of steps to a \texttt{skip}, this must be done by first evaluating $S_1$, then loading $S_2$ and evaluating it. 
+
+\begin{lemma}
+\label{breakingdowncomp}
+For every statement $S_1$, $S_2$, for every list $L$, for every state $s$, $s'$, if $\langle S_1; S_2, L, s \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $L, s' \rangle$, then it must be the case that $\langle S_1;S_2, L, s \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $S_2::L, s'' \rangle \Rightarrow \langle S_2, L, s'' \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $L, s' \rangle$ for some state $s''$. 
+\end{lemma}
+
+\begin{proof}
+Assume $\langle S_1; S_2, L, s \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $L, s' \rangle$. Now look at $\langle S_1; S_2, L, s \rangle$. We know there must be a derivation. The only possible rule is [comp$_{\textrm{os}}$], so we have $\langle S_1; S_2, L, s \rangle \Rightarrow \langle S_1, S_2::L, s \rangle$. Now we see that our list has grown by one item. However we know there is a derivation and it ends with the list $L$, instead of $S_2::L$. So at some point in the derivation the list must be reduced again. The only possible rule that could have done that is [load$_{\textrm{os}}$]. So we must have $\langle \texttt{skip} , S_2::L, s'' \rangle \Rightarrow \langle S_2, L, s'' \rangle$ at some point in the derivation. Therefore we have $\langle S_1; S_2, L, s \rangle \Rightarrow \langle S_1, S_2::L, s \rangle \Rightarrow ^{*} \langle \texttt{skip} , S_2::L, s'' \rangle \Rightarrow \langle S_2, L, s'' \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $L, s' \rangle$, which was to be proven.
+\end{proof}
+
+We will look at a similar lemma for the let statement:
+
+\begin{lemma}
+\label{breakingdownlet}
+For every statement $S$, for every list $L$, for every state $s$, $s'$, if $\langle a : \texttt{let x } : \tau \texttt{ in } S , L, s \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $L, s' \rangle$, then it must be the case that $\langle a : \texttt{let x } : \tau \texttt{ in } S, L, s \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $(x,s(x))::L, s'' \rangle \Rightarrow \langle (x,s(x)), L, s'' \rangle \Rightarrow \langle$ \texttt{skip}, $L, s' \rangle$ for some state $s''$. 
+\end{lemma}
+
+\begin{proof}
+The proof is similar to lemma \ref{breakingdowncomp}. 
+\end{proof}
+
+Now we will move on, to proof that for evaluating a statement, it is irrelevant what is in the list. 
+
+\begin{proposition}
+For every program instruction $S$, every state $s$, $s'$, if $\langle S, \texttt{Nil}, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$, the for all lists $L$, we have $\langle S, L, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, L, s' \rangle$. 
+\end{proposition}
+
+\begin{proof}
+We know that there must be a derivation from $\langle S, \texttt{Nil}, s \rangle$ to $\langle \texttt{\textrm{skip}}, \texttt{Nil}, s' \rangle$, so $S$ must be of one of the forms of definition \ref{os}. We therefore proof the proposition by induction on the form of the program instruction $S$.
+
+\begin{itemize}
+    \item $S = \texttt{skip}$ : then $\langle \texttt{skip}, L, s \rangle$ is already of the correct form, so we can evaluate to the desired state in zero steps. 
+    
+    \item $S = \texttt{x := } e$ : assume $\langle \texttt{x := } e, \texttt{Nil}, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. Then we know the rule that must have been applied next is [ass$_{\textrm{os}}$], so $\langle \texttt{x := } e, \texttt{Nil}, s \rangle \Rightarrow \langle \texttt{skip}, \texttt{Nil}, s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-] \rangle$, which is of the desired form. So it must be that $s' = s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$. Now we look at $\langle \texttt{x := } e, L, s \rangle$. The only rule we can apply is [ass$_{\textrm{os}}$], so we get $\langle \texttt{x := } e, L, s \rangle \Rightarrow \langle \texttt{skip}, L, s$ $[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-] \rangle$, which is of the desired form, and has the right $s'$, which proves this case. 
+    
+    \item $S = (v,e)$ : assume $\langle (v,e), \texttt{Nil}, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. Then we know the rule that must have been applied next was [free$_{\textrm{os}}$]. So $\langle (v,e), \texttt{Nil}, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s[x\mapsto v] \rangle$. This is of the desired form, so it must be the case that $s' = s[x\mapsto v]$. Now we look at $\langle (v,e), L, s \rangle$. The only rule that can be applied is [free$_{\textrm{os}}$], so we get $\langle (v,e), L, s \rangle \Rightarrow  \langle \texttt{skip}, L, s[x\mapsto v] \rangle$, which is of the desired form, and has the right $s'$, which proves this case.
+    
+    \item $S = S_1; S_2$ : assume $\langle S_1;S_2, \texttt{Nil}, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. Then by [comp$_{\textrm{os}}$] and lemma \ref{breakingdowncomp}, we have $\langle S_1;S_2, \texttt{Nil}, s \rangle \Rightarrow \langle S_1, S_2::\texttt{Nil}, s \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $S_2::\texttt{Nil}, s'' \rangle \Rightarrow \langle S_2, \texttt{Nil}, s'' \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$ ( * ). Now we look at $\langle S_1;S_2, L, s \rangle$ with $L$ random. We can apply the rule [comp$_{\textrm{os}}$] to see $\langle S_1;S_2, L, s \rangle \Rightarrow \langle S_1, S_2::L, s \rangle$. Now we can apply the induction hypothesis to $\langle S_1, S_2::L, s \rangle$, as we have $\langle S_1, \texttt{Nil}, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s'' \rangle$ by ( * ). So we get $\langle S_1, S_2::L, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, S_2::L, s'' \rangle$. Then by [load$_{\textrm{os}}$], $\langle \texttt{skip}, S_2::L, s'' \rangle \Rightarrow \langle S_2 , L , s''\rangle$. Now we can apply the induction hypothesis to $\langle S_2 , L , s''\rangle$, as we have $\langle S_2, \texttt{Nil}, s''\rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s'\rangle$ by ( * ). We get $\langle S_2 , L , s''\rangle \Rightarrow ^{*} \langle \texttt{skip}, L, s'\rangle$. That means we can form the derivation sequence $\langle S_1;S_2, L, s \rangle \Rightarrow \langle S_1, S_2::L, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, S_2::L, s'' \rangle \Rightarrow \langle S_2 , L , s''\rangle \Rightarrow ^{*} \langle \texttt{skip}, L, s'\rangle$. This gives us $\langle S_1;S_2, L, s \rangle  \Rightarrow ^{*} \langle \texttt{skip}, L, s'\rangle$, which was to be proven. 
+        
+    \item $S = a : \texttt{let x } : \tau \texttt{ in } S'$ : assume $\langle a : \texttt{let x } : \tau \texttt{ in } S', \texttt{Nil}, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. There is only one rule that could have been applied first, [let$_{\textrm{os}}$], which gives us $\langle a : \texttt{let x } : \tau \texttt{ in } S', \texttt{Nil}, s \rangle \Rightarrow \langle S, (x,s(x))::\texttt{Nil}, s[x\mapsto v] \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. By lemma \ref{breakingdownlet} we get $\langle a : \texttt{let x } : \tau \texttt{ in } S', \texttt{Nil}, s \rangle \Rightarrow \langle S, (x,s(x))::\texttt{Nil}, s[x\mapsto v] \rangle \Rightarrow ^{*} \langle \texttt{skip}, (x,s(x))::\texttt{Nil}, s'' \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. Now we look at $\langle a : \texttt{let x } : \tau \texttt{ in } S', L, s \rangle$ for some list $L$. Then we can apply [let$_{\textrm{os}}$] to get $\langle a : \texttt{let x } : \tau \texttt{ in } S', L, s \rangle \Rightarrow \langle S, (x,s(x))::L, s[x\mapsto v] \rangle$. We can now apply the induction hypothesis, as we know \emph{Okay we have some problems here as the list is not empty.... Change theorem to maybe state that if it is possible for any L, then true for all L?}
+\end{itemize}
+Hence we can conclude that the theorem holds. 
+\end{proof}
+
+Intuitively, this makes sense. If we look at the rules, we see that we can only move something from the list to the front if the front only contains a \texttt{skip} statement, and that thus everything that had been there, must have been finished evaluating. 
+
+We will now do a simple proof to show that in a composition, the execution of $S_1$ does not depend on what $S_2$ entails. 
+
+\begin{proposition}
+For every statement $S_1$, $S_2$, for every list $L$, for every state $s$, $s'$ and for every natural number $n$, if $\langle S_1, L, s \rangle \Rightarrow ^{n} \langle \texttt{\textrm{skip}}, L, s \rangle$, then $\langle S_1;S_2, L, s \rangle$ $\Rightarrow ^{n+2} \langle S_2, L, s \rangle$
+\end{proposition}
+
+\begin{proof}
+Assume $\langle S_1, L, s \rangle \Rightarrow ^{n} \langle \texttt{skip}, L, s \rangle$ and look at $\langle S_1;S_2, L, s \rangle$. Then $\langle S_1;S_2, L, s \rangle$ $\Rightarrow _{[\textrm{comp}$_{\textrm{os}}$]} $\langle S_1, S_2::L, s \rangle$
+\end{proof}
+
+\section{Compile time check}
+To model the compile time checker of Rust, we need something that passes through the code and checks the code as it goes. It should then return whether the code is correct or not. 
+
+
