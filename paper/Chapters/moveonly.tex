@@ -1,3 +1,5 @@
+
+
 \section{Introduction}
 In the next two (?) chapters of this thesis, we will look at subsets of Rust. Of these subsets, we will define the syntax and will try to form a semantics as well. With these semantics, we will try to prove some interesting properties. This first chapter will go into detail at every step. Later chapters will not do this anymore and assume that what was mentioned here is known to the reader.
 
@@ -349,9 +351,9 @@ We know that there must be a derivation from $\langle S, \texttt{Nil}, s \rangle
     
     \item $S = (v,e)$ : assume $\langle (v,e), \texttt{Nil}, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. Then we know the rule that must have been applied next was [free$_{\textrm{os}}$]. So $\langle (v,e), \texttt{Nil}, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s[x\mapsto v] \rangle$. This is of the desired form, so it must be the case that $s' = s[x\mapsto v]$. Now we look at $\langle (v,e), L, s \rangle$. The only rule that can be applied is [free$_{\textrm{os}}$], so we get $\langle (v,e), L, s \rangle \Rightarrow  \langle \texttt{skip}, L, s[x\mapsto v] \rangle$, which is of the desired form, and has the right $s'$, which proves this case.
     
-    \item $S = S_1; S_2$ : assume $\langle S_1;S_2, \texttt{Nil}, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. Then by [comp$_{\textrm{os}}$] and lemma \ref{breakingdowncomp}, we have $\langle S_1;S_2, \texttt{Nil}, s \rangle \Rightarrow \langle S_1, S_2::\texttt{Nil}, s \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $S_2::\texttt{Nil}, s'' \rangle \Rightarrow \langle S_2, \texttt{Nil}, s'' \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$ ( * ). Now we look at $\langle S_1;S_2, L, s \rangle$ with $L$ random. We can apply the rule [comp$_{\textrm{os}}$] to see $\langle S_1;S_2, L, s \rangle \Rightarrow \langle S_1, S_2::L, s \rangle$. Now we can apply the induction hypothesis to $\langle S_1, S_2::L, s \rangle$, as we have $\langle S_1, \texttt{Nil}, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s'' \rangle$ by ( * ). So we get $\langle S_1, S_2::L, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, S_2::L, s'' \rangle$. Then by [load$_{\textrm{os}}$], $\langle \texttt{skip}, S_2::L, s'' \rangle \Rightarrow \langle S_2 , L , s''\rangle$. Now we can apply the induction hypothesis to $\langle S_2 , L , s''\rangle$, as we have $\langle S_2, \texttt{Nil}, s''\rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s'\rangle$ by ( * ). We get $\langle S_2 , L , s''\rangle \Rightarrow ^{*} \langle \texttt{skip}, L, s'\rangle$. That means we can form the derivation sequence $\langle S_1;S_2, L, s \rangle \Rightarrow \langle S_1, S_2::L, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, S_2::L, s'' \rangle \Rightarrow \langle S_2 , L , s''\rangle \Rightarrow ^{*} \langle \texttt{skip}, L, s'\rangle$. This gives us $\langle S_1;S_2, L, s \rangle  \Rightarrow ^{*} \langle \texttt{skip}, L, s'\rangle$, which was to be proven. 
+    \item $S = S_1; S_2$ : assume $\sos{ S_1;S_2}{\texttt{Nil}}{ s} \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. Then by [comp$_{\textrm{os}}$] and lemma \ref{breakingdowncomp}, we have $\langle S_1;S_2, \texttt{Nil}, s \rangle \Rightarrow \langle S_1, S_2::\texttt{Nil}, s \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $S_2::\texttt{Nil}, s'' \rangle \Rightarrow \langle S_2, \texttt{Nil}, s'' \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$ ( * ). Now we look at $\langle S_1;S_2, L, s \rangle$ with $L$ random. We can apply the rule [comp$_{\textrm{os}}$] to see $\langle S_1;S_2, L, s \rangle \Rightarrow \langle S_1, S_2::L, s \rangle$. Now we can apply the induction hypothesis to $\langle S_1, S_2::L, s \rangle$, as we have $\langle S_1, \texttt{Nil}, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s'' \rangle$ by ( * ). So we get $\langle S_1, S_2::L, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, S_2::L, s'' \rangle$. Then by [load$_{\textrm{os}}$], $\langle \texttt{skip}, S_2::L, s'' \rangle \Rightarrow \langle S_2 , L , s''\rangle$. Now we can apply the induction hypothesis to $\langle S_2 , L , s''\rangle$, as we have $\langle S_2, \texttt{Nil}, s''\rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s'\rangle$ by ( * ). We get $\langle S_2 , L , s''\rangle \Rightarrow ^{*} \langle \texttt{skip}, L, s'\rangle$. That means we can form the derivation sequence $\langle S_1;S_2, L, s \rangle \Rightarrow \langle S_1, S_2::L, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, S_2::L, s'' \rangle \Rightarrow \langle S_2 , L , s''\rangle \Rightarrow ^{*} \langle \texttt{skip}, L, s'\rangle$. This gives us $\langle S_1;S_2, L, s \rangle  \Rightarrow ^{*} \langle \texttt{skip}, L, s'\rangle$, which was to be proven. 
         
-    \item $S = a : \texttt{let x } : \tau \texttt{ in } S'$ : assume $\langle a : \texttt{let x } : \tau \texttt{ in } S', \texttt{Nil}, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. There is only one rule that could have been applied first, [let$_{\textrm{os}}$], which gives us $\langle a : \texttt{let x } : \tau \texttt{ in } S', \texttt{Nil}, s \rangle \Rightarrow \langle S, (x,s(x))::\texttt{Nil}, s[x\mapsto v] \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. By lemma \ref{breakingdownlet} we get $\langle a : \texttt{let x } : \tau \texttt{ in } S', \texttt{Nil}, s \rangle \Rightarrow \langle S, (x,s(x))::\texttt{Nil}, s[x\mapsto v] \rangle \Rightarrow ^{*} \langle \texttt{skip}, (x,s(x))::\texttt{Nil}, s'' \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. Now we look at $\langle a : \texttt{let x } : \tau \texttt{ in } S', L, s \rangle$ for some list $L$. Then we can apply [let$_{\textrm{os}}$] to get $\langle a : \texttt{let x } : \tau \texttt{ in } S', L, s \rangle \Rightarrow \langle S, (x,s(x))::L, s[x\mapsto v] \rangle$. We can now apply the induction hypothesis, as we know \emph{Okay we have some problems here as the list is not empty.... Change theorem to maybe state that if it is possible for any L, then true for all L?}
+    \item $S = a : \texttt{let x } : \tau \texttt{ in } S'$ : assume $\sos{a : \texttt{let x } : \tau \texttt{ in } S'}{\texttt{Nil}}{s} \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. There is only one rule that could have been applied first, [let$_{\textrm{os}}$], which gives us $\langle a : \texttt{let x } : \tau \texttt{ in } S', \texttt{Nil}, s \rangle \Rightarrow \langle S, (x,s(x))::\texttt{Nil}, s[x\mapsto v] \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. By lemma \ref{breakingdownlet} we get $\langle a : \texttt{let x } : \tau \texttt{ in } S', \texttt{Nil}, s \rangle \Rightarrow \langle S, (x,s(x))::\texttt{Nil}, s[x\mapsto v] \rangle \Rightarrow ^{*} \langle \texttt{skip}, (x,s(x))::\texttt{Nil}, s'' \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. Now we look at $\langle a : \texttt{let x } : \tau \texttt{ in } S', L, s \rangle$ for some list $L$. Then we can apply [let$_{\textrm{os}}$] to get $\langle a : \texttt{let x } : \tau \texttt{ in } S', L, s \rangle \Rightarrow \langle S, (x,s(x))::L, s[x\mapsto v] \rangle$. We can now apply the induction hypothesis, as we know \emph{Okay we have some problems here as the list is not empty.... Change theorem to maybe state that if it is possible for any L, then true for all L?}
 \end{itemize}
 Hence we can conclude that the theorem holds. 
 \end{proof}
@@ -361,7 +363,7 @@ Intuitively, this makes sense. If we look at the rules, we see that we can only 
 We will now do a simple proof to show that in a composition, the execution of $S_1$ does not depend on what $S_2$ entails. 
 
 \begin{proposition}
-For every statement $S_1$, $S_2$, for every list $L$, for every state $s$, $s'$ and for every natural number $n$, if $\langle S_1, L, s \rangle \Rightarrow ^{n} \langle \texttt{\textrm{skip}}, L, s \rangle$, then $\langle S_1;S_2, L, s \rangle$ $\Rightarrow ^{n+2} \langle S_2, L, s \rangle$
+For every statement $S_1$, $S_2$, for every list $L$, for every state $s$, $s'$ and for every natural number $n$, if $\sos{S_1}{L}{s} \Rightarrow ^{n} \langle \texttt{\textrm{skip}}, L, s \rangle$, then $\langle S_1;S_2, L, s \rangle$ $\Rightarrow ^{n+2} \langle S_2, L, s \rangle$
 \end{proposition}
 
 \begin{proof}
@@ -371,4 +373,61 @@ Assume $\langle S_1, L, s \rangle \Rightarrow ^{n} \langle \texttt{skip}, L, s \
 \section{Compile time check}
 To model the compile time checker of Rust, we need something that passes through the code and checks the code as it goes. It should then return whether the code is correct or not. 
 
+We use a reduced state like function to keep track of the stuff
+
+\begin{definition}
+\textbf{RState} is the set of functions $r: \textbf{Var} \to \{-, \perp, \star \}$
+\end{definition}
+
+The interpretation of $\star$ here is that the variable has a value. However, for compile time checking, it is irrelevant what that value is, so we leave that out. We just want to know that the variable has been assigned a certain value.
+
+\begin{definition}
+\label{compiletimechecker}
+The \emph{compile time checker} is a derivation system that has the following rules
+\begin{align*}
+\cc{\texttt{skip}}{\texttt{Nil}}{r} & \to \texttt{true}  \\
+\cc{\texttt{skip}} {P::L}{ r}       & \to \cc{P}{L}{r}  \\
+\cc{S_1; S_2}{L}{r}                 & \to \cc{S_1}{S_2::L}{r}  \\
+\cc{x:=e}{L}{r}                     & \to \cc{\texttt{skip}}{L}{r[x\mapsto \star][ev(e) \mapsto -]} \\
+                                    & \textrm{if }r(x) = \perp \textrm{ and } \forall y \in ev(e), r(y) = \star \\
+                                    & \to \texttt{false} \textrm{ otherwise}\\
+\cc{a : \texttt{let x } : \tau \texttt{ in } S}{L}{r} & \to \cc{S}{(x,r(x))::L}{r[x\mapsto \perp]} \\
+\cc{(x,v)}{L}{r}                    & \to \cc{\texttt{skip}}{L}{r[x \mapsto v]}
+\end{align*}
+\end{definition}
+
+Now first of all, we want this checker to always finish, no matter what the program it needs to check is. It would be impractical if a checker would not terminate when compiling a program, because the compilation would take infinitely long. In order to prove this, we will asign a (nonnegative) `length' to every possible input of the checker and show that with every step the checker takes, this `length' decreases. This in turn gives us a decreasing sequence of nonnegative numbers. This sequence must always be finite, since there is no infinite decreasing sequence of nonnegative numbers. 
+
+\begin{theorem}
+The compile checker from definition \ref{compiletimechecker} always terminates.
+\end{theorem}
+
+\begin{proof}
+\end{proof}
+
+%\begin{definition}
+%TODO::: Fix function signature
+%The compilte time check function $\mathcal{C}: \times \textbf{List} \times \textbf{RState} \to %\textbf{RState} \cup \{ \texttt{false} \}$ is defined by:
+%\begin{align*}
+%    \mathcal{C}( \texttt{skip}, \texttt{Nil}, r )          &= r
+%\\  \mathcal{C}( \texttt{skip}, P::L, r )         &= \mathcal{C}( P, L, r)
+%\\ \mathcal{C}( S_1; S_2, L, r )   &= \mathcal{C}(S_1, S_2::L, r)
+%\\ \mathcal{C}(x:=e, L, r )   &= \mathcal{C}(\texttt{skip}, L, r[x\mapsto \star][ev(e) \mapsto -] ) 
+%\\ & \textrm{ if } r(x) = \perp \textrm{ and } \forall y \in ev(e),~s(y) = \star
+%\\ & = \texttt{false} \textrm{ otherwise}
+%\\ \mathcal{C}( a : \texttt{let x } : \tau \texttt{ in } S, L, r )   &= \mathcal{C}( S, %(x,r(x))::L, r[x\mapsto \perp] ) 
+%\\ \mathcal{C}( (x,v), L, r )          &= \mathcal{C}( \texttt{skip}, L, r[x \mapsto v]) 
+%\end{align*}
+%$\mathcal{C}( S, L, r )$ is \texttt{false} is all other cases. 
+%\end{definition}
+
+%\begin{theorem}
+%If $\mathcal{C}( S, L, r) = r'$ for some $r' \in \textbf{RState}$, then 
+%\end{proposition}
+
+%\begin{proof}
+%Assume $\langle S_1, L, s \rangle \Rightarrow ^{n} \langle \texttt{skip}, L, s \rangle$ and look at $\langle S_1;S_2, L, s \rangle$. Then $\langle S_1;S_2, L, s \rangle$ $\Rightarrow _{[\textrm{comp}$_{\textrm{os}}$]} $\langle S_1, S_2::L, s \rangle$
+%\end{proof}
+
+%pdflatex -synctex=1 -interaction=nonstopmode --shell-escape main.tex
 
