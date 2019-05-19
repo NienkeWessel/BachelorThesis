@@ -353,7 +353,7 @@ We know that there must be a derivation from $\langle S, \texttt{Nil}, s \rangle
     
     \item $S = S_1; S_2$ : assume $\sos{ S_1;S_2}{\texttt{Nil}}{ s} \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. Then by [comp$_{\textrm{os}}$] and lemma \ref{breakingdowncomp}, we have $\langle S_1;S_2, \texttt{Nil}, s \rangle \Rightarrow \langle S_1, S_2::\texttt{Nil}, s \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $S_2::\texttt{Nil}, s'' \rangle \Rightarrow \langle S_2, \texttt{Nil}, s'' \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$ ( * ). Now we look at $\langle S_1;S_2, L, s \rangle$ with $L$ random. We can apply the rule [comp$_{\textrm{os}}$] to see $\langle S_1;S_2, L, s \rangle \Rightarrow \langle S_1, S_2::L, s \rangle$. Now we can apply the induction hypothesis to $\langle S_1, S_2::L, s \rangle$, as we have $\langle S_1, \texttt{Nil}, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s'' \rangle$ by ( * ). So we get $\langle S_1, S_2::L, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, S_2::L, s'' \rangle$. Then by [load$_{\textrm{os}}$], $\langle \texttt{skip}, S_2::L, s'' \rangle \Rightarrow \langle S_2 , L , s''\rangle$. Now we can apply the induction hypothesis to $\langle S_2 , L , s''\rangle$, as we have $\langle S_2, \texttt{Nil}, s''\rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s'\rangle$ by ( * ). We get $\langle S_2 , L , s''\rangle \Rightarrow ^{*} \langle \texttt{skip}, L, s'\rangle$. That means we can form the derivation sequence $\langle S_1;S_2, L, s \rangle \Rightarrow \langle S_1, S_2::L, s \rangle \Rightarrow ^{*} \langle \texttt{skip}, S_2::L, s'' \rangle \Rightarrow \langle S_2 , L , s''\rangle \Rightarrow ^{*} \langle \texttt{skip}, L, s'\rangle$. This gives us $\langle S_1;S_2, L, s \rangle  \Rightarrow ^{*} \langle \texttt{skip}, L, s'\rangle$, which was to be proven. 
         
-    \item $S = a : \texttt{let x } : \tau \texttt{ in } S'$ : assume $\sos{a : \texttt{let x } : \tau \texttt{ in } S'}{\texttt{Nil}}{s} \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. There is only one rule that could have been applied first, [let$_{\textrm{os}}$], which gives us $\langle a : \texttt{let x } : \tau \texttt{ in } S', \texttt{Nil}, s \rangle \Rightarrow \langle S, (x,s(x))::\texttt{Nil}, s[x\mapsto v] \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. By lemma \ref{breakingdownlet} we get $\langle a : \texttt{let x } : \tau \texttt{ in } S', \texttt{Nil}, s \rangle \Rightarrow \langle S, (x,s(x))::\texttt{Nil}, s[x\mapsto v] \rangle \Rightarrow ^{*} \langle \texttt{skip}, (x,s(x))::\texttt{Nil}, s'' \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. Now we look at $\langle a : \texttt{let x } : \tau \texttt{ in } S', L, s \rangle$ for some list $L$. Then we can apply [let$_{\textrm{os}}$] to get $\langle a : \texttt{let x } : \tau \texttt{ in } S', L, s \rangle \Rightarrow \langle S, (x,s(x))::L, s[x\mapsto v] \rangle$. We can now apply the induction hypothesis, as we know \emph{Okay we have some problems here as the list is not empty.... Change theorem to maybe state that if it is possible for any L, then true for all L?}
+    \item $S = \letm{x}{S'}$ : assume $\sos{\letm{x}{S'}}{\texttt{Nil}}{s} \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. There is only one rule that could have been applied first, [let$_{\textrm{os}}$], which gives us $\langle a : \texttt{let x } : \tau \texttt{ in } S', \texttt{Nil}, s \rangle \Rightarrow \langle S, (x,s(x))::\texttt{Nil}, s[x\mapsto v] \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. By lemma \ref{breakingdownlet} we get $\langle a : \texttt{let x } : \tau \texttt{ in } S', \texttt{Nil}, s \rangle \Rightarrow \langle S, (x,s(x))::\texttt{Nil}, s[x\mapsto v] \rangle \Rightarrow ^{*} \langle \texttt{skip}, (x,s(x))::\texttt{Nil}, s'' \rangle \Rightarrow ^{*} \langle \texttt{skip}, \texttt{Nil}, s' \rangle$. Now we look at $\langle a : \texttt{let x } : \tau \texttt{ in } S', L, s \rangle$ for some list $L$. Then we can apply [let$_{\textrm{os}}$] to get $\langle a : \texttt{let x } : \tau \texttt{ in } S', L, s \rangle \Rightarrow \langle S, (x,s(x))::L, s[x\mapsto v] \rangle$. We can now apply the induction hypothesis, as we know \emph{Okay we have some problems here as the list is not empty.... Change theorem to maybe state that if it is possible for any L, then true for all L?}
 \end{itemize}
 Hence we can conclude that the theorem holds. 
 \end{proof}
@@ -391,7 +391,7 @@ The \emph{compile time checker} is a derivation system that has the following ru
 \cc{x:=e}{L}{r}                     & \to \cc{\texttt{skip}}{L}{r[x\mapsto \star][ev(e) \mapsto -]} \\
                                     & \textrm{if }r(x) = \perp \textrm{ and } \forall y \in ev(e), r(y) = \star \\
                                     & \to \texttt{false} \textrm{ otherwise}\\
-\cc{a : \texttt{let x } : \tau \texttt{ in } S}{L}{r} & \to \cc{S}{(x,r(x))::L}{r[x\mapsto \perp]} \\
+\cc{\letm{x}{S}}{L}{r} & \to \cc{S}{(x,r(x))::L}{r[x\mapsto \perp]} \\
 \cc{(x,v)}{L}{r}                    & \to \cc{\texttt{skip}}{L}{r[x \mapsto v]}
 \end{align*}
 \end{definition}
@@ -399,14 +399,51 @@ The \emph{compile time checker} is a derivation system that has the following ru
 Now first of all, we want this checker to always finish, no matter what the program it needs to check is. It would be impractical if a checker would not terminate when compiling a program, because the compilation would take infinitely long. In order to prove this, we will asign a (nonnegative) `length' to every possible input of the checker and show that with every step the checker takes, this `length' decreases. This in turn gives us a decreasing sequence of nonnegative numbers. This sequence must always be finite, since there is no infinite decreasing sequence of nonnegative numbers. 
 
 \begin{theorem}
+\label{termination}
 The compile checker from definition \ref{compiletimechecker} always terminates.
 \end{theorem}
 
+Before we proof this theorem, we first define the aforementioned `length'. 
+
+\begin{definition}
+\label{length}
+The \emph{length} is a function $|.|: \textbf{Lists} \times \textbf{ProgInstr} \to \mathbb{N}$ which is defined by $|(P,L)| = |P|+|L|$.
+
+$|L|$ is recursively defined by 
+\begin{align*}
+|\texttt{NIl}| & = 0\\
+|B::L| & = |B| + |L|
+\end{align*}
+Futhermore, for every program instruction we have
+\begin{align*}
+|\texttt{skip}| & = 1\\
+|S_1, S_2| & = |S_1| + |S_2| + 1 \\
+|x:=e| & = 2\\
+|\letm{x}{S}| & = |S| + 3 \\
+|(x,v)| & = 2 \\
+\end{align*}
+Lastly, we define that $|\texttt{false}|$ and $|\texttt{true}|$ are 0.
+
+Together this gives us a definition of the length of a program and list combined.
+\end{definition}
+
 \begin{proof}
+\emph{Of theorem \ref{termination}.}
+We will show termination by proving that with every step from \ref{compiletimechecker}, the length as defined in \ref{length} decreases. We will look at the different possible cases.
+
+\begin{itemize}
+    \item $\cc{\texttt{skip}}{\texttt{Nil}}{r} \to \texttt{true}$ gives $1 \to 0$
+    \item $\cc{\texttt{skip}}{P::L}{ r} \to \cc{P}{L}{r}$ gives $1 + |P| + |L| \to |P| + |L|$
+    \item $\cc{S_1; S_2}{L}{r} \to \cc{S_1}{S_2::L}{r}$ gives $|S_1| + |S_2| + 1 + |L| \to |S_1| + |S_2::L| = |S_1| + |S_2| + |L|$
+    \item $\cc{x:=e}{L}{r} \to \cc{\texttt{skip}}{L}{r[x\mapsto \star][ev(e) \mapsto -]}$ gives $2 + |L| \to 1 + |L|$
+    \item $\cc{\letm{x}{S}}{L}{r} \to \cc{S}{(x,r(x))::L}{r[x\mapsto \perp]}$ gives $|S|+3+|L|\to |S|+2+|L|$
+    \item $\cc{(x,v)}{L}{r} \to \cc{\texttt{skip}}{L}{r[x \mapsto v]}$ gives $2 + |L| \to 1 + |L|$
+\end{itemize}
+As every one of these steps shows a decrease in the length, we can conclude that the derivation must terminate (by the reasoning explained above).
 \end{proof}
 
 %\begin{definition}
-%TODO::: Fix function signature
+%::: Fix function signature
 %The compilte time check function $\mathcal{C}: \times \textbf{List} \times \textbf{RState} \to %\textbf{RState} \cup \{ \texttt{false} \}$ is defined by:
 %\begin{align*}
 %    \mathcal{C}( \texttt{skip}, \texttt{Nil}, r )          &= r
