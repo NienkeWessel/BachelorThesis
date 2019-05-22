@@ -3,21 +3,86 @@
 
 \input{imports.tex}
 
-\maketitleru[
-authors={Nienke Wessel},
-date={Tomorrow},
-others={{Supervisor:}{Jane Doe},{Second reader:}{Joanne Dune}},
-course={Master’s Thesis},
-title={The ‘traditional’ layout},
-subtitle={Simple elegance}]
+
+%\maketitleru[
+%authors={Nienke Wessel},
+%date={Tomorrow},
+%others={{Supervisor:}{Jane Doe},{Second reader:}{Joanne Dune}},
+%course={Master’s Thesis},
+%title={The ‘traditional’ layout},
+%subtitle={Simple elegance}]
 
 %\title{Thesis Semantics Rust\\ \large Some subtitle}
 %\author{Nienke Wessel - s4598350 }
 %\date{March 2018}
 
+\begin{titlepage}
+
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+\center % Center everything on the page
+ 
+%----------------------------------------------------------------------------------------
+%	HEADING SECTIONS
+%----------------------------------------------------------------------------------------
+
+\textsc{\LARGE Bachelor Thesis\\Computing Science}\\[1.5cm] % Name of your university/college
+\includegraphics[scale=.35]{radboud_logo.png}\\[1cm] % Include a department/university logo - this will require the graphicx package
+\textsc{\Large Radboud University}\\[0.5cm] % Major heading such as course name
+%\textsc{\large Course code}\\[0.5cm] % Minor heading such as course title
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\HRule \\[0.4cm]
+{ \huge \bfseries Semantics Rust and stuff}\\[0.4cm] % Title of your document
+\HRule \\[1.5cm]
+ 
+%----------------------------------------------------------------------------------------
+%	AUTHOR SECTION
+%----------------------------------------------------------------------------------------
+
+\begin{minipage}[t]{0.4\textwidth}
+\begin{flushleft} \large
+\emph{Author:}\\
+Nienke \textsc{Wessel}\\ % Your name
+s4598350
+\end{flushleft}
+\end{minipage}
+~
+\begin{minipage}[t]{0.4\textwidth}
+\begin{flushright} \large
+\emph{First supervisor:} \\
+Dr. Freek \textsc{Wiedijk}\\ % Supervisor's Name
+\texttt{\href{mailto:freek@cs.ru.nl}{freek@cs.ru.nl}}
+\end{flushright}
+
+\begin{flushright} \large
+\emph{Second supervisor:} \\
+Marc \textsc{Schoolderman} \\% Supervisor's Name
+\texttt{\href{mailto:m.schoolderman@cs.ru.nl}{m.schoolderman@cs.ru.nl}}
+\end{flushright}
+\end{minipage}\\[2cm]
+
+% If you don't want a supervisor, uncomment the two lines below and remove the section above
+%\Large \emph{Author:}\\
+%John \textsc{Smith}\\[3cm] % Your name
+
+%----------------------------------------------------------------------------------------
+%	DATE SECTION
+%----------------------------------------------------------------------------------------
+
+{\large \today}\\[2cm] % Date, change the \today to a set date if you want to be precise
+
+\vfill % Fill the rest of the page with whitespace
+
+\end{titlepage}
+
+
 \begin{document}
 
-\maketitle
+%\maketitle
 
 %\chapter*{Preface}
 %\input{Chapters/preface}
@@ -50,5 +115,9 @@ subtitle={Simple elegance}]
 
 %\chapter{Conclusion}
 %\input{Chapters/conclusion}
+
+\bibliography{bibli}
+\bibliographystyle{plain}
+
 
 \end{document}
