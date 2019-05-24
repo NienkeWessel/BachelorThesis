@@ -367,7 +367,7 @@ For every statement $S_1$, $S_2$, for every list $L$, for every state $s$, $s'$ 
 \end{proposition}
 
 \begin{proof}
-Assume $\sos{S_1}{L}{s} \Rightarrow ^{n} \langle \texttt{skip}, L, s \rangle$ and look at $\langle S_1;S_2, L, s \rangle$. Then $\sos{S_1;S_2}{L}{s} \Rightarrow _{[\textrm{comp}_{\textrm{os}}$]} \sos{S_1}{S_2::L}{s}$
+Assume $\sos{S_1}{L}{s} \Rightarrow ^{n} \langle \texttt{skip}, L, s \rangle$ and look at $\langle S_1;S_2, L, s \rangle$. Then $\sos{S_1;S_2}{L}{s} \Rightarrow _{[\textrm{comp}_{\textrm{os}}]} \sos{S_1}{S_2::L}{s}$
 \end{proof}
 
 \section{Compile time check}
@@ -476,14 +476,14 @@ This exhausts all possible cases and hence proves our theorem.
 The second property we are interested in is called \emph{progress}. This means that if the program passes through the compile time checker, we can always do a step in the semantics (or we are already in the skip state). %CITING TEST \cite{Arnold2007}
 
 \begin{theorem}
-If $\cc{S}{L}{s} ->^* \texttt{true}$, then $S = \texttt{skip}$ or we have $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$ for some $S'$, $L'$ and $s'$.
+If $\cc{S}{L}{s} ->^* \texttt{true}$, then $S = \texttt{skip}$ and $L = \texttt{Nil}$ or we have $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$ for some $S'$, $L'$ and $s'$.
 \end{theorem}
 
 \begin{proof}
 We assume $\cc{S}{L}{s} ->^* \texttt{true}$. We look at the possible derivation steps that could have led to this form. 
 \begin{itemize}
-    \item $\cc{\texttt{skip}}{\texttt{Nil}}{r} \to \texttt{true}$. This means $S = \texttt{skip}$ and that means we are done.
-    \item $\cc{\texttt{skip}} {P::L}{ r} \to \cc{P}{L}{r}$
+    \item $\cc{\texttt{skip}}{\texttt{Nil}}{r} \to \texttt{true}$. This means $S = \texttt{skip}$ and $L = \texttt{Nil}$ and that means we are done.
+    \item $\cc{\texttt{skip}} {P::L}{ r} \to \cc{P}{L}{r}$. This means we have 
     \item $\cc{S_1; S_2}{L}{r} \to \cc{S_1}{S_2::L}{r}$
     \item $\cc{x:=e}{L}{r} \to \cc{\texttt{skip}}{L}{r[x\mapsto \star][ev(e) \mapsto -]} \textrm{ if }r(x) = \perp \textrm{ and } \forall y \in ev(e), r(y) = \star$
     \item $\cc{x:=e}{L}{r} \to \texttt{false} \textrm{  if the conditions in the previous item don't apply}$. This is in contradiction with our assumption, so this rule is not possible. 
