@@ -159,22 +159,22 @@ We define the following natural semantics rules (name on the left)
 
 \begin{tabular}{p{5em}p{18em}p{13em}}
 [skip$_{\textrm{ns}}$] &
-\centering$\langle$ \texttt{skip} $, s \rangle \to s$ & \medskip\\
+\centering$\ns{\texttt{skip}}{s}{s}$ & \medskip\\
 
 [comp$_{\textrm{ns}}$] &
-\centering \AxiomC{$\langle S_1, s \rangle \to s' $}
-\AxiomC{$\langle S_2, s' \rangle \to s''$}
-\BinaryInfC{$\langle S_1$; $S_2, s \rangle \to s''$}
+\centering \AxiomC{$\ns{S_1}{s}{s'}$}
+\AxiomC{$\ns{S_2}{s'}{s''}$}
+\BinaryInfC{$\ns{S_1; S_2}{s}{s''}$}
 \DisplayProof \medskip& \\
 
 [let$_{\textrm{ns}}$] &
 \centering
-\AxiomC{$\langle S, s[x\mapsto \perp] \rangle \to s'$}
-\UnaryInfC{$\langle a : \texttt{let x } : \tau \texttt{ in } S, s \rangle \to s'[x \mapsto s(x)]$}
+\AxiomC{$\ns{S}{s[x\mapsto \perp]}{s'}$}
+\UnaryInfC{$\ns{\letm{x}{S}}{s}{s'[x \mapsto s(x)]}$}
 \DisplayProof \medskip& \\
 
 [ass$_{\textrm{ns}}$] &
-\centering$\langle$ \texttt{x := } $e, s \rangle \to s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$ & if $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e}s \neq \perp$ and $\letterfunc{A}{e}s \neq -$\medskip\\
+\centering $\ns{\texttt{x := }e}{s}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$ & if $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e}s \neq \perp$ and $\letterfunc{A}{e}s \neq -$\medskip\\
 \end{tabular} 
 Where $\mathcal{V}(e)\mapsto-$ is an abbreviation for `for all $x \in \mathcal{V}(e)$, $x \mapsto -$'.
 \end{definition} 
@@ -193,15 +193,40 @@ In this subsection, we will look at and prove some interesting properties of our
 The first will be that our program is deterministic. This means that if we run a program multiple times with the same starting state, the end state will always be the same. This is of course a desirable property in most programs.
 
 \begin{theorem}
-For every statement $S$, every state $s, s', s''$, if $\langle S, s \rangle \to s'$ and $\langle S, s \rangle \to s''$, then $s' = s''$.
+For every statement $S$, every state $s, s', s''$, if $\ns{S}{s}{s'}$ and $\ns{S}{s}{s''}$, then $s' = s''$.
 \end{theorem}
 
 \begin{proof}
 The proof proceeds by induction on the structure of $S$. We distinguish the following cases:
 \begin{itemize}[noitemsep]
-    \item $S$ = \texttt{skip} : if $\langle \texttt{skip}, s \rangle \to s'$ and $\langle \texttt{skip}, s \rangle \to s''$, then this can only be achieved by [skip$_{\textrm{ns}}$], which means $s=s'$ and $s=s''$, so $s' = s''$. 
-    \item Blah \emph{details will be filled in later, currently don't have the proof with me and enough other things to focuss on first}.
+    \item $S$ = \texttt{skip} : if $\ns{\texttt{skip}}{s}{s'}$ and $\ns{\texttt{skip}}{s}{s''}$, then this can only be achieved by [skip$_{\textrm{ns}}$], which means $s=s'$ and $s=s''$, so $s' = s''$. 
+    \item $S = \texttt{x := }e$ : if $\ns{\texttt{x := }e}{s}{s'}$ and $\ns{\texttt{x := }e}{s}{s''}$, then the rule that must have been applied is [ass$_{\textrm{ns}}$]. This means $s'= s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$ and $s''=s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$, so $s'=s''$.
+    \item $S = S_1; S_2$ : if $\ns{S_1;S_2}{s}{s'}$ and $\ns{S_1;S_2}{s}{s''}$, the rule that must have been applied is [comp$_{\textrm{ns}}$]. This gives us
+    $$  \AxiomC{$\ns{S_1}{s}{s'''}$}
+\AxiomC{$\ns{S_2}{s'''}{s'}$}
+\BinaryInfC{$\ns{S_1; S_2}{s}{s'}$}
+\DisplayProof
+ \textrm{ and }
+ \AxiomC{$\ns{S_1}{s}{s''''}$}
+\AxiomC{$\ns{S_2}{s''''}{s''}$}
+\BinaryInfC{$\ns{S_1; S_2}{s}{s''}$}
+\DisplayProof$$
+    Now we can apply the induction hypothesis to $\ns{S_1}{s}{s'''}$ and $\ns{S_1}{s}{s''''}$, so we have $s''' = s''''$. Now we can also apply the induction hypothesis to $\ns{S_2}{s'''}{s'}$ and $\ns{S_2}{s''''}{s''}$, so we have $s' = s''$.
+    \item $S = \letm{x}{S'}$ : if $\ns{\letm{x}{S'}}{s}{s'}$ and $\ns{\letm{x}{S'}}{s}{s''}$, then it must be the case that the rule [let$_{\textrm{ns}}$] has been applied. That gives us
+    $$
+    \AxiomC{$\ns{S'}{s[x\mapsto \perp]}{s'''}$}
+\UnaryInfC{$\ns{\letm{x}{S'}}{s}{s'''[x \mapsto s(x)]}$}
+\DisplayProof
+    $$
+    where $s'''[x \mapsto s(x)] = s'$ and
+    $$\AxiomC{$\ns{S'}{s[x\mapsto \perp]}{s''''}$}
+\UnaryInfC{$\ns{\letm{x}{S'}}{s}{s''''[x \mapsto s(x)]}$}
+\DisplayProof
+    $$
+    where $s''''[x \mapsto s(x)] = s''$. 
+    We can apply the induction hypothesis to $\ns{S'}{s[x\mapsto \perp]}{s'''}$ and $\ns{S'}{s[x\mapsto \perp]}{s''''}$, so we have $s''' = s''''$. This must also mean that $s' = s'''[x \mapsto s(x)] = s''''[x \mapsto s(x)] = s''$, so $s' = s''$.
 \end{itemize}
+This exhausts all possible cases and hence proves our theorem. 
 \end{proof}
 
 \subsubsection*{Variable allocation}
@@ -209,14 +234,14 @@ The proof proceeds by induction on the structure of $S$. We distinguish the foll
 While this first theorem is one that is generally considered useful to prove, the next is very specific to Rust and the way we defined our semantics. It states that a program no longer has any variables in memory after it terminates. 
 
 \begin{theorem}
-For every statement $S$, every state $s, s'$, if $\langle S, s \rangle \to s'$, then for all variables $x$, if $\letterfunc{A}{x}s = -$ then $\letterfunc{A}{x}s' = -$.
+For every statement $S$, every state $s, s'$, if $\ns{S}{s}{s'}$, then for all variables $x$, if $\letterfunc{A}{x}s = -$ then $\letterfunc{A}{x}s' = -$.
 \end{theorem}
 
 \begin{proof}
 The proof proceeds by induction on the structure of $S$. We distinguish the following cases:
 \begin{itemize}[noitemsep]
 
-    \item $S$ = \texttt{skip} : if $\langle \texttt{skip}, s \rangle \to s'$, then this can only be achieved by [skip$_{\textrm{ns}}$], which means $s=s'$. Therefore if $\letterfunc{A}{x}s = -$ then $\letterfunc{A}{x}s' = -$. 
+    \item $S$ = \texttt{skip} : if $\ns{\texttt{skip}}{s}{s'}$, then this can only be achieved by [skip$_{\textrm{ns}}$], which means $s=s'$. Therefore if $\letterfunc{A}{x}s = -$ then $\letterfunc{A}{x}s' = -$. 
     
     \item $S$ = \texttt{x := } $e$ : assume $\langle \texttt{x := } e, s \rangle \to s'$. Then the only rule that can have been applied is [ass$_{\textrm{ns}}$], so  $s'$ must be $s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$ and $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e}s \neq \perp$ and $\letterfunc{A}{e}s \neq -$. If one of these things had not been the case, we could not have applied any rules, and therefore our assumption `$\langle S, s \rangle \to s'$' would be false. So we can assume these things. Now we look at a variable $y$, chosen randomly. We distinguish two cases:
     \begin{itemize}
