@@ -9,17 +9,20 @@ We will first look at the syntax of our `move only' language.
 
 \section{Syntax}
 \begin{definition}
+\label{statementsmove}
 A statement $S$ is defined recursively by:
 $$S ::= \textrm{skip} \mid S_1; S_2 \mid a: \textrm{let } x:\tau \textrm{ in } S' \mid x := e$$
 where $e$ is an expression as defined below, $\tau$ is a type as defined below and $S_1$, $S_2$ and $S'$ are again statements.
 \end{definition}
 
 \begin{definition}
+\label{expressionsmove}
 An expression $e$ is defined recursively by:
 $$e ::= x \mid i \mid e_1 + e_2$$
 \end{definition}
 
 \begin{definition}
+\label{typesmove}
 A type $\tau$ is
 $$\tau ::= \textrm{Int}$$
 \end{definition}
@@ -51,7 +54,7 @@ This looks a lot like the desugaring in \ref{desugar}, but has no \verb|'| to in
 
 
 \section{Semantics: Framework}
-In this chapter we will look at two types of semantics. The first is a big step semantics and the second a small steps semantics. Both are based on the exposition in Nielson and Nielson [citation needed]. 
+In this chapter we will look at two types of semantics. The first is a big step semantics and the second a small steps semantics. Both are based on the exposition in Nielson and Nielson \cite{nielson1992semantics}. 
 
 Our big step semantics is called `natural semantics'. Its rules are of the form: 
 
@@ -120,7 +123,7 @@ Now we need a way to go from a Rust representation for a number to an actual num
 $\mathcal{N}$: $\textbf{Num} \to \mathbb{Z}$ translates a Rust representation for a number to the actual number
 \end{definition}
 
-We leave the details of this function out, as it is cumbersome and not relevant for the remainder of this thesis. We will simply assume that we have such a function and that it behaves as we would expect. For a detailed exposition on this function, we refer the reader to Nielson and Nielson [citation needed]. 
+We leave the details of this function out, as it is cumbersome and not relevant for the remainder of this thesis. We will simply assume that we have such a function and that it behaves as we would expect. For a detailed exposition on this function, we refer the reader to Nielson and Nielson \cite{nielson1992semantics}. 
 
 \subsection*{State and evaluation}
 The state is a function that maps a variable to a value. Therefore, we can define the set \textbf{State} which contains all possible states. 
@@ -243,7 +246,7 @@ Now assume $x$ to be a random variable and $\letterfunc{A}{x}s = -$. We can appl
 This exhausts all possible shapes of our statement $S$, and hence proves the theorem.
 \end{proof}
 
-Note that this means that after a program terminates, none of the results are available anymore. To make use of the data, you would have to write it to a file or some other IO device. This is a significant break from the exposition of Nielson and Nielson [citation needed] where the state of a terminated program shows the values of the variables at the end and you can thus `access' the results of the calculations. However, as this is not how a computer normally works, we have chosen to not do this. 
+Note that this means that after a program terminates, none of the results are available anymore. To make use of the data, you would have to write it to a file or some other IO device. This is a significant break from the exposition of Nielson and Nielson \cite{nielson1992semantics} where the state of a terminated program shows the values of the variables at the end and you can thus `access' the results of the calculations. However, as this is not how a computer normally works, we have chosen to not do this. 
 
 
 \section{Semantics: Small step}
