@@ -15,7 +15,7 @@ let vector = vec![37, 42];
 let vector2 = vector;
 println!("vector[0] + vector[1] = {}", vector[0] + vector[1]);
 \end{minted}
-This program gives the compile error \verb|error: use of moved value: `vector`|. 
+This program gives the compile error \texttt{use of moved value: `vector'}. 
 
 So what is happening here? The variable \verb|vector| is initialized in line 1. That means \verb|vector| owns a piece of memory to store the values of the vector. Next, the ownership is transferred to \verb|vector2|. That means \verb|vector2| now owns the piece of memory and \verb|vector| cannot do anything with it anymore. So when \verb|vector| tries to access that piece of memory in line 3 to print its value, this is not possible because the ownership has already been transferred. The interesting thing about Rust is that these things are not checked at run tine, but already at compile time.
 
@@ -30,9 +30,9 @@ let vector = vec![37, 42];
 function(vector);
 println!("vector[0] + vector[1] = {}", vector[0] + vector[1]);
 \end{minted}
-This gives the same error as above, \verb|error: use of moved value: vector|. 
+This gives the same error as above, texttt{error: use of moved value: vector}. 
 
-Here, the ownership is moved to the variable \verb|v| in the function \verb|function|. When \verb|function| is finished, all local variables release their resources. So \verb|v| releases the memory space it had for its vector. Later on, \verb|vector| wants access to the resource, but it gave away ownership in the function call, so it can no longer access the resource. Besides, the resource was removed after the function returned, so there is also nothing left to access. Again, this is error is given already at compile time instead of run time. 
+Here, the ownership is moved to the variable \verb|v| in the function \texttt{function}. When \verb|function| is finished, all local variables release their resources. So \verb|v| releases the memory space it had for its vector. Later on, \verb|vector| wants access to the resource, but it gave away ownership in the function call, so it can no longer access the resource. Besides, the resource was removed after the function returned, so there is also nothing left to access. Again, this is error is given already at compile time instead of run time. 
 
 \section{Borrowing}
 It seems impractical, however, to always move the ownership so that the original owner cannot use the variable anymore. That is why the concept of \textbf{borrowing} was introduced. This way, the original owner only temporarily gives up its access to the resource only to have it returned later on. This ensures that only one variable owns a resource at a time,  %This is where it gets interesting, because the compiler will have to check at compile time if all references point to valid objects. It should also be impossible to destroy an object while there is some pointer to it, even if it is a borrowed pointer. 
@@ -63,7 +63,7 @@ function(&vector);
 println!("vector[0] + vector[1] = {}", vector[0] + vector[1]);
 \end{minted}
 
-This gives the compile time error: \verb|cannot borrow immutable borrowed content `*v` as| \verb|mutable|, which means that by calling \verb|push| on \verb|vector| you are passing \verb|vector| as if it is mutable, but \verb|vector| was not as a mutable passed to \verb|function|. 
+This gives the compile time error: \texttt{cannot borrow immutable borrowed content `*v' as mutable}, which means that by calling \verb|push| on \verb|vector| you are passing \verb|vector| as if it is mutable, but \verb|vector| was not as a mutable passed to \verb|function|. 
 
 This is fixable by letting \verb|function| borrow \verb|vector| as a mutable reference. 
 
@@ -141,7 +141,7 @@ let f = function(&vector, &wector);
 println!("f[0] + f[1] = {}", f[0] + f[1]);
 \end{minted}
 
-This piece of code defines two vectors, passes them to a function, that functions returns one of them and then uses that result to print something. Even though this looks like a good piece of code, the Rust compiler will not accept it. It will give an error asking for lifetime parameters: \verb|error: missing lifetime specifier|. It is saying that the function's return type contains a borrowed value, but the signature doesn't say what is was borrowed from. The problem here is that rust does not know how the lifetimes of the input and the output are related to each other. The borrow checker now cannot make sure that the rules mentioned above are enforced. 
+This piece of code defines two vectors, passes them to a function, that functions returns one of them and then uses that result to print something. Even though this looks like a good piece of code, the Rust compiler will not accept it. It will give an error asking for lifetime parameters: \texttt{error: missing lifetime specifier}. It is saying that the function's return type contains a borrowed value, but the signature doesn't say what is was borrowed from. The problem here is that rust does not know how the lifetimes of the input and the output are related to each other. The borrow checker now cannot make sure that the rules mentioned above are enforced. 
 
 It is good to realize that by adding lifetime notations you cannot actually change the lifetime of any variable. They are a way of telling the compiler how the lifetimes of variables are related. We are basically saying to the Rust compiler that any variables passed to a function that do not adhere to the rules should result in an error. 
 
@@ -207,7 +207,7 @@ let f;
 println!("f[0] + f[1] = {}", f[0] + f[1]);
 \end{minted}
 
-So now we declare \verb|f| before we declare the vector \verb|wector|, which means \verb|f| will live longer than \verb|wector|. If \verb|f| then points to \verb|wector|, because \verb|wector| was returned in the function, this would cause a problem, which is why this will give a compile time error \verb|error: `wector` does not live long enough|. We, as humans, can see that there will be no problem if you do run the code, since \verb|function| will return \verb|vector| and not \verb|wector|. The Rust compiler, however, still does not allow it. 
+So now we declare \verb|f| before we declare the vector \verb|wector|, which means \verb|f| will live longer than \verb|wector|. If \verb|f| then points to \verb|wector|, because \verb|wector| was returned in the function, this would cause a problem, which is why this will give a compile time error \texttt{error: `wector` does not live long enough}. We, as humans, can see that there will be no problem if you do run the code, since \verb|function| will return \verb|vector| and not \verb|wector|. The Rust compiler, however, still does not allow it. 
 
 \subsection{Lifetime elision}
 As mentioned above, in some cases you don't need to state the lifetimes explicitly. The compiler can infere the lifetimes in these cases. This is called \textbf{elision}. As of now, there are only very few specific cases in which the compiler can infere the lifetimes. It is certainly possible that the amount of cases in which this can be done grows as newer versions of the language are made available. In the earlier versions of the language, there we no cases at all in which lifetimes were elided. 
