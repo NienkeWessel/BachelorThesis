@@ -1,8 +1,99 @@
-\section{Borrowing}
-We will now add an extra feature to our language, namely borrowing. Borrowing presents us with new challenges, as we need to make sure that the variable which is borrowed from in accessible during the borrow, but becomes accessible again after the borrow. That is why we need to keep track of what variables were borrowed from when they go out of scope. 
+\section{Introduction}
+We will now add an extra feature to our language, namely borrowing. Borrowing presents us with new challenges, as we need to make sure that the variable we borrow from is not accessible during the borrow, but becomes accessible again after the borrow. We will need to keep track of what variables we have borrowed from. If we do not do so, we cannot free them afterwards. 
 
-For borrowing, the language we have the following expressions: 
+\section{Syntax}
+First, we need to update our syntax to reflect the possibility of borrowing. The possible statements from definition \ref{statementsmove} can remain the same. We will need to update our expressions.
+
+\begin{definition}
+\label{expressionsborrow}
+An expression $e$ is defined recursively by:
 $$e ::= x \mid i \mid e_1 + e_2 \mid \&a~e$$
+\end{definition}
+
+We will also need to update our types, to indicate that a variable can have an indirect type.
+
+\begin{definition}
+\label{typesborrow}
+A type $\tau$ is
+$$\tau ::= \textrm{Int} \mid \& \tau$$
+\end{definition}
+
+\section{A case study}
+
+In order to illustrate what is happening in this chapter and therefore what should be happening in the semantics, we will walk through a small piece of example code, which we have also seen in \ref{desugar}. 
+
+\begin{minted}[linenos, frame=lines]{rust}
+let x = 0;
+let z;
+let y = &x;
+z = y;
+\end{minted}
+
+If we write this in our syntax, we get: 
+
+\begin{minted}[linenos, frame=lines]{rust}
+a: {
+    let x: Int in x = 0
+    b: {
+        let z: &Int in 
+        c: {
+            let y: &Int in
+            y = & x;
+            z = y;
+        }
+    }
+}
+\end{minted} 
+
+Now let's look per step at what should be happening in the semantics. At the start, we have no borrows and every variable is undefined, i.e. $-$. Then we look at the code. 
+
+\begin{minted}[linenos, frame=lines]{rust}
+a: {
+    let x: Int in 
+\end{minted}
+
+Like in the previous chapter, it seems wise to keep track of what variables have been initialized and which have not been. So lets make a state again as we did in the previous chapter to keep track of the values of the variables. So we will say \texttt{x} now is $\perp$ or $s(x) = \perp$.  
+
+\begin{minted}[linenos, frame=lines]{rust}
+a: {
+    let x: Int in x = 0
+\end{minted}
+
+Obviously, we will now want \verb|x| to equal $0 \in \mathbb{Z}$. Now we move on to the next \verb|let|-statement.
+
+\begin{minted}[linenos, frame=lines]{rust}
+a: {
+    let x: Int in x = 0
+    b: {
+        let z: &Int in
+\end{minted}
+
+Now \verb|z| has been initiazed. So we have $s(x) = 0$ and $s(z) = \perp$. For all other variables $v$, we have $s(v) = -$. 
+
+\begin{minted}[linenos, frame=lines]{rust}
+a: {
+    let x: Int in x = 0
+    b: {
+        let z: &Int in 
+        c: {
+            let y: &Int in
+\end{minted}
+
+Now we also have $s(y) = \perp$.
+
+\begin{minted}[linenos, frame=lines]{rust}
+a: {
+    let x: Int in x = 0;
+    b: {
+        let z: &Int in 
+        c: {
+            let y: &Int in
+            y = & x;
+\end{minted}
+
+
+
+
 
 We will first start with defining the evaluation function $\mathcal{A}$. In order to do that, we also need to know the type of the state $s$. We can leave the evaluation function for the first three types of expressions the same as in the previous section. However, we need to think of what we want $\&a~e$ to evaluate to. There are two possible logical answers. We can let it evaluate to e itself, and thus let the result of the evaluation be a pointer of some sort in the model as well. We can also recursively calculate the evaluation of $e$ and set that as the evaluation of $\&a~e$ as well. This latter model thus does not model pointers as such. In the two sections below, both models are worked out and described. We will start with the latter model, which we will call the ``non-pointer'' model. After that, the ``pointer'' model will be described. 
 
