@@ -94,6 +94,22 @@ Rule 1. is there to make sure the original owner is able to clean up the resourc
 
 For a data race, you need to have two pointers to the same piece of memory and at least one of them is writing to that resource, while the operations are not synchronized. By following the second rule for borrowing, one makes sure a data race cannot exist. If the first part of the second rule holds, the shared resource cannot be written to, as it is immutable. If the the second part of the second rule is true, there are no two pointers in the first place. 
 
+This means that the following piece of code is allowed (multiple borrows to one owner):
+
+\begin{minted}[linenos, frame=lines]{rust}
+let y=0;
+	let x = & y; 
+	let z = & y;
+\end{minted}
+
+While the next piece of code is not allowed and produces the error \texttt{cannot borrow `y` as mutable more than once at a time}
+
+\begin{minted}[linenos, frame=lines]{rust}
+let mut y=0;
+	let x = &mut y; 
+	let z = &mut y;
+\end{minted}
+
 \section{Lifetimes}
 Another important concept is \textbf{lifetimes}. 
 Lifetimes are what the compiler keeps track of in order to enforce the concepts mentioned above. Before we dive into the rules and theory and whatnot, we first need to take a look at what lifetimes are and what the syntax of lifetimes in Rust looks like. 
