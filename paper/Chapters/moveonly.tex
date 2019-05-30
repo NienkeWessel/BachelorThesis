@@ -314,7 +314,7 @@ We define the following semantic derivation rules (name on the left):
 [let$_{\textrm{os}}$] &
 \centering $\sos{\letm{x}{S}}{L}{s} \Rightarrow \sos{S}{(x,s(x))::L}{s[x\mapsto \perp]}$ & \medskip\\
 
-[free$_{\textrm{os}}$] &
+[set$_{\textrm{os}}$] &
 \centering$\sos{(x,v)}{L}{s} \Rightarrow \sos{\texttt{skip}}{L}{s[x\mapsto v]}$ & \medskip\\
 \end{tabular} 
 Where $\mathcal{V}(e)\mapsto-$ is an abbreviation for `for all $x \in \mathcal{V}(e)$, $x \mapsto -$'.
@@ -326,26 +326,12 @@ We will be using $\langle S, L, s \rangle \Rightarrow ^{*} \langle S', L', s' \r
 
 \subsection{Properties of our semantic rules}
 
-\subsubsection*{Determinism}
-
-\begin{theorem}
-For every statement $S$, every state $s, s', s''$, every list $L$, if $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ and $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$, then $s' = s''$.
-\end{theorem}
-
-\begin{proof}
-The proof proceeds by induction on the structure of $S$. We distinguish the following cases:
-\begin{itemize}[noitemsep]
-    \item $S$ = \texttt{skip} : if $\sos{\texttt{skip}}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ and $\sos{\texttt{skip}}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$, then no steps have to be taken, or could have been taken, and we obviously have $s' = s''$.
-    \item Blah \emph{details will be filled in later, shouldn't be too hard I hope...}.
-\end{itemize}
-\end{proof}
-
 \subsubsection*{Concerning lists and compositions}
 First, we will see that it is irrelevant what is in the list for a statement currently executing. In order to prove that, we will need to prove a lemma that states that if a composition evaluates in a certain amount of steps to a \texttt{skip}, this must be done by first evaluating $S_1$, then loading $S_2$ and evaluating it. 
 
 \begin{lemma}
 \label{breakingdowncomp}
-For every statement $S_1$, $S_2$, for every list $L$, for every state $s$, $s'$, if $\langle S_1; S_2, L, s \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $L, s' \rangle$, then it must be the case that $\langle S_1;S_2, L, s \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $S_2::L, s'' \rangle \Rightarrow \langle S_2, L, s'' \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $L, s' \rangle$ for some state $s''$. 
+For every statement $S_1$, $S_2$, for every list $L$, for every state $s$, $s'$, if $\sos{S_1; S_2}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$, then it must be the case that $\sos{S_1;S_2}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ for some state $s''$. 
 \end{lemma}
 
 \begin{proof}
@@ -356,7 +342,7 @@ We will look at a similar lemma for the let statement:
 
 \begin{lemma}
 \label{breakingdownlet}
-For every statement $S$, for every list $L$, for every state $s$, $s'$, if $\langle a : \texttt{let x } : \tau \texttt{ in } S , L, s \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $L, s' \rangle$, then it must be the case that $\langle a : \texttt{let x } : \tau \texttt{ in } S, L, s \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $(x,s(x))::L, s'' \rangle \Rightarrow \langle (x,s(x)), L, s'' \rangle \Rightarrow \langle$ \texttt{skip}, $L, s' \rangle$ for some state $s''$. 
+For every statement $S$, for every list $L$, for every state $s$, $s'$, if $\langle a : \texttt{let x } : \tau \texttt{ in } S , L, s \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $L, s' \rangle$, then it must be the case that $\sos{\letm{x}{S}}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{(x,s(x))::L}{s''} \Rightarrow \sos{(x,s(x))}{L}{s''} \Rightarrow \sos{\texttt{skip}}{L}{s'}$ for some state $s''$. 
 \end{lemma}
 
 \begin{proof}
@@ -398,6 +384,46 @@ For every statement $S_1$, $S_2$, for every list $L$, for every state $s$, $s'$ 
 Assume $\sos{S_1}{L}{s} \Rightarrow ^{n} \sos{\texttt{skip}}{L}{s}$ and look at $\sos{S_1;S_2}{L}{s}$. Then \\$\sos{S_1;S_2}{L}{s}$ $\Rightarrow _{[\textrm{comp}_{\textrm{os}}]} \sos{S_1}{S_2::L}{s}$
 \end{proof}
 
+
+\subsubsection*{Determinism}
+
+\begin{theorem}
+For every statement $S$, every state $s, s', s''$, every list $L$, if $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ and $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$, then $s' = s''$.
+\end{theorem}
+
+\begin{proof}
+The proof proceeds by induction on the structure of $S$, the program instruction. We distinguish the following cases:
+\begin{itemize}[noitemsep]
+    \item $S$ = \texttt{skip} : if $\sos{\texttt{skip}}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ and $\sos{\texttt{skip}}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$, then no steps have to be taken, or could have been taken, and we obviously have $s' = s''$.
+    \item $S = \texttt{x := } e$ : $\sos{\texttt{x := } e}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ and $\sos{\texttt{x := } e}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$, then the rule that must have been applied is [ass$_{\textrm{os}}$]. This means that exactly one step has been taken and that $s'=s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$ and $s'' = s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$, so $s' = s''$.
+    \item $S = (x,v)$ : if $\sos{(x,v)}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ and $\sos{(x,v)}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$, then the rule that must have been applied next is [set$_{\textrm{os}}$]. This means that exactly one step has been taken and that $s' = s[x\mapsto v]$ and $s'' = s[x\mapsto v]$, so $s' = s''$.
+    \item $S = S_1; S_2$ : if $\sos{S_1; S_2}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ and $\sos{S_1; S_2}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$, then the only applicable rule is [comp$_{\textrm{os}}$]. This means that we have 
+    $$\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$$
+    and 
+    $$\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}  \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$$
+    By Proposition \ref{breakingdowncomp}, we know that we can break the latter $\Rightarrow ^{*}$ can be broken up into smaller parts, so we have 
+     $$\sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L}{s'''} \Rightarrow \sos{S_2}{L}{s'''} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$$
+     and
+     $$\sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L}{s''''} \Rightarrow \sos{S_2}{L}{s''''} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$$
+     for some $s'''$ and $s''''$. Now we can apply the induction hypothesis to $\sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L}{s'''}$ and $\sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L}{s''''}$, so we have $s''' = s''''$. So then we have 
+     $$\sos{S_2}{L}{s'''} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$$
+     and 
+     $$\sos{S_2}{L}{s'''} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$$
+     to which we can apply the induction hypothesis again to get $s' = s''$.
+    \item $S = \letm{x}{S'}$ : if $\sos{\letm{x}{S'}}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ and $\sos{\letm{x}{S'}}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$, then the only applicable rule is [let$_{\textrm{os}}$]. This gives us
+    $$\sos{\letm{x}{S'}}{L}{s} \Rightarrow \sos{S'}{(x,s(x))::L}{s[x\mapsto \perp]} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$$
+    and 
+    $$\sos{\letm{x}{S'}}{L}{s} \Rightarrow \sos{S'}{(x,s(x))::L}{s[x\mapsto \perp]} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$$
+    By Proposition{breakingdownlet}, we know that we can break the latter $\Rightarrow ^{*}$ can be broken up into smaller parts, so we have 
+    $$\sos{\letm{x}{S}}{L}{s} \Rightarrow \sos{S'}{(x,s(x))::L}{s[x\mapsto \perp]} \Rightarrow ^{*}$$ $$\sos{\texttt{skip}}{(x,s(x))::L}{s'''} \Rightarrow \sos{(x,s(x))}{L}{s'''} \Rightarrow \sos{\texttt{skip}}{L}{s'}$$
+    and 
+    $$\sos{\letm{x}{S}}{L}{s} \Rightarrow \sos{S'}{(x,s(x))::L}{s[x\mapsto \perp]} \Rightarrow ^{*}$$ $$\sos{\texttt{skip}}{(x,s(x))::L}{s''''} \Rightarrow \sos{(x,s(x))}{L}{s''''} \Rightarrow \sos{\texttt{skip}}{L}{s''}$$
+    Now we can apply the induction hypothesis to $\sos{S'}{(x,s(x))::L}{s[x\mapsto \perp]} \Rightarrow ^{*}$$ $$\sos{\texttt{skip}}{(x,s(x))::L}{s'''}$ and $\sos{S'}{(x,s(x))::L}{s[x\mapsto \perp]} \Rightarrow ^{*}$$ $$\sos{\texttt{skip}}{(x,s(x))::L}{s''''}$, so $s''' = s''''$. Then $\sos{(x,s(x))}{L}{s'''} \Rightarrow \sos{\texttt{skip}}{L}{s'''[x\mapsto v]}$, so $s' = s'''[x\mapsto v] = s''$, which means $s'=s''$.
+\end{itemize}
+This exhausts all possible cases and hence proves the theorem.
+\end{proof}
+
+
 \section{Compile time check}
 To model the compile time checker of Rust, we need something that passes through the code and checks the code as it goes. It should then return whether the code is correct or not. 
 
@@ -429,8 +455,8 @@ The \emph{compile time checker} is a derivation system that has the following ru
 \cc{\texttt{skip}}{\texttt{Nil}}{r} & \to \texttt{true}  \\
 \cc{\texttt{skip}} {P::L}{ r}       & \to \cc{P}{L}{r}  \\
 \cc{S_1; S_2}{L}{r}                 & \to \cc{S_1}{S_2::L}{r}  \\
-\cc{x:=e}{L}{r}                     & \to \cc{\texttt{skip}}{L}{r[x\mapsto \star][ev(e) \mapsto -]} \\
-                                    & \textrm{if }r(x) = \perp \textrm{ and } \forall y \in ev(e), r(y) = \star \\
+\cc{x:=e}{L}{r}                     & \to \cc{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]} \\
+                                    & \textrm{if }r(x) = \perp \textrm{ and } \forall y \in \mathcal{V}(e), r(y) = \star \\
                                     & \to \texttt{false} \textrm{ otherwise}\\
 \cc{\letm{x}{S}}{L}{r} & \to \cc{S}{(x,r(x))::L}{r[x\mapsto \perp]} \\
 \cc{(x,v)}{L}{r}                    & \to \cc{\texttt{skip}}{L}{r[x \mapsto v]}
@@ -476,7 +502,7 @@ We will show termination by proving that with every step from \ref{compiletimech
     \item $\cc{\texttt{skip}}{\texttt{Nil}}{r} \to \texttt{true}$ gives $1 \to 0$
     \item $\cc{\texttt{skip}}{P::L}{ r} \to \cc{P}{L}{r}$ gives $1 + |P| + |L| \to |P| + |L|$
     \item $\cc{S_1; S_2}{L}{r} \to \cc{S_1}{S_2::L}{r}$ gives $|S_1| + |S_2| + 1 + |L| \to |S_1| + |S_2::L| = |S_1| + |S_2| + |L|$
-    \item $\cc{x:=e}{L}{r} \to \cc{\texttt{skip}}{L}{r[x\mapsto \star][ev(e) \mapsto -]}$ gives $2 + |L| \to 1 + |L|$
+    \item $\cc{x:=e}{L}{r} \to \cc{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]}$ gives $2 + |L| \to 1 + |L|$
     \item $\cc{\letm{x}{S}}{L}{r} \to \cc{S}{(x,r(x))::L}{r[x\mapsto \perp]}$ gives $|S|+3+|L|\to |S|+2+|L|$
     \item $\cc{(x,v)}{L}{r} \to \cc{\texttt{skip}}{L}{r[x \mapsto v]}$ gives $2 + |L| \to 1 + |L|$
 \end{itemize}
@@ -495,7 +521,7 @@ We look at the different possible rules $\Rightarrow$.
 \begin{itemize}
     \item $\sos{\texttt{skip}}{I::L}{s} \Rightarrow \sos{I}{L}{s}$. We assume $\cc{\texttt{skip}}{I::L}{r} \to ^* \texttt{true}$. We try to determine which derivation steps could have let to \texttt{true}. The only possible step is $\cc{\texttt{skip}}{I::L}{r}\to \cc{I}{L}{r}$. Then we have our $r' = r$, and obviously we also have $\cc{I}{L}{r} \to^* \texttt{true}$.
     \item $\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}$. We assume $\cc{S_1; S_2}{L}{r} \to ^* \texttt{true}$. We try to determine which derivation steps could have led to \texttt{true}. The only possible step is $\cc{S_1; S_2}{L}{r} \to \cc{S_1}{S_2::L}{r}$. Then we have our $r' = r$ and obviously we also have $\cc{S_1}{S_2::L}{r} \to^* \texttt{true}$.
-    \item $\sos{\texttt{x := } e}{L}{s} \Rightarrow \sos{\texttt{skip}}{L}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$. We assume $\cc{\texttt{x := } e}{L}{r} \to ^* \texttt{true}$. We try to determine which derivation steps could have led to \texttt{true}. The only possible step is $\cc{x:=e}{L}{r} \to \cc{\texttt{skip}}{L}{r[x\mapsto \star][ev(e) \mapsto -]}$. Then we have our $r' = r[x\mapsto \star][ev(e) \mapsto -]$ and obviously we also have $\cc{\texttt{skip}}{L}{r[x\mapsto \star][ev(e) \mapsto -]} \to^* \texttt{true}$ then.
+    \item $\sos{\texttt{x := } e}{L}{s} \Rightarrow \sos{\texttt{skip}}{L}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$. We assume $\cc{\texttt{x := } e}{L}{r} \to ^* \texttt{true}$. We try to determine which derivation steps could have led to \texttt{true}. The only possible step is $\cc{x:=e}{L}{r} \to \cc{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]}$. Then we have our $r' = r[x\mapsto \star][\mathcal{V}(e) \mapsto -]$ and obviously we also have $\cc{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]} \to^* \texttt{true}$ then.
     \item The other cases are similar. \emph{Might add them later.}
 \end{itemize}
 This exhausts all possible cases and hence proves our theorem.
@@ -513,7 +539,7 @@ We assume $\cc{S}{L}{s} ->^* \texttt{true}$. We look at the possible derivation 
     \item $\cc{\texttt{skip}}{\texttt{Nil}}{r} \to \texttt{true}$. This means $S = \texttt{skip}$ and $L = \texttt{Nil}$ and that means we are done.
     \item $\cc{\texttt{skip}} {P::L}{ r} \to \cc{P}{L}{r}$. This means we have 
     \item $\cc{S_1; S_2}{L}{r} \to \cc{S_1}{S_2::L}{r}$
-    \item $\cc{x:=e}{L}{r} \to \cc{\texttt{skip}}{L}{r[x\mapsto \star][ev(e) \mapsto -]} \textrm{ if }r(x) = \perp \textrm{ and } \forall y \in ev(e), r(y) = \star$
+    \item $\cc{x:=e}{L}{r} \to \cc{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]} \textrm{ if }r(x) = \perp \textrm{ and } \forall y \in \mathcal{V}(e), r(y) = \star$
     \item $\cc{x:=e}{L}{r} \to \texttt{false} \textrm{  if the conditions in the previous item don't apply}$. This is in contradiction with our assumption, so this rule is not possible. 
     \item $\cc{\letm{x}{S}}{L}{r} \to \cc{S}{(x,r(x))::L}{r[x\mapsto \perp]}$
     \item $\cc{(x,v)}{L}{r} \to \cc{\texttt{skip}}{L}{r[x \mapsto v]}$
