@@ -312,9 +312,9 @@ vector.push(4);
 println!("{}", x);
 \end{minted}
 
-This program has a \textit{mutable} vector \verb|vector| and a variable \verb|x| that points to a part of \verb|vector|. This means we have a problem:  \verb|vector| is mutable but \verb|x| also points to the same piece of memory! The second rule of borrowing is not adhered to here. 
+This program has a \textit{mutable} vector \texttt{vector} and a variable \texttt{x} that points to a part of \texttt{vector}. This means we have a problem:  \texttt{vector} is mutable but \texttt{x} also points to the same piece of memory! The second rule of borrowing is not adhered to here. 
 
-However, Rust does not look at it like that. It does reject the program, but for completely different reasons. Rust does not know that \verb|x| is a reference to a part of \verb|vector|. Rust does not even know what the \verb|vec| macro is about. In order to understand what Rust does know and how it still rejects this code is to again desugar the piece of code. This gives the following: 
+However, Rust does not look at it like that. It does reject the program, but for completely different reasons. Rust does not know that \texttt{x} is a reference to a part of \texttt{vector}. Rust does not even know what the \texttt{vec} macro is about. In order to understand what Rust does know and how it still rejects this code is to again desugar the piece of code. This gives the following: 
 
 \begin{minted}[linenos, frame=lines]{rust}
 'a: {
