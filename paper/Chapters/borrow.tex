@@ -18,10 +18,34 @@ A type $\tau$ is
 $$\tau ::= \textrm{Int} \mid \& \tau$$
 \end{definition}
 
-\section{A case study}
+\section{Some examples}
 
-In order to illustrate what is happening in this chapter and therefore what should be happening in the semantics, we will walk through a small piece of example code, which we have also seen in \ref{desugar}. 
+In order to illustrate what is happening in this chapter and therefore what should be happening in the semantics, we will walk through some small pieces of example code. 
 
+\subsection{Mutability}
+To start of easy, we will first look at an example of mutability without borrowing. 
+
+\begin{minted}[linenos, frame=lines]{rust}
+let mut y=0;
+y = 1;
+\end{minted}
+
+We can desugar this to our own syntax:
+
+\begin{minted}[linenos, frame=lines]{rust}
+a: {
+    let mut y in 
+        y = 0;
+        y = 1;
+   }
+\end{minted}
+
+Let's see what happens here. We will try to use the semantics of the previous chapter as much as possible. At the \texttt{let}-statement, besides initializing \texttt{x} to $\perp$, we need to somehow save that \texttt{x} is mutable. We can do that by introducing a new function besides the state, $\mathcal{M}$, which tells us whether a variable is mutable or not. For purposes that will become clear later on, we will choose to let this function return $\{\texttt{mut}\}$ if the variable is mutable and let it return $\emptyset$ if the variable is not mutable. 
+
+Then in line 4, we assign a value to \texttt{x}, which makes that $s(x) = 0$. Then in line 5, instead of rejecting the program because \texttt{x} already has a value and thus is not $\perp$, we see that \texttt{x} is mutable and accept the assignment if \texttt{x} is either $\perp$ or an element from $\mathbb{Z}$. If \texttt{x} were not mutable, then only $\perp$ would have sufficed. 
+
+\subsection{Nonmutable borrow}
+The example of this section looks at just borrowing and no mutability. 
 \begin{minted}[linenos, frame=lines]{rust}
 let x = 0;
 let z;
@@ -33,7 +57,7 @@ If we write this in our syntax, we get:
 
 \begin{minted}[linenos, frame=lines]{rust}
 a: {
-    let x: Int in x = 0
+    let x: Int in x = 0;
     b: {
         let z: &Int in 
         c: {
@@ -56,14 +80,14 @@ Like in the previous chapter, it seems wise to keep track of what variables have
 
 \begin{minted}[linenos, frame=lines]{rust}
 a: {
-    let x: Int in x = 0
+    let x: Int in x = 0;
 \end{minted}
 
 Obviously, we will now want \verb|x| to equal $0 \in \mathbb{Z}$. Now we move on to the next \verb|let|-statement.
 
 \begin{minted}[linenos, frame=lines]{rust}
 a: {
-    let x: Int in x = 0
+    let x: Int in x = 0;
     b: {
         let z: &Int in
 \end{minted}
@@ -72,7 +96,7 @@ Now \verb|z| has been initiazed. So we have $s(x) = 0$ and $s(z) = \perp$. For a
 
 \begin{minted}[linenos, frame=lines]{rust}
 a: {
-    let x: Int in x = 0
+    let x: Int in x = 0;
     b: {
         let z: &Int in 
         c: {
@@ -91,11 +115,141 @@ a: {
             y = & x;
 \end{minted}
 
+Now we have $s(y) = 0$ and we have $s(x) = 0$. As you might remember from the chapter about Rust, you can have multiple `readers' to one location, as long as you cannot change the content of that location (to prevent data races). 
+
+\begin{minted}[linenos, frame=lines]{rust}
+a: {
+    let x: Int in x = 0;
+    b: {
+        let z: &Int in 
+        c: {
+            let y: &Int in
+            y = & x;
+            z = y
+\end{minted}
+
+Now the value that $y$ had will be moved to $z$. So $s(y) = -$ and $s(z) = 0$. 
+
+\begin{minted}[linenos, frame=lines]{rust}
+a: {
+    let x: Int in x = 0;
+    b: {
+        let z: &Int in 
+        c: {
+            let y: &Int in
+            y = & x;
+            z = y
+        }
+\end{minted}
+
+Now $z$ goes out of scope, so we have $s(z) = -$, while still having $s(x) = 0$. 
+
+\begin{minted}[linenos, frame=lines]{rust}
+a: {
+    let x: Int in x = 0;
+    b: {
+        let z: &Int in 
+        c: {
+            let y: &Int in
+            y = & x;
+            z = y;
+        }
+    }
+}
+\end{minted} 
+
+After the second \}, nothing happens, as $s(y)$ already was $-$. After the last bracket, $x$ is also again set to $-$. 
+
+\subsection{Mutable borrow}
+
+For the second example, we will look at some mutable borrowing. As explained in the chapter about Rust, the following program produces an error, as it makes two mutable references to the same piece of memory. This makes the code prone to data races. 
+
+\begin{minted}[linenos, frame=lines]{rust}
+let mut x=0;
+let y = & mut x; 
+let z = & mut x;
+\end{minted}
+
+If we write this in our syntax, we get: 
+
+\begin{minted}[linenos, frame=lines]{rust}
+a: {
+    let mut x: Int in x = 0;
+    b: {
+        let y: &Int in y = & mut x;
+        c: {
+            let z: &Int in z = & mut x;
+        }
+    }
+}
+\end{minted} 
+
+So now we will walk through the code and see where the code should not be accepted. 
+
+\begin{minted}[linenos, frame=lines]{rust}
+a: {
+    let mut x: Int in x = 0;
+\end{minted}
+
+After the \texttt{let}, we have $s(x) = -$. Then after the \texttt{x = 0}, we have $s(x) = 0$. This should be surprising in the light of the previous chapter and previous example. However, it is very important to not that our \texttt{x} here is \texttt{mut}able. We will need this information inside the \texttt{let}, so we should have some way to keep track of it. Let's say we have a function $\mathcal{M}$ that tells us whether a variable is \texttt{mut} or not. So we will say $\mathcal{M}(x) = \{\texttt{mut}\}$. 
+
+\begin{minted}[linenos, frame=lines]{rust}
+a: {
+    let mut x: Int in x = 0;
+    b: {
+        let y: &Int in y = & mut x;
+\end{minted}
+
+For \texttt{y}, the same story holds as for \texttt{x} above, but \texttt{y} is not mutable. So at the end, $s(y) = 0$ and $\mathcal{M}(y) = \emptyset$. However, we want \texttt{x} to know that it has been borrowed, so cannot be changed directly anymore and we want \texttt{y} to know where it borrowed from, so we can release the borrow after the scope of \texttt{y} ends. Therefore, we need to do some additional bookkeeping. We will say $\mathcal{M}(x) = \{\texttt{bor}, \texttt{mut}\}$ and $\mathcal{M}(y) = \{x\}$. So our $\mathcal{M}$ will have a signature of the form $\textbf{Var} \to \mathcal{P}(\{\texttt{bor}, \texttt{mut}\} \cup \textbf{Var})$.
+
+\begin{minted}[linenos, frame=lines]{rust}
+a: {
+    let mut x: Int in x = 0;
+    b: {
+        let y: &Int in y = & mut x;
+        c: {
+            let z: &Int in z = & mut x;
+\end{minted}
+
+An error should occur here, as this will be the second borrow to the mutable variable \texttt{x}. This could be discovered by looking at $\mathcal{M}(x)$ and seeing that both \texttt{mut} and \texttt{bor} are in there. No new borrow could be made. 
+
+Looking at the same program, but without the last \texttt{let}, we get the following structure:
+
+\begin{minted}[linenos, frame=lines]{rust}
+//s(y) = -, s(y) = -, M(x) = {}, M(y) = {}
+a: {                          
+    let mut x: Int in         //s(x) = |, M(x) = {mut}
+        x = 0;                //s(x) = 0
+        b: {
+            let y: &Int in    //s(y) = |
+                y = & mut x;  //s(y) = 0, M(x) = {bor,mut}, M(y) = {x}
+        }                     //s(y) = -, M(y) = {}, M(x) = {mut}
+}                             //s(x) = -, M(x) = {}
+\end{minted}
+
+Here, we can see that at the end, everything is freed. After the borrow of \texttt{x} ends, we remove the \texttt{bor}row status from our $\mathcal{M}$, as \texttt{x} now can be borrowed again. 
+
+\subsection{Another example of mutability}
+The following piece of code is incorrect and produces the error \texttt{re-assignment of immutable variable}. This is because even though \texttt{y} and \texttt{z} are mutable, \texttt{x} is not, and thus cannot be reassigned to borrow from \texttt{z}. 
+\begin{minted}[linenos, frame=lines]{rust}
+let mut y=0;
+let mut z=1;
+let x = & mut y; 
+x = & mut z
+\end{minted}
+
+In order to fix this, we make \texttt{x} mutable, as was done in the following piece of code. This does compile.
+
+\begin{minted}[linenos, frame=lines]{rust}
+let mut y=0;
+let mut z=1;
+let mut x = & mut y; 
+x = & mut z
+\end{minted}
 
 
 
-
-We will first start with defining the evaluation function $\mathcal{A}$. In order to do that, we also need to know the type of the state $s$. We can leave the evaluation function for the first three types of expressions the same as in the previous section. However, we need to think of what we want $\&a~e$ to evaluate to. There are two possible logical answers. We can let it evaluate to e itself, and thus let the result of the evaluation be a pointer of some sort in the model as well. We can also recursively calculate the evaluation of $e$ and set that as the evaluation of $\&a~e$ as well. This latter model thus does not model pointers as such. In the two sections below, both models are worked out and described. We will start with the latter model, which we will call the ``non-pointer'' model. After that, the ``pointer'' model will be described. 
+%We will first start with defining the evaluation function $\mathcal{A}$. In order to do that, we also need to know the type of the state $s$. We can leave the evaluation function for the first three types of expressions the same as in the previous section. However, we need to think of what we want $\&a~e$ to evaluate to. There are two possible logical answers. We can let it evaluate to e itself, and thus let the result of the evaluation be a pointer of some sort in the model as well. We can also recursively calculate the evaluation of $e$ and set that as the evaluation of $\&a~e$ as well. This latter model thus does not model pointers as such. In the two sections below, both models are worked out and described. We will start with the latter model, which we will call the ``non-pointer'' model. After that, the ``pointer'' model will be described. 
 
 \subsection{Non-pointer model}
 In this model, a state $s$ is a function with signature $\textbf{Var} \to \mathbb{Z}_{ext}$, just as before. The evaluation function is defined as:
