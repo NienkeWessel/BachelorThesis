@@ -300,48 +300,137 @@ a:{let y in             //s(y)=|
 
 In comparison to the previous example, very little bookkeeping needed to be done. We only need to keep track of the values of the variables, and keep in mind that \texttt{x} is mutable. There is no need to remember which variables have been borrowed or not, since we can have zero, one or multiple borrows anyways. 
 
-\section{Semantics}
+\section{Semantics: Framework}
+Just as in the chapter about moving, we need some mathematical definitions. This section is dedicated to updating our previous definitions and including some new definitions. 
 
-In this chapter, we will move to the small step semantics right away. These are of similar form to the previous chapter, except that we have rules of the form $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$, where $S$, $S'$ are statements and $s$, $s'$ are states as defined later TODOOOO Fix official definitions. %TODO
+\subsection*{Variables and expression}
+We will continue to use $\mathbb{Z}_{ext}$ in the same way we did in the previous chapter. 
+
+\begin{definition}
+We define the function $\mathcal{V}: \textbf{Exp} \to \mathcal{P}(\textbf{Var})$ recursively by:
+\begin{align*}
+    \mathcal{V}(i)          &= \emptyset
+\\  \mathcal{V}(x)          &= \{ x \}
+\\  \mathcal{V}(e_1 + e_2)  &= \mathcal{V}(e_1) \cup \mathcal{V}(e_2)
+\\  \mathcal{V}(\& x)       &= \emptyset
+\end{align*}
+\end{definition}
+
+\begin{definition}
+We define the function $\mathcal{B}: \textbf{Exp} \to \mathcal{P}(\textbf{Var})$ recursively by:
+\begin{align*}
+    \mathcal{B}(i)          &= \emptyset
+\\  \mathcal{B}(x)          &= \emptyset
+\\  \mathcal{B}(e_1 + e_2)  &= \mathcal{V}(e_1) \cup \mathcal{V}(e_2)
+\\  \mathcal{B}(\& x)       &= \{ x \} \textrm{ if } \texttt{mut} \in \mathcal{M}(x) 
+\end{align*}
+\end{definition}
+
+\begin{definition}
+The evaluation function $\mathcal{A}: \textbf{Exp} \times \textbf{State} \to \mathbb{Z}_{ext}$ is defined by:
+\begin{align*}
+    \letterfunc{A}{i}s          &= \letterfunc{N}{i}
+\\  \letterfunc{A}{x}s          &= s(x)
+\\  \letterfunc{A}{e_1 + e_2}s  &= \letterfunc{A}{e_1}s + \letterfunc{A}{e_2}s \textrm{ if } \letterfunc{A}{e_1}s \in \mathbb{Z} \textrm{ and } \letterfunc{A}{e_2}s \in \mathbb{Z}
+\\  \letterfunc{A}{e_1 + e_2}s  &= - \textrm{ otherwise}
+\\ \letterfunc{A}{\&a~x}s       &= \letterfunc{A}{x}s
+\end{align*}
+\end{definition}
+Notice it is the same as in the previous chapter, except for the added last line. 
+
+\section{Semantics: Big step}
+In this chapter, we will move to the small step semantics right away and skip the big step semantics. These are of similar form to the previous chapter, except that we have rules of the form $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$, where $S$, $S'$ are statements and $s$, $s'$ are states as defined later TODOOOO Fix official definitions. %TODO
 
 \begin{definition} 
 \label{osb}
 We define the following semantic derivation rules (name on the left):
 
 \begin{tabular}{p{5em}p{23em}p{1em}}
+& & \\
+
 [load$_{\textrm{os}}$] &
-\centering$\sosb{\texttt{skip}}{I::L}{s}{M} \Rightarrow \sosb{I}{L}{s}{M}$ & \medskip\\
+\centering$\sosb{\texttt{skip}}{I::L}{s}{M} \Rightarrow \sosb{I}{L}{s}{M}$ & \\
+
+& & \\
 
 [comp$_{\textrm{os}}$] &
-\centering$\sosb{S_1; S_2}{L}{s}{M} \Rightarrow \sosb{S_1}{S_2::L}{s}{M}$ & \medskip\\
+\centering$\sosb{S_1; S_2}{L}{s}{M} \Rightarrow \sosb{S_1}{S_2::L}{s}{M}$ & \\
+
+& & \\
 
 [ass$_{\textrm{os}}$] &
-\centering $\sos{\texttt{x := } e}{L}{s} \Rightarrow \sos{\texttt{skip}}{L}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$ & \medskip\\
+\centering $\sosb{\texttt{x := } e}{L}{s}{M} \Rightarrow \sosb{\texttt{skip}}{L}{& \\
+& \centering s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]
+\centering }{M[\forall \textit{y} \in B(\textit{e}), \textit{y}\mapsto M(\textit{y})\cup \{\texttt{bor} \} ] 
+[\textit{x} \mapsto M(\textit{x}) \cup B(\textit{e})]}$ & \medskip\\
+
+& & \\
 
 [let$_{\textrm{os}}$] &
-\centering $\sos{\letm{x}{S}}{L}{s} \Rightarrow \sos{S}{(x,s(x),\mathcal{M}(x))::L}{s[x\mapsto \perp]}$ & \medskip\\
+\centering $\sos{\letm{x}{S}}{L}{s} \Rightarrow \sosb{S}{(x,s(x),\mathcal{M}(x))::L}{s[x\mapsto \perp]}{M}$ & \medskip\\
+
+& & \\
 
 [letmut$_{\textrm{os}}$] &
 \centering $\sosb{\letmut{x}{S}}{L}{s}{M} \Rightarrow \sosb{S}{(x,s(x),\mathcal{M}(x))::L}{s[x\mapsto \perp]}{M[\texttt{x}\mapsto\{\texttt{mut}\}]}$ & \medskip\\
 
+& & \\
+
 [set$_{\textrm{os}}$] &
-\centering$\sosb{(x,v,m)}{L}{s}{M} \Rightarrow \sosb{\texttt{skip}}{L}{s[x\mapsto v]}{M[\texttt{x}\mapsto \textrm{m}]}$ & \medskip\\
+\centering$\sosb{(x,v,m)}{L}{s}{M} \Rightarrow \sosb{\texttt{skip}}{L}{s[x\mapsto v]}{M[\forall \textit{y} \in M(\textit{x})\cap\textbf{Var}, \textit{y} \mapsto M(\textit{y}) \setminus \{\texttt{bor}\}][\texttt{x}\mapsto \textit{m}]}$ & \medskip\\
 \end{tabular} 
 %Where $\mathcal{V}(e)\mapsto-$ is an abbreviation for `for all $x \in \mathcal{V}(e)$, $x \mapsto -$'.
 \end{definition} 
-Note that $\sos{\texttt{skip}}{\texttt{Nil}}{s}$ has no derivation; this is the/an end state. 
+Note that $\sosb{\texttt{skip}}{\texttt{Nil}}{s}{M}$ has no derivation; this is the/an end state. 
+
+
+\begin{definition}
+\label{compiletimecheckerb}
+The \emph{compile time checker} is a derivation system that has the following rules
+\begin{align*}
+\ccb{\texttt{skip}}{\texttt{Nil}}{r}{M} & \to \texttt{true}  \\
+\ccb{\texttt{skip}}{P::L}{r}{M}       & \to \ccb{P}{L}{r}{M}  \\
+\ccb{S_1; S_2}{L}{r}{M}                 & \to \ccb{S_1}{S_2::L}{r}{M}  \\
+\ccb{x:=e}{L}{r}{M}                     & \to \ccb{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]}{M[\forall \textit{y} \in B(\textit{e}), \textit{y}\mapsto M(\textit{y})\cup \{\texttt{bor} \} ][\textit{x} \mapsto M(\textit{x}) \cup B(\textit{e})]} \\
+                                    & \textrm{if } \texttt{mut} \in \mathcal{M}(x), r(x) = \perp \textrm{ or } r(x) = \star, \\ &  \forall y \in \mathcal{V}(e) \cup \mathcal{B}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
+                                    & \textrm{if } \neg \texttt{mut} \in \mathcal{M}(x), r(x) = \perp,  \\ & \forall y \in \mathcal{V}(e) \cup \mathcal{B}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
+                                    & \to \texttt{false} \textrm{ otherwise}\\
+\ccb{\letm{x}{S}}{L}{r}{M} & \to \ccb{S}{(x,r(x),\mathcal{M}(x))::L}{r[x\mapsto \perp]}{M} \\
+\ccb{\letmut{x}{S}}{L}{r}{M} & \to \ccb{S}{(x,r(x),\mathcal{M}(x))::L}{r[x\mapsto \perp]}{M[\texttt{x}\mapsto\{\texttt{mut}\}]} \\
+\ccb{(x,v,m)}{L}{r}{M}                    & \to \ccb{\texttt{skip}}{L}{r[x \mapsto v]}{M[\forall \textit{y} \in M(\textit{x})\cap\textbf{Var}, \textit{y} \mapsto M(\textit{y}) \setminus \{\texttt{bor}\}][\texttt{x} \mapsto \textrm{m}]} 
+\end{align*}
+\end{definition}
+
+Of course, we again want this compile time checker  to always terminate. 
+
+\begin{theorem}
+\label{terminationb}
+The compile checker from definition \ref{compiletimecheckerb} always terminates.
+\end{theorem}
+
+\begin{proof}
+This proof is almost completely similar to that of \ref{termination}, if we define $|\letmut{x}{S}| = |S| + 3$. We therefore omit the details.
+\end{proof}
+
+
+\begin{theorem}
+\label{preservationb}
+If $\cc{S}{L}{r} \to ^* \texttt{true}$ and $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$ with $r$ equivalent to $s$, then there is an $r'$ that is equivalent to $s'$ and we have $\cc{S'}{L'}{r'} \to ^* \texttt{true}$. We assume $\cc{S}{L}{s} \to ^* \texttt{true}$
+\end{theorem}
+
+\begin{proof}
+We look at the different possible rules $\Rightarrow$. 
+\begin{itemize}
+    \item $\sos{\texttt{skip}}{I::L}{s} \Rightarrow \sos{I}{L}{s}$. We assume $\cc{\texttt{skip}}{I::L}{r} \to ^* \texttt{true}$. We try to determine which derivation steps could have let to \texttt{true}. The only possible step is $\cc{\texttt{skip}}{I::L}{r}\to \cc{I}{L}{r}$. Then we have our $r' = r$, and obviously we also have $\cc{I}{L}{r} \to^* \texttt{true}$.
+    \item $\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}$. We assume $\cc{S_1; S_2}{L}{r} \to ^* \texttt{true}$. We try to determine which derivation steps could have led to \texttt{true}. The only possible step is $\cc{S_1; S_2}{L}{r} \to \cc{S_1}{S_2::L}{r}$. Then we have our $r' = r$ and obviously we also have $\cc{S_1}{S_2::L}{r} \to^* \texttt{true}$.
+    \item $\sos{\texttt{x := } e}{L}{s} \Rightarrow \sos{\texttt{skip}}{L}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$. We assume $\cc{\texttt{x := } e}{L}{r} \to ^* \texttt{true}$. We try to determine which derivation steps could have led to \texttt{true}. The only possible step is $\cc{x:=e}{L}{r} \to \cc{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]}$. Then we have our $r' = r[x\mapsto \star][\mathcal{V}(e) \mapsto -]$ and obviously we also have $\cc{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]} \to^* \texttt{true}$ then.
+    \item The other cases are similar. \emph{Might add them later.}
+\end{itemize}
+This exhausts all possible cases and hence proves our theorem.
+\end{proof}
+
 
 %We will first start with defining the evaluation function $\mathcal{A}$. In order to do that, we also need to know the type of the state $s$. We can leave the evaluation function for the first three types of expressions the same as in the previous section. However, we need to think of what we want $\&a~e$ to evaluate to. There are two possible logical answers. We can let it evaluate to e itself, and thus let the result of the evaluation be a pointer of some sort in the model as well. We can also recursively calculate the evaluation of $e$ and set that as the evaluation of $\&a~e$ as well. This latter model thus does not model pointers as such. In the two sections below, both models are worked out and described. We will start with the latter model, which we will call the ``non-pointer'' model. After that, the ``pointer'' model will be described. 
-
-\subsection{Non-pointer model}
-In this model, a state $s$ is a function with signature $\textbf{Var} \to \mathbb{Z}_{ext}$, just as before. The evaluation function is defined as:
-\begin{align*}
-    \letterfunc{A}{i}s          &= \letterfunc{N}{i}
-\\  \letterfunc{A}{x}s          &= s(x)
-\\  \letterfunc{A}{e_1 + e_2}s  &= \letterfunc{A}{e_1}s + \letterfunc{A}{e_2}s
-\\ \letterfunc{A}{\&a~x}s       &= \letterfunc{A}{x}s
-\end{align*}
-Notice it is the same as above, except for the added last line. 
 
 %However, besides the state that assigns a value to a variable, we also need a way to keep track of what variables \verb|x| borrows from. In a program such as 
 %\begin{minted}[linenos, frame=lines]{rust}
