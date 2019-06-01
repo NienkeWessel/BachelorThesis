@@ -229,7 +229,7 @@ a: {
 
 Here, we can see that at the end, everything is freed. After the borrow of \texttt{x} ends, we remove the \texttt{bor}row status from our $\mathcal{M}$, as \texttt{x} now can be borrowed again. 
 
-\subsection{Another example of mutability}
+\subsection{Another example of mutable borrowing}
 The following piece of code is incorrect and produces the error \texttt{re-assignment of immutable variable}. This is because even though \texttt{y} and \texttt{z} are mutable, \texttt{x} is not, and thus cannot be reassigned to borrow from \texttt{z}. 
 \begin{minted}[linenos, frame=lines]{rust}
 let mut y=0;
@@ -237,6 +237,14 @@ let mut z=1;
 let x = & mut y; 
 x = & mut z
 \end{minted}
+
+As discussed above, we only accept an assignment of \texttt{x} if 
+\begin{itemize}[noitemsep]
+    \item \texttt{x} is \texttt{mut} and has value $-$ or some value from $\mathbb{Z}$, or;
+    \item \texttt{x} is not \texttt{mut} and has value $-$.
+\end{itemize}
+
+Neither is the case here, so we reject this piece of code, as does the Rust compiler. 
 
 In order to fix this, we make \texttt{x} mutable, as was done in the following piece of code. This does compile.
 
@@ -247,7 +255,54 @@ let mut x = & mut y;
 x = & mut z
 \end{minted}
 
+Our analysis of this piece of code results in the following: 
 
+\begin{minted}[linenos, frame=lines]{rust}
+//s(y)=s(x)=s(z)=-,M(x)=M(y)=M(z)={}
+a: {let mut y            //s(y)=|, M(y)={mut}
+    in y=0;              //s(y)=0
+    b: {let mut z in     //s(z)=|, M(z)={mut}
+        z=1;             //s(z)=1
+        c: {let mut x in //s(x)=|, M(x)={mut}
+            x = & mut y; //s(x)=0, M(x)={y},M(y)={mut,bor}
+            x = & mut z; //s(x)=1, M(x)={y,z},M(z)={mut,bor}
+        }                //s(x)=-, M(x)={},M(y)=M(z)={mut}
+    }                    //s(z)=-, M(z)={}
+}                        //s(y)=-, M(y)={}
+\end{minted}
+
+It might be surprising to see that after the \texttt{x} is reassigned, the borrow of \texttt{y} is not undone. However, this is the case in the Rust compiler. The compiler (version 1.22.1) does not accept a reborrow of y even after x has gotten a new value. So adding the line \texttt{let v = & mut y} after line 8 leads to a compile error. 
+
+Now we will look at one more example before putting what we've learned so far into use. The following piece of code passes through the compile time checker.
+
+\begin{minted}[linenos, frame=lines]{rust}
+let y=0;
+let z=1;
+let mut x = & y; 
+x = & z
+\end{minted}
+
+We will again analyze this piece to see what happens here. 
+
+\begin{minted}[linenos, frame=lines]{rust}
+//s(y)=s(x)=s(z)=-,M(x)=M(y)=M(z)={}
+a:{let y in             //s(y)=|
+    y=0;                //s(y)=0
+    b:{let z in         //s(z)=|
+        z=1;            //s(z)=1
+        c:{let mut x in //s(x)=|,M(x)={mut}
+            x = & y;    //s(x)=0
+            x = & z;    //s(x)=1
+        }               //s(x)=-,M(x)={}
+    }                   //s(z)=-
+}                       //s(y)=-
+\end{minted}
+
+In comparison to the previous example, very little bookkeeping needed to be done. We only need to keep track of the values of the variables, and keep in mind that \texttt{x} is mutable. There is no need to remember which variables have been borrowed or not, since we can have zero, one or multiple borrows anyways. 
+
+\section{Semantics}
+
+In this chapter, we will move to the small step semantics right away. These are of similar form to the previous chapter, except that we have rules of the form 
 
 %We will first start with defining the evaluation function $\mathcal{A}$. In order to do that, we also need to know the type of the state $s$. We can leave the evaluation function for the first three types of expressions the same as in the previous section. However, we need to think of what we want $\&a~e$ to evaluate to. There are two possible logical answers. We can let it evaluate to e itself, and thus let the result of the evaluation be a pointer of some sort in the model as well. We can also recursively calculate the evaluation of $e$ and set that as the evaluation of $\&a~e$ as well. This latter model thus does not model pointers as such. In the two sections below, both models are worked out and described. We will start with the latter model, which we will call the ``non-pointer'' model. After that, the ``pointer'' model will be described. 
 
@@ -261,47 +316,46 @@ In this model, a state $s$ is a function with signature $\textbf{Var} \to \mathb
 \end{align*}
 Notice it is the same as above, except for the added last line. 
 
-However, besides the state that assigns a value to a variable, we also need a way to keep track of what variables \verb|x| borrows from. In a program such as 
-\begin{minted}[linenos, frame=lines]{rust}
-let y;
-{
-    let x;
-    {
-        y = 5;
-        x = &y
-        //do other stuff?
-    }
-}
-\end{minted}
-we need to return ownership to \verb|y| at the end of the inner brackets. However, at the end of the brackets, we have no easy way in natural semantics to see that when \verb|x| goes out of scope, it has borrowed from \verb|y|. Natural semantics does not know what happens in the brackets. Therefore we define a second function, $\mathcal{B}$, that when passed a variable \verb|x|, returns all the variables \verb|x| borrowed from. The signature of $\mathcal{B}$ is \textbf{Var} $\to \mathcal{P}(\textbf{Var})$. That means the signature of a rule becomes 
+%However, besides the state that assigns a value to a variable, we also need a way to keep track of what variables \verb|x| borrows from. In a program such as 
+%\begin{minted}[linenos, frame=lines]{rust}
+%let y;
+%{
+%    let x;
+%    {
+%        y = 5;
+%        x = &y
+%        //do other stuff?
+%    }
+%}
+%\end{minted}
+%we need to return ownership to \verb|y| at the end of the inner brackets. However, at the end of the brackets, we have no easy way in natural semantics to see that when \verb|x| goes out of scope, it has borrowed from \verb|y|. Natural semantics does not know what happens in the brackets. Therefore we define a second function, $\mathcal{B}$, that when passed a variable \verb|x|, returns all the variables \verb|x| borrowed from. The signature of $\mathcal{B}$ is \textbf{Var} $\to \mathcal{P}(\textbf{Var})$. That means the signature of a rule becomes 
 
-$$\langle S, s, \mathcal{B} \rangle \to s, \mathcal{B}$$
+%$$\langle S, s, \mathcal{B} \rangle \to s, \mathcal{B}$$
 
-The semantics for this model now become:
+%The semantics for this model now become:
 
-\medskip
-\begin{tabular}{p{5em}p{18em}p{13em}}
-[skip$_{\textrm{ns}}$] &
-\centering$\langle$ \texttt{skip} $, s, \mathcal{B} \rangle \to s, \mathcal{B}$ & \medskip\\
+%\medskip
+%\begin{tabular}{p{5em}p{18em}p{13em}}
+%[skip$_{\textrm{ns}}$] &
+%\centering$\langle$ \texttt{skip} $, s, \mathcal{B} \rangle \to s, \mathcal{B}$ & \medskip\\
 
-[comp$_{\textrm{ns}}$] &
-\centering \AxiomC{$\langle S_1, s, \mathcal{B} \rangle \to s', \mathcal{B}' $}
-\AxiomC{$\langle S_2, s', \mathcal{B}' \rangle \to s'', \mathcal{B}''$}
-\BinaryInfC{$\langle S_1$; $S_2, s, \mathcal{B} \rangle \to s'', \mathcal{B}''$}
-\DisplayProof \medskip& \\
+%[comp$_{\textrm{ns}}$] &
+%\centering \AxiomC{$\langle S_1, s, \mathcal{B} \rangle \to s', \mathcal{B}' $}
+%\AxiomC{$\langle S_2, s', \mathcal{B}' \rangle \to s'', \mathcal{B}''$}
+%\BinaryInfC{$\langle S_1$; $S_2, s, \mathcal{B} \rangle \to s'', \mathcal{B}''$}
+%\DisplayProof \medskip& \\
 
-[let$_{\textrm{ns}}$] &
-\centering
-\AxiomC{$\langle S, s[x\mapsto \perp], \mathcal{B} \rangle \to s', \mathcal{B}'$}
-\UnaryInfC{$\langle a : \texttt{let x } : \tau \texttt{ in } S, s, \mathcal{B} \rangle \to s'[\mathcal{B}'(x) \mapsto s\mathcal{B}'(x)][x \mapsto s(x)], \mathcal{B}'[x \mapsto *]$}
-\DisplayProof \medskip& \\
+%[let$_{\textrm{ns}}$] &
+%\centering
+%\AxiomC{$\langle S, s[x\mapsto \perp], \mathcal{B} \rangle \to s', \mathcal{B}'$}
+%\UnaryInfC{$\langle a : \texttt{let x } : \tau \texttt{ in } S, s, \mathcal{B} \rangle \to s'[\mathcal{B}'(x) \mapsto s\mathcal{B}'(x)][x \mapsto s(x)], \mathcal{B}'[x \mapsto *]$}
+%\DisplayProof \medskip& \\
 
-[ass$_{\textrm{ns}}$] &
-\centering$\langle$ \texttt{x := } e$, s \rangle \to s[x \mapsto \letterfunc{A}{e}s][ev(e)\mapsto-]$ & if $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e} \neq \perp$ and $\letterfunc{A}{e} \neq -$\medskip\\
-\end{tabular} 
+%[ass$_{\textrm{ns}}$] &
+%\centering$\langle$ \texttt{x := } e$, s \rangle \to s[x \mapsto \letterfunc{A}{e}s][ev(e)\mapsto-]$ & if $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e} \neq \perp$ and $\letterfunc{A}{e} \neq -$\medskip\\
+%\end{tabular} 
 
-
-\subsection{Pointer model}
+%\subsection{Pointer model}
 
 
 
