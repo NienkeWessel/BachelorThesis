@@ -541,11 +541,12 @@ We now move on to the more interesting proofs where we will actually proof some 
 The first one is \emph{preservation}, where we will show that if the compile time checker says a program is okay, and you take a step in the semantics, the checker will say it is still okay. In general this means that the result of the checker does not depend on where you are in the program and does not change throughout running the program. 
 
 \begin{theorem}
-If $\cc{S}{L}{r} \to ^* \texttt{true}$ and $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$ with $r$ equivalent to $s$, then there is an $r'$ that is equivalent to $s'$ and we have $\cc{S'}{L'}{r'} \to ^* \texttt{true}$. We assume $\cc{S}{L}{s} \to ^* \texttt{true}$
+\label{preservation}
+If $\cc{S}{L}{r} \to ^* \texttt{true}$ and $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$ with $r$ equivalent to $s$, then there is an $r'$ that is equivalent to $s'$ and we have $\cc{S'}{L'}{r'} \to ^* \texttt{true}$.
 \end{theorem}
 
 \begin{proof}
-We look at the different possible rules $\Rightarrow$. 
+We assume $\cc{S}{L}{s} \to ^* \texttt{true}$. We look at the different possible rules $\Rightarrow$. 
 \begin{itemize}
     \item $\sos{\texttt{skip}}{I::L}{s} \Rightarrow \sos{I}{L}{s}$. We assume $\cc{\texttt{skip}}{I::L}{r} \to ^* \texttt{true}$. We try to determine which derivation steps could have let to \texttt{true}. The only possible step is $\cc{\texttt{skip}}{I::L}{r}\to \cc{I}{L}{r}$. Then we have our $r' = r$, and obviously we also have $\cc{I}{L}{r} \to^* \texttt{true}$.
     \item $\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}$. We assume $\cc{S_1; S_2}{L}{r} \to ^* \texttt{true}$. We try to determine which derivation steps could have led to \texttt{true}. The only possible step is $\cc{S_1; S_2}{L}{r} \to \cc{S_1}{S_2::L}{r}$. Then we have our $r' = r$ and obviously we also have $\cc{S_1}{S_2::L}{r} \to^* \texttt{true}$.
@@ -558,6 +559,7 @@ This exhausts all possible cases and hence proves our theorem.
 The second property we are interested in is called \emph{progress}. This means that if the program passes through the compile time checker, we can always do a step in the semantics (or we are already in the skip state). %CITING TEST \cite{Arnold2007}
 
 \begin{theorem}
+\label{progress}
 If $\cc{S}{L}{s} ->^* \texttt{true}$, then $S = \texttt{skip}$ and $L = \texttt{Nil}$ or we have $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$ for some $S'$, $L'$ and $s'$.
 \end{theorem}
 
