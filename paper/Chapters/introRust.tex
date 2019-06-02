@@ -1,11 +1,11 @@
 This chapter provides an introduction to Rust, specifically to the features that are considered interesting for this thesis. 
 
-Rust is an imperative programming language, with some functional aspects. The language coins similarities to C and especially C++, but is different in that it claims to provide memory safety whereas C and C++ do not. One of the most important concepts in this \emph{RAII}, which stands for Resource Acquisition Is Initialization. 
+Rust is an imperative programming language, with some functional and object orientated aspects. The language has similarities to C and especially C++, but is different in that it claims to provide memory safety whereas C and C++ do not. One of the most important concepts in this \emph{RAII}, which stands for Resource Acquisition Is Initialization. This term was first by \cite{stroustrup1994design} about the design of C++.
 
-The idea behind RAII is that a resource is allocated during the creation (initialization) of the data and a resource is deallocated during the the destruction of the data. This makes that makes that as long the programmer does not ``lose'' the data, there are no memory leaks. To help the programmer do this, there are several important terms/concepts which will be discussed here. We start with \textbf{ownership} and \textbf{borrowing}. At the end of this chapter, we briefly also discuss \textbf{lifetimes}, as this is an important aspect of memory safety in Rust. This will only very briefly return in the rest of this thesis. 
+The idea behind RAII is that a resource (a piece of memory) is allocated during the creation (initialization) of the data/variable and a resource is deallocated during the the destruction of the data/variable. This makes that makes that as long the programmer does not ``lose'' the data, there are no memory leaks. To help the programmer do this, there are several important terms/concepts which will be discussed here. We start with \textbf{ownership} and \textbf{borrowing}. At the end of this chapter, we briefly also discuss \textbf{lifetimes}, as this is an important aspect of memory safety in Rust. This will only very briefly return in the rest of this thesis. 
 
 \section{Ownership} %http://theburningmonk.com/2015/05/rust-memory-safety-without-gc/
-Since variables are in charge of freeing their own resources, resources must have exactly one owner. This way, a resource cannot be freed more than once by different owners or left to dangle if there are no owners at all. This concept is called \textbf{ownership} in Rust terminology. 
+Since variables are in charge of freeing their own resources, resources must have exactly one owner. Otherwise, a resource could be freed more than once by different owners or left to dangle if there are no owners at all. This concept is called \textbf{ownership} in Rust terminology. 
 
 Of course, when programming, this is not very helpful. Sometimes you would want a variable to have the information from another variable, for example. So you need to access this variable, but then there are two owners, which is not allowed. Luckily, there are several ways in Rust to deal with this. The most basic is moving the ownership of a variable. In Rust, this is called a \textbf{move}. After moving the ownership, the previous owner can no longer use the resource. 
 
@@ -80,7 +80,7 @@ println!("vector[0] + vector[1] = {}", vector[0] + vector[1]);
 This is allowed and compiles. 
 
 \subsection{Rules for borrowing}
-So this begs the question why would you not simply always use borrowing instead of moving the ownership? But if you do that, why does Rust have borrowing in the first place? The answer here is that it is not always possible to borrow a variable. There are several rules for when you can use borrowing. These rules were introduced to eliminate data races. 
+So this begs the question why would you not simply always use borrowing instead of moving the ownership? But if you do that, why does Rust have moving in the first place? The answer here is that it is not always possible to borrow a variable. There are several rules for when you can use borrowing. These rules were introduced to eliminate data races. 
 \begin{enumerate}[noitemsep]
     \item The scope of the borrower cannot outlast the scope of the original owner
 \item Only one of the following can be true at any moment:
