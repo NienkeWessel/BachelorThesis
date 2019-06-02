@@ -1,0 +1,29 @@
+In this chapter, we will briefly look at some other extensions that could be done to our language. This will mostly be informal and `quick-and-dirty', just to give the reader an idea of how what we have done here could be expanded. 
+
+\section{While}
+It is interesting to add some form of looping, as that makes it for example possible for a program to not ever finish. As said in the introduction of this thesis, we want the compile time check to always finish, even if the program itself does not finish. 
+
+For example, the very simple program 
+
+\begin{minted}[linenos, frame=lines]{rust}
+fn main() {
+    while true {
+        print!("Hello world!")
+    }
+}
+\end{minted}
+
+produces no error. \footnote{It does give the warning \texttt{denote infinite loops with `loop { ... }`}, but as said in the introduction, we will only be trying to model actual errors.}
+
+If we add while-loops to our syntax, we get 
+
+\begin{definition}
+\label{statementswhile}
+A statement $S$ is defined recursively by:
+$$S ::= \textrm{skip} \mid S_1; S_2 \mid a: \textrm{let } x:\tau \textrm{ in } S' \mid x := e \mid \texttt{while } b \{ S' \}$$
+where $e$ is an expression, $\tau$ is a type and $S_1$, $S_2$ and $S'$ are again statements.
+\end{definition}
+
+We will not formally define booleans here, but just use them. We refer the interested reader to \cite{nielson1992semantics}.
+
+
