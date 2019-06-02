@@ -92,7 +92,7 @@ So this begs the question why would you not simply always use borrowing instead 
 
 Rule 1. is there to make sure the original owner is able to clean up the resource without problems when done. The second rule is there to eliminate data races. 
 
-For a data race, you need to have two pointers to the same piece of memory and at least one of them is writing to that resource, while the operations are not synchronized. By following the second rule for borrowing, one makes sure a data race cannot exist. If the first part of the second rule holds, the shared resource cannot be written to, as it is immutable. If the the second part of the second rule is true, there are no two pointers in the first place. 
+For a data race, you need to have two pointers to the same piece of memory and at least one of them is writing to that resource, while the operations are not synchronized. By following the second rule for borrowing, one makes sure a data race cannot exist. If the first part of the second rule holds, the shared resource cannot be written to, as it is immutable. If the the second part of the second rule is true, there are no two pointers in the first place. For a more semantic justification of these rules/this idea, we refer to \cite{boyland2003checking}.
 
 This means that the following piece of code is allowed (multiple borrows to one owner):
 
