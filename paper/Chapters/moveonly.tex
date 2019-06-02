@@ -537,8 +537,12 @@ We will show termination by proving that with every step from \ref{compiletimech
 As every one of these steps shows a decrease in the length, we can conclude that the derivation must terminate (by the reasoning explained above).
 \end{proof}
 
-We now move on to the more interesting proofs where we will actually proof some memory safety properties. 
-The first one is \emph{preservation}, where we will show that if the compile time checker says a program is okay, and you take a step in the semantics, the checker will say it is still okay. In general this means that the result of the checker does not depend on where you are in the program and does not change throughout running the program. 
+
+\subsection{Memory safety}
+We now move on to the more interesting proofs where we will actually proof some memory safety properties. Here, we apply an idea originally introduced by \cite{wright1994syntactic} in a slightly different context. The original idea is that when you have a type system, you prove \emph{preservation} and \emph{progress}, and that this combines to safety. However, in our case, we do not have a type system, but we do have our compile time checker. The following pages detail these proves.
+
+\subsubsection*{Preservation}
+The first thing we will prove is \emph{preservation}, where we will show that if the compile time checker says a program is okay, and you take a step in the semantics, the checker will say it is still okay. In general this means that the result of the checker does not depend on where you are in the program and does not change throughout running the program. 
 
 \begin{theorem}
 \label{preservation}
@@ -556,7 +560,8 @@ We assume $\cc{S}{L}{s} \to ^* \texttt{true}$. We look at the different possible
 This exhausts all possible cases and hence proves our theorem.
 \end{proof}
 
-The second property we are interested in is called \emph{progress}. This means that if the program passes through the compile time checker, we can always do a step in the semantics (or we are already in the skip state). %CITING TEST \cite{Arnold2007}
+\subsubsection{Progress}
+The second property we are interested in is called \emph{progress}. This means that if the program passes through the compile time checker, we can always do a step in the semantics (or we are already in the skip state). 
 
 \begin{theorem}
 \label{progress}
@@ -578,7 +583,7 @@ We assume $\cc{S}{L}{s} ->^* \texttt{true}$. We look at the possible derivation 
 This exhausts all possible cases and hence proves the theorem.
 \end{proof}
 
-
+ 
 %\begin{theorem}
 %If $\mathcal{C}( S, L, r) = r'$ for some $r' \in \textbf{RState}$, then 
 %\end{proposition}
