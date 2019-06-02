@@ -91,20 +91,25 @@ Marc \textsc{Schoolderman} \\% Supervisor's Name
 \abstract{Test}
 
 \chapter*{Preface}
+\addcontentsline{toc}{chapter}{Preface}
 \input{Chapters/preface}
 
 \tableofcontents
 
 \chapter{Introduction}
+\label{Introduction}
 \input{Chapters/introduction}
 
 \chapter{Rust}
+\label{Rust}
 \input{Chapters/introRust}
 
 \chapter{Moving}
+\label{Moving}
 \input{Chapters/moveonly}
 
 \chapter{Borrowing}
+\label{Borrowing}
 \input{Chapters/borrow}
 
 %\chapter{Syntax}
@@ -117,13 +122,16 @@ Marc \textsc{Schoolderman} \\% Supervisor's Name
 %\input{Chapters/types}
 
 \chapter{Conclusion and discussion}
+\label{Conclusion}
 \input{Chapters/discussion}
 
 %\chapter{Conclusion}
 %\input{Chapters/conclusion}
 
+\newpage
+\addcontentsline{toc}{chapter}{Bibliography}
 \bibliography{bibli}
-\bibliographystyle{plain}
+\bibliographystyle{apalike}
 
 
 \end{document}
