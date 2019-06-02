@@ -327,6 +327,16 @@ We define the function $\mathcal{B}: \textbf{Exp} \to \mathcal{P}(\textbf{Var})$
 \end{definition}
 
 \begin{definition}
+We define the function $\mathcal{C}: \textbf{Exp} \to \mathcal{P}(\textbf{Var})$ recursively by:
+\begin{align*}
+    \mathcal{C}(i)          &= \{ x \}
+\\  \mathcal{C}(x)          &= \emptyset
+\\  \mathcal{C}(e_1 + e_2)  &= \mathcal{V}(e_1) \cup \mathcal{V}(e_2)
+\\  \mathcal{C}(\& x)       &= \{ x \}
+\end{align*}
+\end{definition}
+
+\begin{definition}
 The evaluation function $\mathcal{A}: \textbf{Exp} \times \textbf{State} \to \mathbb{Z}_{ext}$ is defined by:
 \begin{align*}
     \letterfunc{A}{i}s          &= \letterfunc{N}{i}
@@ -392,8 +402,8 @@ The \emph{compile time checker} is a derivation system that has the following ru
 \ccb{\texttt{skip}}{P::L}{r}{M}       & \to \ccb{P}{L}{r}{M}  \\
 \ccb{S_1; S_2}{L}{r}{M}                 & \to \ccb{S_1}{S_2::L}{r}{M}  \\
 \ccb{x:=e}{L}{r}{M}                     & \to \ccb{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]}{M[\forall \textit{y} \in B(\textit{e}), \textit{y}\mapsto M(\textit{y})\cup \{\texttt{bor} \} ][\textit{x} \mapsto M(\textit{x}) \cup B(\textit{e})]} \\
-                                    & \textrm{if } \texttt{mut} \in \mathcal{M}(x), r(x) = \perp \textrm{ or } r(x) = \star, \\ &  \forall y \in \mathcal{V}(e) \cup \mathcal{B}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
-                                    & \textrm{if } \neg \texttt{mut} \in \mathcal{M}(x), r(x) = \perp,  \\ & \forall y \in \mathcal{V}(e) \cup \mathcal{B}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
+                                    & \textrm{if } \texttt{mut} \in \mathcal{M}(x), r(x) = \perp \textrm{ or } r(x) = \star, \\ &  \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
+                                    & \textrm{if } \neg \texttt{mut} \in \mathcal{M}(x), r(x) = \perp,  \\ & \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
                                     & \to \texttt{false} \textrm{ otherwise}\\
 \ccb{\letm{x}{S}}{L}{r}{M} & \to \ccb{S}{(x,r(x),\mathcal{M}(x))::L}{r[x\mapsto \perp]}{M} \\
 \ccb{\letmut{x}{S}}{L}{r}{M} & \to \ccb{S}{(x,r(x),\mathcal{M}(x))::L}{r[x\mapsto \perp]}{M[\texttt{x}\mapsto\{\texttt{mut}\}]} \\
@@ -415,7 +425,7 @@ This proof is almost completely similar to that of \ref{termination}, if we defi
 
 \begin{theorem}
 \label{preservationb}
-If $\cc{S}{L}{r}{M} \to ^* \texttt{true}$ and $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$ with $r$ equivalent to $s$, then there is an $r'$ that is equivalent to $s'$ and we have $\ccb{S'}{L'}{r'}{M'} \to ^* \texttt{true}$.
+If $\ccb{S}{L}{r}{M} \to ^* \texttt{true}$ and $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$ with $r$ equivalent to $s$, then there is an $r'$ that is equivalent to $s'$ and we have $\ccb{S'}{L'}{r'}{M'} \to ^* \texttt{true}$.
 \end{theorem}
 
 \begin{proof}
