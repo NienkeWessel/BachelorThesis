@@ -64,14 +64,13 @@ The \emph{compile time checker} is a derivation system that has the following ru
 \ccwhile{\texttt{skip}}{P::L}{r}{M}{b}      & \to \ccwhile{P}{L}{r}{M}{b}  \\
 \ccwhile{S_1; S_2}{L}{r}{M}{b}                 & \to \ccwhile{S_1}{S_2::L}{r}{M}{b}  \\
 \ccwhile{x:=e}{L}{r}{M}{b}                    & \to \ccwhile{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]}{M[\forall \textit{y} \in B(\textit{e}), \textit{y}\mapsto M(\textit{y})\cup \{\texttt{bor} \} ][\textit{x} \mapsto M(\textit{x}) \cup B(\textit{e})]}{b} \\
-                                    & \textrm{if } \neg b, \texttt{mut} \in \mathcal{M}(x), r(x) = \perp \textrm{ or } r(x) = \star, \\ &  \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
+                                    & \textrm{if } \neg b, \texttt{mut} \in \mathcal{M}(x), r(x) = & \perp \textrm{ or } r(x) = \star, \\ &  \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
                                     & \textrm{if } \neg b, \neg \texttt{mut} \in \mathcal{M}(x),  r(x) = \perp,  \\ & \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
                                     & \textrm{if } b, \texttt{mut} \in \mathcal{M}(x), r(x) = \perp \textrm{ or } r(x) = \star, \forall y \in \mathcal{C}(e), r(y) = \star, \mathcal{B}(e) = \emptyset \textrm{ and } \mathcal{V}(e) = \emptyset \\
                                     & \to \texttt{false} \textrm{ otherwise}\\
 \ccwhile{\letm{x}{S}}{L}{r}{M}{b} & \to \ccwhile{S}{(x,r(x),\mathcal{M}(x))::L}{r[x\mapsto \perp]}{M}{b} \\
 \ccwhile{\letmut{x}{S}}{L}{r}{M}{b} & \to \ccwhile{S}{(x,r(x),\mathcal{M}(x))::L}{r[x\mapsto \perp]}{M[\texttt{x}\mapsto\{\texttt{mut}\}]}{b} \\
 \ccwhile{(x,v,m)}{L}{r}{M}{b}                    & \to \ccwhile{\texttt{skip}}{L}{r[x \mapsto v]}{M[\forall \textit{y} \in M(\textit{x})\cap\textbf{Var}, \textit{y} \mapsto M(\textit{y}) \setminus \{\texttt{bor}\}][\texttt{x} \mapsto \textrm{m}]}{b} \\
-
 \ccwhile{\whi{S}}{L}{r}{M}{b} & \to \ccwhile{S}{(b)::L}{r}{M}{\texttt{true}} \\
 \ccwhile{(b')}{L}{r}{M}{b} & \to \ccwhile{\texttt{skip}}{L}{r}{M}{b'}
 \end{align*}
@@ -88,7 +87,7 @@ If $\ccwhile{S}{L}{r}{M}{b} \to ^* \texttt{true}$ and $\sosb{S}{L}{s}{M} \Righta
 \begin{proof}
 We assume $\soswhile{S}{L}{s}{M}{b} \Rightarrow \sosb{S'}{L'}{s'}{M'}{b'}$. We look at the different possible rules $\Rightarrow$. 
 \begin{itemize}[noitemsep]
-    \item $\sosb{\whi{S'}}{L}{s}{M} \Rightarrow \sosb{S'}{\whi{S'}::L}{s}{M}$. We assume $\ccwhile{\whi{S'}}{L}{r}{M}{b} \to ^* \texttt{true}$. We look at the possible derivation steps that could have let to \texttt{true}. The only possible step is 
+    \item Klopt echt voor geen meter.... $\sosb{\whi{S'}}{L}{s}{M} \Rightarrow \sosb{S'}{\whi{S'}::L}{s}{M}$. We assume $\ccwhile{\whi{S'}}{L}{r}{M}{b} \to ^* \texttt{true}$. We look at the possible derivation steps that could have let to \texttt{true}. The only possible step is 
     $$\ccwhile{\whi{S}}{L}{r}{M}{b} & \to \ccwhile{S}{(b)::L}{r}{M}{\texttt{true}}$$
     This gives us our $r$ and obviously makes $ \ccwhile{S}{(b)::L}{r}{M}{\texttt{true}} \to \texttt{true}$. 
     \item $\sosb{\whi{S'}}{L}{s}{M} \Rightarrow \sosb{\texttt{skip}}{L}{s}{M}$. This case is analogous.
