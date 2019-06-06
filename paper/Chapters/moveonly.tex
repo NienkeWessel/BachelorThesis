@@ -570,14 +570,9 @@ If $\cc{S}{L}{r} ->^* \texttt{true}$, then $S = \texttt{skip}$ and $L = \texttt{
 
 \begin{proof}
 We assume $\cc{S}{L}{s} ->^* \texttt{true}$. We look at the possible derivation steps that could have led to this form. 
-\begin{itemize}
+\begin{itemize}[noitemsep]
     \item $\cc{\texttt{skip}}{\texttt{Nil}}{r} \to \texttt{true}$. This means $S = \texttt{skip}$ and $L = \texttt{Nil}$ and that means we are done.
-    \item $\cc{\texttt{skip}} {P::L}{ r} \to \cc{P}{L}{r}$. This means we have $\sosb{\texttt{skip}}{P::L}{s}$ for any $s$ equivalent to $r$ and we can apply the rule [load$_{\textrm{os}}$]. This gives us $\sosb{\texttt{skip}}{P::L}{s} \Rightarrow \sosb{P}{L}{s}$, which proves this case. 
-    %\item $\cc{S_1; S_2}{L}{r} \to \cc{S_1}{S_2::L}{r}$
-    %\item $\cc{x:=e}{L}{r} \to \cc{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]} \textrm{ if }r(x) = \perp \textrm{ and } \forall y \in \mathcal{V}(e), r(y) = \star$
-    %\item $\cc{x:=e}{L}{r} \to \texttt{false} \textrm{  if the conditions in the previous item don't apply}$. This is in contradiction with our assumption, so this rule is not possible. 
-    %\item $\cc{\letm{x}{S}}{L}{r} \to \cc{S}{(x,r(x))::L}{r[x\mapsto \perp]}$
-    %\item $\cc{(x,v)}{L}{r} \to \cc{\texttt{skip}}{L}{r[x \mapsto v]}$
+    \item $\cc{\texttt{skip}} {P::L}{ r} \to \cc{P}{L}{r}$. This means we have $\sos{\texttt{skip}}{P::L}{s}$ for any $s$ equivalent to $r$ and we can apply the rule [load$_{\textrm{os}}$]. This gives us $\sos{\texttt{skip}}{P::L}{s} \Rightarrow \sos{P}{L}{s}$, which proves this case. 
      \item The other cases are similar. \emph{Might add them later.}
 \end{itemize}
 This exhausts all possible cases and hence proves the theorem.
