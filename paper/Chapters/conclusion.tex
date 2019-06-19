@@ -57,34 +57,43 @@ This program gives the error \texttt{re-assignment of immutable variable `x}.
 
 So we will have to keep track of whether we are in a while loop or not. We can do that for example by adding and extra little bit of information to our derivation system, so that our derivation system has rules of the form 
 
-$$\ccwhile{S}{L}{s}{M}{b} \to \ccwhile{S'}{L'}{s'}{M'}{b'}$$
+$$\ccwhile{S}{L}{s}{M}{c} \to \ccwhile{S'}{L'}{s'}{M'}{c'}$$
 
-where $b$ and $b'$ are booleans that are either \texttt{true} or \texttt{false}. We use the boolean to indicate whether we are in a while loop or not. 
+We use the boolean to indicate whether we are in a while loop or not, but more about that later. 
 
-As a compile time checker, we would have something like in the following definition. 
-\begin{definition}
-\label{compiletimecheckerwhile}
-The \emph{compile time checker} is a derivation system that has the following rules
-\begin{align*}
-\ccwhile{\texttt{skip}}{\texttt{Nil}}{r}{M}{b} & \to \texttt{true}  \\
-\ccwhile{\texttt{skip}}{P::L}{r}{M}{b}      & \to \ccwhile{P}{L}{r}{M}{b}  \\
-\ccwhile{S_1; S_2}{L}{r}{M}{b}                 & \to \ccwhile{S_1}{S_2::L}{r}{M}{b}  \\
-\ccwhile{x:=e}{L}{r}{M}{b}                    & \to \ccwhile{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]}{M[\forall \textit{y} \in B(\textit{e}), \textit{y}\mapsto M(\textit{y})\cup \{\texttt{bor} \} ][\textit{x} \mapsto M(\textit{x}) \cup B(\textit{e})]}{b} \\
-                                    & \textrm{if } \neg b, \texttt{mut} \in \mathcal{M}(x), r(x) = & \perp \textrm{ or } r(x) = \star, \\ &  \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
-                                    & \textrm{if } \neg b, \neg \texttt{mut} \in \mathcal{M}(x),  r(x) = \perp,  \\ & \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
-                                    & \textrm{if } b, \texttt{mut} \in \mathcal{M}(x), r(x) = \perp \textrm{ or } r(x) = \star, \forall y \in \mathcal{C}(e), r(y) = \star, \mathcal{B}(e) = \emptyset \textrm{ and } \mathcal{V}(e) = \emptyset \\
-                                    & \to \texttt{false} \textrm{ otherwise}\\
-\ccwhile{\letm{x}{S}}{L}{r}{M}{b} & \to \ccwhile{S}{(x,r(x),\mathcal{M}(x))::L}{r[x\mapsto \perp]}{M}{b} \\
-\ccwhile{\letmut{x}{S}}{L}{r}{M}{b} & \to \ccwhile{S}{(x,r(x),\mathcal{M}(x))::L}{r[x\mapsto \perp]}{M[\texttt{x}\mapsto\{\texttt{mut}\}]}{b} \\
-\ccwhile{(x,v,m)}{L}{r}{M}{b}                    & \to \ccwhile{\texttt{skip}}{L}{r[x \mapsto v]}{M[\forall \textit{y} \in M(\textit{x})\cap\textbf{Var}, \textit{y} \mapsto M(\textit{y}) \setminus \{\texttt{bor}\}][\texttt{x} \mapsto \textrm{m}]}{b} \\
-\ccwhile{\whi{S}}{L}{r}{M}{b} & \to \ccwhile{S}{(b)::L}{r}{M}{\texttt{true}} \\
-\ccwhile{(b')}{L}{r}{M}{b} & \to \ccwhile{\texttt{skip}}{L}{r}{M}{b'}
-\end{align*}
-\end{definition}
-This definition honors that there should be no immutable assignment within a loop, as that would make it possible for an assignment to happen multiple times. Also, when entering a while loop, the boolean will be updated to state that we are in a while loop. At the end of the while loop, the boolean will have to be set back to what it was before. We cannot simply put it to \texttt{false}, as that we might have a while loop within a while loop. 
+We will not provide a complete definition for the whole checker, but will sketch what this definition will have to keep track off. 
+%\begin{definition}
+%\label{compiletimecheckerwhile}
+%The \emph{compile time checker} is a derivation system that has the following rules
+%\begin{align*}
+%\ccwhile{\texttt{skip}}{\texttt{Nil}}{r}{M}{b} & \to \texttt{true}  \\
+%\ccwhile{\texttt{skip}}{P::L}{r}{M}{b}      & \to \ccwhile{P}{L}{r}{M}{b}  \\
+%\ccwhile{S_1; S_2}{L}{r}{M}{b}                 & \to \ccwhile{S_1}{S_2::L}{r}{M}{b}  \\
+%\ccwhile{x:=e}{L}{r}{M}{b}                    & \to \ccwhile{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]}{M[\forall \textit{y} \in B(\textit{e}), \textit{y}\mapsto M(\textit{y})\cup \{\texttt{bor} \} ][\textit{x} \mapsto M(\textit{x}) \cup B(\textit{e})]}{b} \\
+%                                    & \textrm{if } \neg b, \texttt{mut} \in \mathcal{M}(x), r(x) = %& \perp \textrm{ or } r(x) = \star, \\ &  \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
+%                                    & \textrm{if } \neg b, \neg \texttt{mut} \in \mathcal{M}(x),  r(x) = \perp,  \\ & \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
+%                                    & \textrm{if } b, \texttt{mut} \in \mathcal{M}(x), r(x) = \perp \textrm{ or } r(x) = \star, \forall y \in \mathcal{C}(e), r(y) = \star, \mathcal{B}(e) = \emptyset \textrm{ and } \mathcal{V}(e) = \emptyset \\
+%                                    & \to \texttt{false} \textrm{ otherwise}\\
+%\ccwhile{\letm{x}{S}}{L}{r}{M}{b} & \to \ccwhile{S}{(x,r(x),\mathcal{M}(x))::L}{r[x\mapsto \perp]}{M}{b} \\
+%\ccwhile{\letmut{x}{S}}{L}{r}{M}{b} & \to \ccwhile{S}{(x,r(x),\mathcal{M}(x))::L}{r[x\mapsto \perp]}{M[\texttt{x}\mapsto\{\texttt{mut}\}]}{b} \\
+%\ccwhile{(x,v,m)}{L}{r}{M}{b}                    & \to \ccwhile{\texttt{skip}}{L}{r[x \mapsto v]}{M[\forall \textit{y} \in M(\textit{x})\cap\textbf{Var}, \textit{y} \mapsto M(\textit{y}) \setminus \{\texttt{bor}\}][\texttt{x} \mapsto \textrm{m}]}{b} \\
+%\ccwhile{\whi{S}}{L}{r}{M}{b} & \to \ccwhile{S}{(b)::L}{r}{M}{\texttt{true}} \\
+%\ccwhile{(b')}{L}{r}{M}{b} & \to \ccwhile{\texttt{skip}}{L}{r}{M}{b'}
+%\end{align*}
+%\end{definition}
+First of all, we need to make sure that the compile time checker does not actually run through the while loop, as this might result in an infinite loop, while the checker itself should always finish. This calls for a rule of form similar to
 
-Now as for memory safety, this is a bit more difficult. Where previously, each semantic rule had a compile time check equivalent, which made proofs easy, we now have a more difficult situation where this is not the case. That is why we did not have the time to finish the proofs in this thesis. We will provide a brief sketch of the problems. 
+$$\ccwhile{\whi{S}}{L}{r}{M}{c} \to \ccwhile{S}{\texttt{dec}::L}{r}{M}{c+1}$$
 
+It is important that there should be no immutable assignment within a loop, as that would make it possible for an assignment to happen multiple times. As we saw before, the compile checker of the actual Rust Programming Language does not keep track of whether an assignment actually will happen multiple times, so  neither do we. This simplifies the process. 
+
+We will need some way to keep track of whether we are in a while loop. Our proposal is to add an extra variable, a counter, in the tuple that will be incremented once we enter a while loop and decremented once we exit the while loop. If the compile time checker comes accross an immutable assignment when the counter is strict larger than zero, it should reject the program. 
+
+The compile time checker pushes a decrease opertaion to our stack/list to make sure that after the while loop finishes, the counter will be reduced by one. 
+
+We need a counter and cannot simply do with for example a boolean, as there might be multiple nested while loops. After the inner while loop, you might naively put the boolean to false when you finish, but then this would not be correct as you are still in the outer while loops. You could make an extra program instruction with the value of the boolean when you enter the loop to keep track of what it was, but this is extra bookkeeping and more difficult than our proposed solution.
+
+The progress and preservation proofs get more complicated when we add while loops to our language. This is because our semantic rules no longer match as perfect with our compile time check anymore as in the previous chapters. This will mean we will have to do some extra work, or adjust our theorems. The compile time checker has an instruction that is not included in the semantics, so that we will need to adjust for that. 
 
 \subsection{Lifetimes}
 Due to time constraints, we did not really include lifetimes in this thesis. We mostly used scope properties instead of the lifetimes themselves. A more elaborate research should look into how to incorporate lifetimes in the current semantics. This would include choosing a suitable mathematical representation for lifetimes. 
@@ -94,5 +103,5 @@ A possible choice would be to make lifetimes a lattice. Not all lifetimes are ne
 Later research could look into this possibility. 
 
 \subsection{Functions}
-To make a usuable programming language, functions are very important. It seems likely that lifetimes will be needed to make a successful semantic implementation of this. 
+To make a usuable programming language, functions are very important. From chapter \ref{Rust}, it seems likely that lifetimes will be needed to make a successful semantic implementation of this. Future research could look into this. 
 
