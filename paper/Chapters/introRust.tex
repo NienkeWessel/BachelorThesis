@@ -136,8 +136,8 @@ fn function(v : &Vec<i32>, w : &Vec<i32>) -> &Vec<i32>{
 }
 
 let vector = vec![37, 42];
-let wector = vec![42, 37];
-let f = function(&vector, &wector);
+let another_vector = vec![42, 37];
+let f = function(&vector, &another_vector);
 println!("f[0] + f[1] = {}", f[0] + f[1]);
 \end{minted}
 
@@ -158,8 +158,8 @@ fn function<'a>(v : &'a Vec<i32>, w : &'a Vec<i32>) -> &'a Vec<i32>{
 }
 
 let vector = vec![37, 42];
-let wector = vec![42, 37];
-let f = function(&vector, &wector);
+let another_vector = vec![42, 37];
+let f = function(&vector, &another_vector);
 println!("f[0] + f[1] = {}", f[0] + f[1]);
 \end{minted}
 
@@ -181,8 +181,8 @@ fn function<'a>(v : &'a Vec<i32>, w : &'a Vec<i32>) -> &'a Vec<i32>{
 
 let vector = vec![37, 42];
 {
-    let wector = vec![42, 37];
-    let f = function(&vector, &wector);
+    let another_vector = vec![42, 37];
+    let f = function(&vector, &another_vector);
     println!("f[0] + f[1] = {}", f[0] + f[1]);
 }
 \end{minted}
@@ -201,13 +201,13 @@ fn function<'a>(v : &'a Vec<i32>, w : &'a Vec<i32>) -> &'a Vec<i32>{
 let vector = vec![37, 42];
 let f;
 {
-    let wector = vec![42, 37];
-    f = function(&vector, &wector);
+    let another_vector = vec![42, 37];
+    f = function(&vector, &another_vector);
 }
 println!("f[0] + f[1] = {}", f[0] + f[1]);
 \end{minted}
 
-So now we declare \verb|f| before we declare the vector \verb|wector|, which means \verb|f| will live longer than \verb|wector|. If \verb|f| then points to \verb|wector|, because \verb|wector| was returned in the function, this would cause a problem, which is why this will give a compile time error \texttt{error: `wector` does not live long enough}. We, as humans, can see that there will be no problem if you do run the code, since \verb|function| will return \verb|vector| and not \verb|wector|. The Rust compiler, however, still does not allow it. 
+So now we declare \verb|f| before we declare the vector \verb|another_vector|, which means \verb|f| will live longer than \verb|another_vector|. If \verb|f| then points to \verb|another_vector|, because \verb|another_vector| was returned in the function, this would cause a problem, which is why this will give a compile time error \texttt{error: `another_vector` does not live long enough}. We, as humans, can see that there will be no problem if you do run the code, since \verb|function| will return \verb|vector| and not \verb|another_vector|. The Rust compiler, however, still does not allow it. 
 
 \subsection{Lifetime elision}
 As mentioned above, in some cases you don't need to state the lifetimes explicitly. The compiler can infere the lifetimes in these cases. This is called \textbf{elision}. As of now, there are only very few specific cases in which the compiler can infere the lifetimes. It is certainly possible that the amount of cases in which this can be done grows as newer versions of the language are made available. In the earlier versions of the language, there we no cases at all in which lifetimes were elided. 
