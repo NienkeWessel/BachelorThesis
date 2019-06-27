@@ -57,13 +57,13 @@ In this chapter we will look at two types of semantics. The first is a big step 
 
 Our big step semantics is called `natural semantics'. Its rules are of the form: 
 
-$$\langle S, s \rangle \to s'$$
+$$\ns{S}{s}{s'}$$
 
 Where $S$ is a statement as defined in the previous section. $s$ and $s'$ are states, for which an exact definition will be given shortly. 
 
 Our small step semantics is called `structural operational semantics'. Its rules are of the form:
 
-$$\langle S, L, s \rangle \Rightarrow \langle S', L', s' \rangle$$
+$$\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$$
 
 Where $S$, $S'$ and $s$, $s'$ are again statements and states respectively. $L$ and $L'$ are lists of program parts, which will also be defined later on. 
 
@@ -147,7 +147,7 @@ We now have sufficient apparatus to continue with the actual semantic rules.
 
 \section{Semantics: Big step}
 As mentioned earlier on, our big step semantics are called natural semantics with rules of the form 
-$$\langle S, s \rangle \to s'$$
+$$\ns{S}{s}{s'}$$
 
 Where $S$ is a statement and $s$, $s'$ are states. We now know what that means, so we can start to define our actual rules. 
 
@@ -173,7 +173,7 @@ We define the following natural semantics rules (name on the left)
 \DisplayProof \medskip& \\
 
 [ass$_{\textrm{ns}}$] &
-\centering $\ns{\texttt{x = }e}{s}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$ & if $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e}s \neq \perp$ and $\letterfunc{A}{e}s \neq -$\medskip\\
+\centering $\ns{x = e}{s}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$ & if $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e}s \neq \perp$ and $\letterfunc{A}{e}s \neq -$\medskip\\
 \end{tabular} 
 Where $\mathcal{V}(e)\mapsto-$ is an abbreviation for `for all $x \in \mathcal{V}(e)$, $x \mapsto -$'.
 \end{definition} 
@@ -199,7 +199,7 @@ For every statement $S$, every state $s, s', s''$, if $\ns{S}{s}{s'}$ and $\ns{S
 The proof proceeds by induction on the structure of $S$. We distinguish the following cases:
 \begin{itemize}[noitemsep]
     \item $S$ = \texttt{skip} : if $\ns{\texttt{skip}}{s}{s'}$ and $\ns{\texttt{skip}}{s}{s''}$, then this can only be achieved by [skip$_{\textrm{ns}}$], which means $s=s'$ and $s=s''$, so $s' = s''$. 
-    \item $S = \texttt{x = }e$ : if $\ns{\texttt{x = }e}{s}{s'}$ and $\ns{\texttt{x = }e}{s}{s''}$, then the rule that must have been applied is [ass$_{\textrm{ns}}$]. This means $s'= s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$ and $s''=s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$, so $s'=s''$.
+    \item $S = x = e$ : if $\ns{x = e}{s}{s'}$ and $\ns{x = e}{s}{s''}$, then the rule that must have been applied is [ass$_{\textrm{ns}}$]. This means $s'= s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$ and $s''=s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$, so $s'=s''$.
     \item $S = S_1; S_2$ : if $\ns{S_1;S_2}{s}{s'}$ and $\ns{S_1;S_2}{s}{s''}$, the rule that must have been applied is [comp$_{\textrm{ns}}$]. This gives us
     $$  \AxiomC{$\ns{S_1}{s}{s'''}$}
 \AxiomC{$\ns{S_2}{s'''}{s'}$}
@@ -242,7 +242,7 @@ The proof proceeds by induction on the structure of $S$. We distinguish the foll
 
     \item $S$ = \texttt{skip} : if $\ns{\texttt{skip}}{s}{s'}$, then this can only be achieved by [skip$_{\textrm{ns}}$], which means $s=s'$. Therefore if $\letterfunc{A}{x}s = -$ then $\letterfunc{A}{x}s' = -$. 
     
-    \item $S$ = \texttt{x = } $e$ : assume $\langle \texttt{x = } e, s \rangle \to s'$. Then the only rule that can have been applied is [ass$_{\textrm{ns}}$], so  $s'$ must be $s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$ and $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e}s \neq \perp$ and $\letterfunc{A}{e}s \neq -$. If one of these things had not been the case, we could not have applied any rules, and therefore our assumption `$\langle S, s \rangle \to s'$' would be false. So we can assume these things. Now we look at a variable $y$, chosen randomly. We distinguish two cases:
+    \item $S = x = e$ : assume $\ns{x = e}{s}{s'}$. Then the only rule that can have been applied is [ass$_{\textrm{ns}}$], so  $s'$ must be $s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$ and $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e}s \neq \perp$ and $\letterfunc{A}{e}s \neq -$. If one of these things had not been the case, we could not have applied any rules, and therefore our assumption `$\ns{S}{s}{s'}$' would be false. So we can assume these things. Now we look at a variable $y$, chosen randomly. We distinguish two cases:
     \begin{itemize}
         \item $x=y$ : if $\letterfunc{A}{x}s \not = -$ there is nothing to prove. So assume $\letterfunc{A}{x}s = -$. However, this is contradictory to our assumption. So this is not possible.
         \item $x\not = y$ : we again assume $\letterfunc{A}{y}s = -$, as otherwise there is nothing to prove. Then we can again distinguish two cases: 
@@ -251,21 +251,21 @@ The proof proceeds by induction on the structure of $S$. We distinguish the foll
             \item $y \not \in \mathcal{V}(e)$ : as $x \not = y$ and $y \not \in \mathcal{V}(e)$, the assignment of $y$ is not any different from $s$ in $s'=s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$, so $\letterfunc{A}{y}s' = -$
         \end{itemize}
     \end{itemize}
-    This exhausts all possible cases, so this proves the case $S$ = \texttt{x = } $e$.
+    This exhausts all possible cases, so this proves the case $S$ is of the form $x = e$.
     
-    \item  $S = \letm{x}{S}$ : assume $\ns{\letm{x}{S}}{s}{s'}$. Then the rule that has been aplied last must be [let$_{\textrm{ns}}$]. This has the following derivation tree \AxiomC{$\langle S, s[x\mapsto \perp] \rangle \to s''$}
+    \item  $S = \letm{x}{S}$ : assume $\ns{\letm{x}{S}}{s}{s'}$. Then the rule that has been aplied last must be [let$_{\textrm{ns}}$]. This has the following derivation tree \AxiomC{$\ns{S}{s[x\mapsto \perp]}{s''}$}
 \UnaryInfC{$\ns{\letm{x}{S}}{s}{s''[x \mapsto s(x)]}$}
 \DisplayProof
 . We again look at a random variable $y$ and assume $\letterfunc{A}{y}s' = -$ (otherwise we have nothing to prove). We again distinguish two cases:
     \begin{itemize}
         \item $x=y$ : then $s' = s''[x \mapsto s(x)]$. As $\letterfunc{A}{x}s = -$ and $x$ in $s''$ maps to $s(x)$, we can conclude $\letterfunc{A}{x}s'' = -$
-        \item $x\neq y$ : we are now interested in $\letterfunc{A}{y}s''$. However, we can apply the induction hypothesis to $\langle S, s[x\mapsto \perp] \rangle \to s''$ as $\letterfunc{A}{y}s[x\mapsto \perp] = \letterfunc{A}{y}s = -$. So $\letterfunc{A}{y}s'' = -$. As $s' = s''[x \mapsto s(x)]$, which changes nothing to the value of $y$, we can conclude $\letterfunc{A}{y}s' = -$
+        \item $x\neq y$ : we are now interested in $\letterfunc{A}{y}s''$. However, we can apply the induction hypothesis to $\ns{S}{s[x\mapsto \perp]}{s''}$ as $\letterfunc{A}{y}s[x\mapsto \perp] = \letterfunc{A}{y}s = -$. So $\letterfunc{A}{y}s'' = -$. As $s' = s''[x \mapsto s(x)]$, which changes nothing to the value of $y$, we can conclude $\letterfunc{A}{y}s' = -$
     \end{itemize}
-    \item $S$ = $S_1$; $S_2$ : assume $\langle S_1$; $S_2, s \rangle \to s'$ (Note the accents $'$). Then the last rule that has been applied must be [comp$_{\textrm{ns}}$], so that gives the following derivation tree \AxiomC{$\langle S_1, s \rangle \to s'' $}
-\AxiomC{$\langle S_2, s'' \rangle \to s'$}
-\BinaryInfC{$\langle S_1$; $S_2, s \rangle \to s'$}
+    \item $S$ = $S_1$; $S_2$ : assume $\ns{S_1;S_2}{s}{s'}$ (Note the accents $'$). Then the last rule that has been applied must be [comp$_{\textrm{ns}}$], so that gives the following derivation tree \AxiomC{$\ns{S_1}{s}{s''} $}
+\AxiomC{$\ns{S_2}{s''}{s'}$}
+\BinaryInfC{$\ns{S_1;S_2}{s}{s'}$}
 \DisplayProof .
-Now assume $x$ to be a random variable and $\letterfunc{A}{x}s = -$. We can apply the induction hypothesis to $\langle S_1, s \rangle \to s''$, so we know $\letterfunc{A}{x}s'' = -$. We can then again apply the induction hypothesis to $\langle S_2, s'' \rangle \to s'$. So we know $\letterfunc{A}{x}s' = -$, which was what was to be proven.
+Now assume $x$ to be a random variable and $\letterfunc{A}{x}s = -$. We can apply the induction hypothesis to $\ns{S_1}{s}{s''}$, so we know $\letterfunc{A}{x}s'' = -$. We can then again apply the induction hypothesis to $\ns{S_2}{s''}{s'}$. So we know $\letterfunc{A}{x}s' = -$, which was what was to be proven.
 \end{itemize} 
 This exhausts all possible shapes of our statement $S$, and hence proves the theorem.
 \end{proof}
@@ -308,7 +308,7 @@ We define the following semantic derivation rules (name on the left):
 \centering$\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}$ & \medskip\\
 
 [ass$_{\textrm{os}}$] &
-\centering $\sos{\texttt{x = } e}{L}{s} \Rightarrow \sos{\texttt{skip}}{L}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$ & \medskip\\
+\centering $\sos{x = e}{L}{s} \Rightarrow \sos{\texttt{skip}}{L}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$ & \medskip\\
 
 [let$_{\textrm{os}}$] &
 \centering $\sos{\letm{x}{S}}{L}{s} \Rightarrow \sos{S}{(x,s(x))::L}{s[x\mapsto \perp]}$ & \medskip\\
@@ -320,7 +320,7 @@ Where $\mathcal{V}(e)\mapsto-$ is an abbreviation for `for all $x \in \mathcal{V
 \end{definition} 
 Note that $\sos{\texttt{skip}}{\texttt{Nil}}{s}$ has no derivation; this is the/an end state. 
 
-We will be using $\langle S, L, s \rangle \Rightarrow ^{*} \langle S', L', s' \rangle$ to indicate we can go from $\langle S, L, s \rangle$ to $\langle S', L', s' \rangle$ in zero or more steps. We will be using $\langle S, L, s \rangle \Rightarrow ^{n} \langle S', L', s' \rangle$ with $n$ a natural number to indicate we can go from $\langle S, L, s \rangle$ to $\langle S', L', s' \rangle$ in exactly $n$ steps. In both cases, a step is one of the rules from definition \ref{os} .
+We will be using $\sos{S}{L}{s} \Rightarrow ^{*} \sos{S'}{L'}{s'}$ to indicate we can go from $\sos{S}{L}{s}$ to $\sos{S'}{L'}{s'}$ in zero or more steps. We will be using $\sos{S}{L}{s} \Rightarrow ^{n} \sos{S'}{L'}{s'}$ with $n$ a natural number to indicate we can go from $\sos{S}{L}{s}$ to $\sos{S'}{L'}{s'}$ in exactly $n$ steps. In both cases, a step is one of the rules from definition \ref{os} .
 
 
 \subsection{Properties of our semantic rules}
@@ -334,7 +334,7 @@ For every statement $S_1$, $S_2$, for every list $L$, for every state $s$, $s'$,
 \end{lemma}
 
 \begin{proof}
-Assume $\langle S_1; S_2, L, s \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $L, s' \rangle$. Now look at $\langle S_1; S_2, L, s \rangle$. We know there must be a derivation. The only possible rule is [comp$_{\textrm{os}}$], so we have $\langle S_1; S_2, L, s \rangle \Rightarrow \langle S_1, S_2::L, s \rangle$. Now we see that our list has grown by one item. However we know there is a derivation and it ends with the list $L$, instead of $S_2::L$. So at some point in the derivation the list must be reduced again. The only possible rule that could have done that is [load$_{\textrm{os}}$]. So we must have $\langle \texttt{skip} , S_2::L, s'' \rangle \Rightarrow \langle S_2, L, s'' \rangle$ at some point in the derivation. Therefore we have $\langle S_1; S_2, L, s \rangle \Rightarrow \langle S_1, S_2::L, s \rangle \Rightarrow ^{*} \langle \texttt{skip} , S_2::L, s'' \rangle \Rightarrow \langle S_2, L, s'' \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $L, s' \rangle$, which was to be proven.
+Assume $\sos{S_1; S_2}{L}{s } \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$. Now look at $\sos{S_1; S_2}{L}{s}$. We know there must be a derivation. The only possible rule is [comp$_{\textrm{os}}$], so we have $\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}$. Now we see that our list has grown by one item. However we know there is a derivation and it ends with the list $L$, instead of $S_2::L$. So at some point in the derivation the list must be reduced again. The only possible rule that could have done that is [load$_{\textrm{os}}$]. So we must have $\sos{\texttt{skip}}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''}$ at some point in the derivation. Therefore we have $\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$, which was to be proven.
 \end{proof}
 
 We will look at a similar lemma for the let statement:
@@ -360,10 +360,10 @@ We know that there must be a derivation from $\sos{S}{L'}{s}$ to $\sos{\texttt{s
 \begin{itemize}[noitemsep]
     \item $S = \texttt{skip}$ : then $\sos{\texttt{skip}}{L}{s}$ is already of the correct form, so we can evaluate to the desired state in zero steps, which proves this case. 
     
-    \item $S = \texttt{x = } e$ : assume $\sos{\texttt{x = } e}{L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'}$. Then we know the rule that must have been applied first is [ass$_{\textrm{os}}$], so we have 
-    $$\sos{\texttt{x = } e}{L'}{s} \Rightarrow \sos{\texttt{skip}}{L'}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$$
-    which is of the desired form. So it must be that $s' = s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$. Now we look at $\langle \texttt{x = } e, L, s \rangle$. The only rule we can apply is [ass$_{\textrm{os}}$], so we get 
-    $$\sos{\texttt{x = } e}{L}{s} \Rightarrow \sos{\texttt{skip}}{L}{s [x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$$
+    \item $S = x =  e$ : assume $\sos{x = e}{L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'}$. Then we know the rule that must have been applied first is [ass$_{\textrm{os}}$], so we have 
+    $$\sos{x = e}{L'}{s} \Rightarrow \sos{\texttt{skip}}{L'}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$$
+    which is of the desired form. So it must be that $s' = s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$. Now we look at $\sos{x = e}{L}{s}$. The only rule we can apply is [ass$_{\textrm{os}}$], so we get 
+    $$\sos{x = e}{L}{s} \Rightarrow \sos{\texttt{skip}}{L}{s [x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$$
     which is of the desired form, and has the right $s'$. This proves this case. 
     
     \item $S = (v,e)$ : assume $\sos{(v,e)}{L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'}$. Then we know the rule that must have been applied first was [set$_{\textrm{os}}$]. So we get
@@ -379,7 +379,7 @@ We know that there must be a derivation from $\sos{S}{L'}{s}$ to $\sos{\texttt{s
     $$\sos{S_2}{L}{s''} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$$
     That means we can form the derivation sequence $$\sos{S_1;S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L}{s''} $$ $$ \Rightarrow \sos{S_2}{L}{s''} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$$
     This gives us 
-    $$\langle S_1;S_2, L, s \rangle  \Rightarrow ^{*} \langle \texttt{skip}, L, s'\rangle$$
+    $$\sos{S_1;S_2}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$$
     which was to be proven. 
         
     \item $S = \letm{x}{S'}$ : assume $\sos{\letm{x}{S'}}{L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'}$. There is only one rule that could have been applied first, [let$_{\textrm{os}}$], which gives us 
@@ -422,7 +422,7 @@ For every statement $S$, every state $s, s', s''$, every list $L$, if $\sos{S}{L
 The proof proceeds by induction on the structure of $S$, the program instruction. We distinguish the following cases:
 \begin{itemize}[noitemsep]
     \item $S$ = \texttt{skip} : if $\sos{\texttt{skip}}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ and $\sos{\texttt{skip}}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$, then no steps have to be taken, or could have been taken, and we obviously have $s' = s''$.
-    \item $S = \texttt{x = } e$ : $\sos{\texttt{x = } e}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ and $\sos{\texttt{x = } e}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$, then the rule that must have been applied is [ass$_{\textrm{os}}$]. This means that exactly one step has been taken and that $s'=s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$ and $s'' = s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$, so $s' = s''$.
+    \item $S = x = e$ : $\sos{x= e}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ and $\sos{x = e}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$, then the rule that must have been applied is [ass$_{\textrm{os}}$]. This means that exactly one step has been taken and that $s'=s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$ and $s'' = s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$, so $s' = s''$.
     \item $S = (x,v)$ : if $\sos{(x,v)}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ and $\sos{(x,v)}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$, then the rule that must have been applied next is [set$_{\textrm{os}}$]. This means that exactly one step has been taken and that $s' = s[x\mapsto v]$ and $s'' = s[x\mapsto v]$, so $s' = s''$.
     \item $S = S_1; S_2$ : if $\sos{S_1; S_2}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ and $\sos{S_1; S_2}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$, then the only applicable rule is [comp$_{\textrm{os}}$]. This means that we have 
     $$\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$$
@@ -553,7 +553,7 @@ We assume $\cc{S}{L}{s} \to ^* \texttt{true}$. We look at the different possible
 \begin{itemize}
     \item $\sos{\texttt{skip}}{I::L}{s} \Rightarrow \sos{I}{L}{s}$. We assume $\cc{\texttt{skip}}{I::L}{r} \to ^* \texttt{true}$. We try to determine which derivation steps could have let to \texttt{true}. The only possible step is $\cc{\texttt{skip}}{I::L}{r}\to \cc{I}{L}{r}$. Then we have our $r' = r$, and obviously we also have $\cc{I}{L}{r} \to^* \texttt{true}$.
     \item $\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}$. We assume $\cc{S_1; S_2}{L}{r} \to ^* \texttt{true}$. We try to determine which derivation steps could have led to \texttt{true}. The only possible step is $\cc{S_1; S_2}{L}{r} \to \cc{S_1}{S_2::L}{r}$. Then we have our $r' = r$ and obviously we also have $\cc{S_1}{S_2::L}{r} \to^* \texttt{true}$.
-    \item $\sos{\texttt{x = } e}{L}{s} \Rightarrow \sos{\texttt{skip}}{L}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$. We assume $\cc{\texttt{x = } e}{L}{r} \to ^* \texttt{true}$. We try to determine which derivation steps could have led to \texttt{true}. The only possible step is $\cc{x=e}{L}{r} \to \cc{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]}$. Then we have our $r' = r[x\mapsto \star][\mathcal{V}(e) \mapsto -]$ and obviously we also have $\cc{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]} \to^* \texttt{true}$ then.
+    \item $\sos{x = e}{L}{s} \Rightarrow \sos{\texttt{skip}}{L}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$. We assume $\cc{x = e}{L}{r} \to ^* \texttt{true}$. We try to determine which derivation steps could have led to \texttt{true}. The only possible step is $\cc{x=e}{L}{r} \to \cc{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]}$. Then we have our $r' = r[x\mapsto \star][\mathcal{V}(e) \mapsto -]$ and obviously we also have $\cc{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]} \to^* \texttt{true}$ then.
     \item The other cases are similar. \emph{Might add them later.}
 \end{itemize}
 This exhausts all possible cases and hence proves our theorem.
