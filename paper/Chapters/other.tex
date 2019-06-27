@@ -20,7 +20,7 @@ If we add while-loops to our syntax, we get
 \begin{definition}
 \label{statementswhile}
 A statement $S$ is defined recursively by:
-$$S ::= \textrm{skip} \mid S_1; S_2 \mid a: \textrm{let } x:\tau \textrm{ in } S' \mid x := e \mid \whi{S'}$$
+$$S ::= \textrm{skip} \mid S_1; S_2 \mid a: \textrm{let } x:\tau \textrm{ in } S' \mid x = e \mid \whi{S'}$$
 where $e$ is an expression, $\tau$ is a type and $S_1$, $S_2$ and $S'$ are again statements.
 \end{definition}
 
@@ -63,7 +63,7 @@ The \emph{compile time checker} is a derivation system that has the following ru
 \ccwhile{\texttt{skip}}{\texttt{Nil}}{r}{M}{b} & \to \texttt{true}  \\
 \ccwhile{\texttt{skip}}{P::L}{r}{M}{b}      & \to \ccwhile{P}{L}{r}{M}{b}  \\
 \ccwhile{S_1; S_2}{L}{r}{M}{b}                 & \to \ccwhile{S_1}{S_2::L}{r}{M}{b}  \\
-\ccwhile{x:=e}{L}{r}{M}{b}                    & \to \ccwhile{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]}{M[\forall \textit{y} \in B(\textit{e}), \textit{y}\mapsto M(\textit{y})\cup \{\texttt{bor} \} ][\textit{x} \mapsto M(\textit{x}) \cup B(\textit{e})]}{b} \\
+\ccwhile{x=e}{L}{r}{M}{b}                    & \to \ccwhile{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]}{M[\forall \textit{y} \in B(\textit{e}), \textit{y}\mapsto M(\textit{y})\cup \{\texttt{bor} \} ][\textit{x} \mapsto M(\textit{x}) \cup B(\textit{e})]}{b} \\
                                     & \textrm{if } \neg b, \texttt{mut} \in \mathcal{M}(x), r(x) = & \perp \textrm{ or } r(x) = \star, \\ &  \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
                                     & \textrm{if } \neg b, \neg \texttt{mut} \in \mathcal{M}(x),  r(x) = \perp,  \\ & \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
                                     & \textrm{if } b, \texttt{mut} \in \mathcal{M}(x), r(x) = \perp \textrm{ or } r(x) = \star, \forall y \in \mathcal{C}(e), r(y) = \star, \mathcal{B}(e) = \emptyset \textrm{ and } \mathcal{V}(e) = \emptyset \\

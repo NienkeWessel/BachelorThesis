@@ -369,7 +369,7 @@ We define the following semantic derivation rules (name on the left):
 & & \\
 
 [ass$_{\textrm{os}}$] &
-\centering $\sosb{\texttt{x := } e}{L}{s}{M} \Rightarrow \sosb{\texttt{skip}}{L}{$& \\
+\centering $\sosb{\texttt{x = } e}{L}{s}{M} \Rightarrow \sosb{\texttt{skip}}{L}{$& \\
 & \centering $s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]
 \centering }{M[\forall \textit{y} \in B(\textit{e}), \textit{y}\mapsto M(\textit{y})\cup \{\texttt{bor} \} ] 
 [\textit{x} \mapsto M(\textit{x}) \cup B(\textit{e})]}$ & \medskip\\
@@ -402,7 +402,7 @@ The \emph{compile time checker} is a derivation system that has the following ru
 \ccb{\texttt{skip}}{\texttt{Nil}}{r}{M} & \to \texttt{true}  \\
 \ccb{\texttt{skip}}{P::L}{r}{M}       & \to \ccb{P}{L}{r}{M}  \\
 \ccb{S_1; S_2}{L}{r}{M}                 & \to \ccb{S_1}{S_2::L}{r}{M}  \\
-\ccb{x:=e}{L}{r}{M}                     & \to \ccb{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]}{M[\forall \textit{y} \in B(\textit{e}), \textit{y}\mapsto M(\textit{y})\cup \{\texttt{bor} \} ][\textit{x} \mapsto M(\textit{x}) \cup B(\textit{e})]} \\
+\ccb{x=e}{L}{r}{M}                     & \to \ccb{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]}{M[\forall \textit{y} \in B(\textit{e}), \textit{y}\mapsto M(\textit{y})\cup \{\texttt{bor} \} ][\textit{x} \mapsto M(\textit{x}) \cup B(\textit{e})]} \\
                                     & \textrm{if } \texttt{mut} \in \mathcal{M}(x), r(x) = \perp \textrm{ or } r(x) = \star, \\ &  \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
                                     & \textrm{if } \neg \texttt{mut} \in \mathcal{M}(x), r(x) = \perp,  \\ & \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
                                     & \to \texttt{false} \textrm{ otherwise}\\
