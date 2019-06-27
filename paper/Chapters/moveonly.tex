@@ -537,6 +537,68 @@ As every one of these steps shows a decrease in the length, we can conclude that
 \end{proof}
 
 
+\subsection{Equivalence with our small step semantics}
+
+\begin{lemma}
+\label{nsimpsos}
+For all $S$, $S'$, $s$, $s'$, $r$ equivalent to $s$, $r'$ equivalent to $s'$, if $\ns{S}{s}{s'}$ then $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s'}$. Also, if $\cc{\sk}{L}{r'} \to ^{*} \tr$, then $\cc{S}{L}{r} \to ^{*} \tr$.
+\end{lemma}
+\begin{proof}
+The proof proceeds by induction on the shape of the derivation tree. 
+\begin{itemize}[noitemsep]
+    \item We assume the last rule applied was [skip$_{\textrm{ns}}$]. This means $\ns{\sk}{s}{s}$. Then for any list $L$, we have $\sos{\sk}{L}{s}$ leading in zero steps to the required end state. Now assume $\cc{\sk}{L}{r} \to \tr$ with $s$ equivalent to $r$. This is already what needed to be proven in the second part of the lemma. 
+    \item We assume the last rule applied was [ass$_{\textrm{ns}}$]. This means $\ns{x=e}{s}{s[x\mapsto\letterfunc{A}{e}s][\mathcal{V}(e)\mapsto -]}$. The conditions state that $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e}s \neq \perp$ and $\letterfunc{A}{e}s \neq -$. Then we start with $\sos{x=e}{L}{s}$ for any $L$. Then we can apply [ass$_{\textrm{sos}}$] to get 
+    $$\sos{\sk}{L}{s[x\mapsto\letterfunc{A}{e}s][\mathcal{V}(e)\mapsto -]}$$ 
+    This is the required end state. 
+    Now assume $\cc{\sk}{L}{r'} \to ^{*} \tr$ and we know from the first part that $r' = s[x\mapsto\star][\mathcal{V}(e)\mapsto -]$. We know $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e}s \neq \perp$ and $\letterfunc{A}{e}s \neq -$. 
+    Then we also know that 
+    $$\cc{x=e}{L}{r} \to \cc{\sk}{L}{r[x\mapsto \star ][\mathcal{V}(e)\mapsto -]} \to ^{*} \tr$$
+    as $\letterfunc{A}{e}s \neq \perp$ and $\letterfunc{A}{e}s \neq -$ implies that $\forall y \in \mathcal{V}(e), r(y) = \star $.
+%    
+    \item We assume the last rule applied was [comp$_{\textrm{ns}}$]. This means
+    $$\centering \AxiomC{$\ns{S_1}{s}{s''}$}
+\AxiomC{$\ns{S_2}{s''}{s'}$}
+\BinaryInfC{$\ns{S_1; S_2}{s}{s'}$}
+\DisplayProof$$
+    If we now look at $\sos{S_1;S_2}{L}{s}$ for some list $L$, we see that we can apply [comp$_{\textrm{sos}}$] to get 
+    $$\sos{S_1;S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}$$
+    We can now apply the Induction Hypothesis to $\sos{S_1}{S_2::L}{s}$ as we have $\ns{S_1}{s}{s''}$. We get 
+    $$\sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\sk}{S_2::L}{s''} $$
+    Then by [load$_{\textrm{sos}}$], we have 
+    $$\sos{\sk}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''}$$
+    Now we can apply the Induction Hypothesis again, as we have $\ns{S_2}{s''}{s'}$. This gives us
+    $$\sos{S_2}{L}{s''} \Rightarrow ^{*} \sos{\sk}{L}{s'}$$
+    This all combined gives us
+    $$\sos{S_1;S_2}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s'}$$
+    which was to be proven.
+    
+    The second part of the lemma is a bit easier. Assume $\cc{\sk}{L}{r'} \to ^{*} \tr$ for some list $L$ in the above derivation. We are interested in the derivation of $\cc{S_1;S_2}{L}{r}$. We can immediately move a step, so
+    $$\cc{S_1;S_2}{L}{r} \to \cc{S_1}{S_2::L}{r}$$
+    Now, we need to know whether $\cc{\sk}{S_2::L}{r''} \to \tr$. If this is the case, we the first application of the Induction Hypothesis above in combination with $\cc{\sk}{L}{r'} \to ^{*} \tr$ tells us that $\cc{S_1}{S_2::L}{r} \to ^{*} \tr$.
+    
+    So we look at $\cc{\sk}{S_2::L}{r}$. We can make the following derivation:
+    $$\cc{\sk}{S_2::L}{r} \to \cc{S_2}{L}{r}$$
+    Therefore, we have 
+    $$\cc{S_1;S_2}{L}{r} \to \cc{S_1}{S_2::L}{r} \to ^{*} \tr$$
+    
+\end{itemize}
+The Lemma follows by induction. 
+\end{proof}
+
+\begin{lemma}
+\label{sosimpns}
+\end{lemma}
+\begin{proof}
+\end{proof}
+
+\begin{theorem}
+For all $S$, $S'$, $s$, $s'$, $L$, $\ns{S}{s}{s'}$ if and only if $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s'}$ and for some $L$ $\cc{S}{L}{s} \to \tr$.
+\end{theorem}
+
+\begin{proof}
+This follows from the proofs for Lemma \ref{nsimpsos} and \ref{sosimpns}. (Something with lists TODO) %TODO
+\end{proof}
+
 \subsection{Memory safety}
 We now move on to the more interesting proofs where we will actually proof some memory safety properties. Here, we apply an idea originally introduced by \cite{wright1994syntactic} in a slightly different context. The original idea is that when you have a type system, you prove \emph{preservation} and \emph{progress}, and that this combines to safety. However, in our case, we do not have a type system, but we do have our compile time checker. The following pages detail these proves.
 
