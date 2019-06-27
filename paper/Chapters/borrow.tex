@@ -271,7 +271,7 @@ a: {let mut y            //s(y)=|, M(y)={mut}
 }                        //s(y)=-, M(y)={}
 \end{minted}
 
-It might be surprising to see that after the \texttt{x} is reassigned, the borrow of \texttt{y} is not undone. However, this is the case in the Rust compiler. The compiler (version 1.22.1) does not accept a reborrow of y even after x has gotten a new value. So adding the line \texttt{let v = & mut y} after line 8 leads to a compile error. 
+It might be surprising to see that after the \texttt{x} is reassigned, the borrow of \texttt{y} is not undone. However, this is the case in the Rust compiler. The compiler (version 1.22.1) does not accept a reborrow of y even after x has gotten a new value. So adding the line \texttt{let v = \& mut y} after line 8 leads to a compile error. 
 
 Now we will look at one more example before putting what we've learned so far into use. The following piece of code passes through the compile time checker.
 
@@ -369,8 +369,8 @@ We define the following semantic derivation rules (name on the left):
 & & \\
 
 [ass$_{\textrm{os}}$] &
-\centering $\sosb{\texttt{x := } e}{L}{s}{M} \Rightarrow \sosb{\texttt{skip}}{L}{& \\
-& \centering s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]
+\centering $\sosb{\texttt{x := } e}{L}{s}{M} \Rightarrow \sosb{\texttt{skip}}{L}{$& \\
+& \centering $s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]
 \centering }{M[\forall \textit{y} \in B(\textit{e}), \textit{y}\mapsto M(\textit{y})\cup \{\texttt{bor} \} ] 
 [\textit{x} \mapsto M(\textit{x}) \cup B(\textit{e})]}$ & \medskip\\
 
@@ -391,8 +391,9 @@ We define the following semantic derivation rules (name on the left):
 \end{tabular} 
 %Where $\mathcal{V}(e)\mapsto-$ is an abbreviation for `for all $x \in \mathcal{V}(e)$, $x \mapsto -$'.
 \end{definition} 
-Note that $\sosb{\texttt{skip}}{\texttt{Nil}}{s}{M}$ has no derivation; this is the/an end state. 
+Note that $\sosb{\texttt{skip}}{\texttt{Nil}}{s}{M}$ has no derivation; this is the/an end state. The other definitions are mostly self-explanatory. Instead of two values in the set-rule, we now have three to also keep track of $\mathcal{M}(x)$. 
 
+We can now look at the compile time checker. In the following definition we show the actual rules. An explanation will be given below. 
 
 \begin{definition}
 \label{compiletimecheckerb}
@@ -411,7 +412,9 @@ The \emph{compile time checker} is a derivation system that has the following ru
 \end{align*}
 \end{definition}
 
-Of course, we again want this compile time checker  to always terminate. 
+The first three rules are to be assumed to be self-explanatory. As for the second rule, this one has a complicated set of conditions that should apply. ADD EXPLANATION
+
+Of course, we again want this compile time checker to always terminate. 
 
 \begin{theorem}
 \label{terminationb}
