@@ -11,7 +11,7 @@ We will first look at the syntax of our `move only' language.
 \begin{definition}
 \label{statementsmove}
 A statement $S$ is defined recursively by:
-$$S ::= \textrm{skip} \mid S_1; S_2 \mid a: \textrm{let } x:\tau \textrm{ in } S' \mid x = e$$
+$$S ::= \textrm{skip} \mid S_1; S_2 \mid \letm{x}{S'} \mid x = e$$
 where $e$ is an expression as defined below, $\tau$ is a type as defined below and $S_1$, $S_2$ and $S'$ are again statements.
 \end{definition}
 
@@ -29,9 +29,10 @@ $$\tau ::= \textrm{Int}$$
 
 This syntax is very simple, but enough for us to say something useful about ownership. We use only one data type, as more data types will add no additional interesting facts for ownership. However, this syntax can be expanded to include more types. The data type we use is Int for all integers.
 
-In particular, take note of the syntax for let. We split a statement such as \verb|let x = 5| in \verb|let x in (x = 5)| (brackets added for clearity). This can be done for every type of let-statement. It was done to show that there are actually two steps in a statement such as \verb|let x = 5|. First of all, the variable \verb|x| is declared. Then, a value is assigned to this \verb|x|. 
+Different from the usual Rust syntax is our syntax for \texttt{let}-statements. We split a statement such as \verb|let x = 5| in \texttt{let x in (x = 5)} (brackets added for clearity). This can be done for every type of let-statement. It was done to show that there are actually two steps in a statement such as \texttt{let x = 5}. First of all, the variable \verb|x| is declared. Then, a value is assigned to this \verb|x|. 
 
-After the splitting (when necessary), we've 'desugared' the statement in a similar way as was done in \ref{desugar}. This is done to make lifetimes explicit. That means we change \verb|let x in (x = 5)| to \verb|a: {let x in (x = 5)}|. We do not add the \verb|'| for the \verb|a|, as we will not be talking about generics and this only complicates the syntax. Lastly, we desugar more, to also include the type $\tau$, so that the previous statement becomes \verb|a: {let x:i32 in (x = 5)}|. 
+After splitting a \texttt{let}-statement if necessary, we include a type. While this is not done in Rust, it makes things more clear for the reader, especially in the following chapter where we will include borrows. 
+%After the splitting (when necessary), we've 'desugared' the statement in a similar way as was done in \ref{desugar}. This is done to make lifetimes explicit\footnote{We do not use the lifetimes explicitly in this thesis due to time constraints. However, including them . That means we change \verb|let x in (x = 5)| to \verb|a: {let x in (x = 5)}|. We do not add the \verb|'| for the \verb|a|, as we will not be talking about generics and this only complicates the syntax. Lastly, we desugar more, to also include the type $\tau$, so that the previous statement becomes \verb|a: {let x:i32 in (x = 5)}|. 
 
 In order to illustrate this, let's write the following program (taken from \ref{desugar}) in our syntax: 
 
@@ -42,19 +43,17 @@ let z = y;
 \end{minted}
 
 \begin{minted}[linenos, frame=lines]{rust}
-a: {
-    let x: Int in x = 0;
-    b: {
-        let y: Int in y = x;
-    }
-}
+let x: Int in (x = 0;
+    let y: Int in (y = x;
+                  )
+              )
 \end{minted}
 
-This looks a lot like the desugaring in \ref{desugar}, but has no \verb|'| to indicate lifetimes, in order to simplify the syntax.
+This looks a lot like the desugaring in \ref{desugar}, but we removed the lifetimes, in order to simplify the syntax. We do not need the lifetimes for the very simple features of Rust. 
 
 
 \section{Semantics: Framework}
-In this chapter we will look at two types of semantics. The first is a big step semantics and the second a small steps semantics. Both are based on the exposition in Nielson and Nielson \cite{nielson1992semantics}. 
+In this chapter we will look at two types of semantics. The first is a big step semantics and the second a small steps semantics. Both are based on the exposition in \cite{nielson1992semantics}. 
 
 Our big step semantics is called `natural semantics'. Its rules are of the form: 
 
@@ -181,7 +180,7 @@ Where $\mathcal{V}(e)\mapsto-$ is an abbreviation for `for all $x \in \mathcal{V
 
 The rules for skip and composition are assumed to be self-explanatory. The rule for let is derived from the idea that a let-statement should put the variable \verb|x| at $\perp$ (declared but not assigned). When the body of a let-statement is finished, \verb|x| should be put at whatever it was before we encountered the let-statement. 
 
-As for the assignment rule, there are several conditions that need to apply before we can consider the rule. If one of these conditions does not apply, we cannot apply this rule and that means we cannot make a derivation of the program. The program is incorrect, then. The first rule states that \verb|x| must have been declared, but not assigned. The second and third rules state that the expression must result in a value. This is important, in for example the following program: \verb|a: let x in (x = y)|. Here, \verb|y| has not been given a value (it has not even been declared), so we cannot rightly assign \verb|y|s value to \verb|x|. 
+As for the assignment rule, there are several conditions that need to apply before we can consider the rule. If one of these conditions does not apply, we cannot apply this rule and that means we cannot make a derivation of the program. The program is incorrect, then. The first rule states that \verb|x| must have been declared, but not assigned. The second and third rules state that the expression must result in a value. This is important, in for example the following program: $\letm{x}{x=y}$. Here, \verb|y| has not been given a value (it has not even been declared), so we cannot rightly assign \verb|y|s value to \verb|x|. 
 
 Note that these rules are important to model Rust in the best possible way. It is not possible to assign to a value that has not been declared and it is also not possible to assign a value to a non-mutable variable that already has a value. 
 
@@ -254,8 +253,8 @@ The proof proceeds by induction on the structure of $S$. We distinguish the foll
     \end{itemize}
     This exhausts all possible cases, so this proves the case $S$ = \texttt{x = } $e$.
     
-    \item  $S$ = a : \texttt{let x } : $\tau$ \texttt{ in } $S$ : assume $\langle a : \texttt{let x } : \tau \texttt{ in } $S$, s \rangle \to s'$. Then the rule that has been aplied last must be [let$_{\textrm{ns}}$]. This has the following derivation tree \AxiomC{$\langle S, s[x\mapsto \perp] \rangle \to s''$}
-\UnaryInfC{$\langle a : \texttt{let x } : \tau \texttt{ in } S, s \rangle \to s''[x \mapsto s(x)]$}
+    \item  $S = \letm{x}{S}$ : assume $\ns{\letm{x}{S}}{s}{s'}$. Then the rule that has been aplied last must be [let$_{\textrm{ns}}$]. This has the following derivation tree \AxiomC{$\langle S, s[x\mapsto \perp] \rangle \to s''$}
+\UnaryInfC{$\ns{\letm{x}{S}}{s}{s''[x \mapsto s(x)]}$}
 \DisplayProof
 . We again look at a random variable $y$ and assume $\letterfunc{A}{y}s' = -$ (otherwise we have nothing to prove). We again distinguish two cases:
     \begin{itemize}
@@ -342,7 +341,7 @@ We will look at a similar lemma for the let statement:
 
 \begin{lemma}
 \label{breakingdownlet}
-For every statement $S$, for every list $L$, for every state $s$, $s'$, if $\langle a : \texttt{let x } : \tau \texttt{ in } S , L, s \rangle \Rightarrow ^{*} \langle$ \texttt{skip}, $L, s' \rangle$, then it must be the case that $\sos{\letm{x}{S}}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{(x,s(x))::L}{s''} \Rightarrow \sos{(x,s(x))}{L}{s''} \Rightarrow \sos{\texttt{skip}}{L}{s'}$ for some state $s''$. 
+For every statement $S$, for every list $L$, for every state $s$, $s'$, if $\sos{\letm{x}{S}}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$, then it must be the case that $\sos{\letm{x}{S}}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{(x,s(x))::L}{s''} \Rightarrow \sos{(x,s(x))}{L}{s''} \Rightarrow \sos{\texttt{skip}}{L}{s'}$ for some state $s''$. 
 \end{lemma}
 
 \begin{proof}
