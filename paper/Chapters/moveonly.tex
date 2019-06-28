@@ -122,7 +122,7 @@ Now we need a way to go from a Rust representation for a number to an actual num
 $\mathcal{N}$: $\textbf{Num} \to \mathbb{Z}$ translates a Rust representation for a number to the actual number
 \end{definition}
 
-We leave the details of this function out, as it is cumbersome and not relevant for the remainder of this thesis. We will simply assume that we have such a function and that it behaves as we would expect. For a detailed exposition on this function, we refer the reader to Nielson and Nielson \cite{nielson1992semantics}. 
+We leave the details of this function out, as it is cumbersome and not relevant for the remainder of this thesis. We will simply assume that we have such a function and that it behaves as we would expect. For a detailed exposition on this function, we refer the reader to  \cite{nielson1992semantics}. 
 
 \subsection*{State and evaluation}
 The state is a function that maps a variable to a value. Therefore, we can define the set \textbf{State} which contains all possible states. 
@@ -270,7 +270,7 @@ Now assume $x$ to be a random variable and $\letterfunc{A}{x}s = -$. We can appl
 This exhausts all possible shapes of our statement $S$, and hence proves the theorem.
 \end{proof}
 
-Note that this means that after a program terminates, none of the results are available anymore. To make use of the data, you would have to write it to a file or some other IO device. This is a significant break from the exposition of Nielson and Nielson \cite{nielson1992semantics} where the state of a terminated program shows the values of the variables at the end and you can thus `access' the results of the calculations. However, as this is not how a computer normally works, we have chosen to not do this. 
+Note that this means that after a program terminates, none of the results are available anymore. To make use of the data, you would have to write it to a file or some other IO device. This is a significant break from the exposition of \cite{nielson1992semantics} where the state of a terminated program shows the values of the variables at the end and you can thus `access' the results of the calculations. However, as this is not how a computer normally works, we have chosen to not do this. 
 
 
 \section{Semantics: Small step}
@@ -572,17 +572,52 @@ The proof proceeds by induction on the shape of the derivation tree.
     $$\sos{S_1;S_2}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s'}$$
     which was to be proven.
     
-    The second part of the lemma is a bit easier. Assume $\cc{\sk}{L}{r'} \to ^{*} \tr$ for some list $L$ in the above derivation. We are interested in the derivation of $\cc{S_1;S_2}{L}{r}$. We can immediately move a step, so
+    The second part of the lemma requires more work. Assume $\cc{\sk}{L}{r'} \to ^{*} \tr$ $( * )$ for some list $L$ in the above derivation. We are interested in the derivation of $\cc{S_1;S_2}{L}{r}$. We can immediately move a step, so
     $$\cc{S_1;S_2}{L}{r} \to \cc{S_1}{S_2::L}{r}$$
-    Now, we need to know whether $\cc{\sk}{S_2::L}{r''} \to \tr$. If this is the case, we the first application of the Induction Hypothesis above in combination with $\cc{\sk}{L}{r'} \to ^{*} \tr$ tells us that $\cc{S_1}{S_2::L}{r} \to ^{*} \tr$.
+    This leaves us with the question on what we can say about $\cc{S_1}{S_2::L}{r}$. It seems logical to apply the same Induction Hypothesis (IH) as was done above the first time (on $\ns{S_1}{s}{s''}$). This IH tells us that if $\cc{\sk}{S_2::L}{r''} \to ^{*} \tr$, then $\cc{S_1}{S_2::L}{r} \to ^{*} \tr$. Therefore, in order to be able to apply the IH, we need to say something about $\cc{\sk}{S_2::L}{r''}$. By the loading rule, we get
+    $$\cc{\sk}{S_2::L}{r''} \to \cc{S_2}{L}{r''}$$
+    This still does not tell us whether it will derive to \texttt{true}. However, it seems that we can apply the IH again, in the same way it was done above the second time (on $\ns{S_2}{s''}{s'}$). This IH states that if $\cc{\sk}{L}{r'} \to ^{*} \tr$, then $\cc{S_2}{L}{r''} \to ^{*} \tr$. The condition is true per assumption $( * )$. Therefore, we have $\cc{S_2}{L}{r''} \to ^{*} \tr$. So that gives us
+    $$\cc{\sk}{S_2::L}{r''} \to \cc{S_2}{L}{r''} \to ^{*} \tr$$
+    and per the first application of the IH
+    $$\cc{S_1;S_2}{L}{r} \to \cc{S_1}{S_2::L}{r}  \to ^{*} \tr$$
+    which was to be proven. 
+% TB: if [skip,L,r'] -> true then [S1;S2,L,r] -> true
+% Per inductie
+% We kunnen in elk geval aannemen [skip,L,r'] -> true
+% We hebben vanwege de comp regel [S1;S2,L,r] -> [S1,S2::L,r]
+% Dan dus de vraag wat [S1,S2::L,r] is
+% We willen de IH toepassen. <S1,s> -> s''.  Om dat te doen moeten we weten wat [skip,S2::L,r''] is
+% Daar kijken we dan naar. We kunnen de load regel doen [skip,S2::L,r''] -> [S2,L,r'']
+% Dan de vraag wat [S2,L,r''] is. We kunnen de IH toepassen met <S2,s''> -> s' als [skip,L,r'] -> true
+% Dat is het geval per aanname van wat er bewezen moest worden. 
+% Dus [S2,L,r''] -> true
+% En daarmee [skip,S2::L,r''] -> true
+% En dan mochten we dus die eerste applicatie van de IH inderdaad doen. 
+% En dan komt alles goed
+    \item We assume the last rule applied was [let$_{\textrm{ns}}$]. This means
+    $$\AxiomC{$\ns{S}{s[x\mapsto \perp]}{s'}$}
+\UnaryInfC{$\ns{\letm{x}{S}}{s}{s'[x \mapsto s(x)]}$}
+\DisplayProof$$
+    If we now look at $\sos{\letm{x}{S}}{L}{s}$ for some list $L$, we see that we can apply   [let$_{\textrm{sos}}$] to get 
+    $$\sos{\letm{x}{S}}{L}{s} \Rightarrow \sos{S}{(x,s(x))::L}{s[x\mapsto \perp]}$$
+    We can now apply the IH to $\sos{S}{(x,s(x))::L}{s[x\mapsto \perp]}$, as we have $\ns{S}{s[x\mapsto \perp]}{s'}$. This gives us
+    $$\sos{S}{(x,s(x))::L}{s[x\mapsto \perp]} \Rightarrow ^{*} \sos{\sk}{(x,s(x))::L}{s'}$$
+    Then per [load$_{\textrm{sos}}$] and [set$_{\textrm{sos}}$] we have
+    $$\sos{\sk}{(x,s(x))::L}{s'} \Rightarrow \sos{(x,s(x))}{L}{s'} \Rightarrow \sos{\sk}{L}{s'[x \mapsto s(x)]}$$
+    In total, this gives us
+    $$\sos{\letm{x}{S}}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s'[x \mapsto s(x)]} $$
+    which was to be proven.
     
-    So we look at $\cc{\sk}{S_2::L}{r}$. We can make the following derivation:
-    $$\cc{\sk}{S_2::L}{r} \to \cc{S_2}{L}{r}$$
-    Therefore, we have 
-    $$\cc{S_1;S_2}{L}{r} \to \cc{S_1}{S_2::L}{r} \to ^{*} \tr$$
-    
+    For the second part of the lemma, we follow a reasoning similar to the previous case. 
+    Assume $\cc{\sk}{L}{r'[x\mapsto r(x)} \to ^{*} \tr$ $( * )$ for some list $L$ in the above derivation. We are interested in the derivation of $\cc{\letm{x}{S}}{L}{r}$. We can immediately move a step to get
+    $$\cc{\letm{x}{S}}{L}{r} \to \cc{S}{(x,r(x))::L}{r[x\mapsto \perp]}$$
+    It seems sensible to want to apply the IH (on $\ns{S}{s[x\mapsto \perp]}{s'}$). The IH in this case states that if $\cc{\sk}{(x,r(x))::L}{r'} \to^{*} \tr$, then $\cc{S}{(x,r(x))::L}{r[x\mapsto \perp]} \to^{*} \tr$. Therefore, we are interested in $\cc{\sk}{(x,r(x))::L}{r'}$. By the derivation rules we have
+    $$\cc{\sk}{(x,r(x))::L}{r'} \to \cc{(x,r(x))}{L}{r'} \to \cc{\sk}{L}{r'[x \mapsto r(x)]}$$
+    Of this last one, we know it derives to \tr, by $( * )$. Therefore, we know $\cc{\sk}{(x,r(x))::L}{r'} \to^{*} \tr$, and we can apply the IH as mentioned above. Therefore, we know $\cc{S}{(x,r(x))::L}{r[x\mapsto \perp]} \to^{*} \tr$. This gives us
+    $$\cc{\letm{x}{S}}{L}{r} \to \cc{S}{(x,r(x))::L}{r[x\mapsto \perp]} \to ^{*} \tr$$
+    which was to be proven.
 \end{itemize}
-The Lemma follows by induction. 
+The lemma now follows by induction. 
 \end{proof}
 
 \begin{lemma}
