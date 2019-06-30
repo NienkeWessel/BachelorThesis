@@ -1,6 +1,6 @@
 In the previous chapters, we have seen how ownership, borrowing and mutability work together to provide memory safety and how we write these concepts down in relatively simple semantic rules. We have also proved preservation and progress, to prove memory safety in a more classical way. 
 
-\section{Discussion and future work}
+\section[discussion]{Discussion and future work}
 While we have looked at some important concepts of Rust, there is of course many many more to Rust that we did not look at extensively. 
 
 \subsection{While}
@@ -105,3 +105,13 @@ Later research could look into this possibility.
 \subsection{Functions}
 To make a usuable programming language, functions are very important. From chapter \ref{Rust}, it seems likely that lifetimes will be needed to make a successful semantic implementation of this. Future research could look into this. 
 
+\subsection{Formalization}
+All of the work in this thesis is done on paper and lacks computer verification. While a start was made to formalize the move only language (Chapter \ref{Moving}) in Coq \citep{barras1997coq}, this was not finished due to time constraints. The first attempt can be found on the Github page of the author \citep{github}. 
+
+In order to make completely sure that all proofs presented in this thesis are correct, they should be verified in Coq or a similar program in the future. 
+
+\subsection{Account for translation}
+While we proved some minor properties of our compile time checker in the previous chapters, this is in no way a guartantee that the translation is 100\% correct and completely models the Rust language. Therefore, future research could focus on the translation process and verify that the translation process went as it should have gone.
+
+\section{Conclusion}
+In the previous chapters we looked at a small but interesting part of Rust. We made semantic rules and a compile time check derivation system to model the way Rust rejects programs compile time. While a lot of work remains to be done (as sketched in the prevous section), we managed to prove some interesting properties, such as progress and preservation of our operational semantics.

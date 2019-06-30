@@ -1,13 +1,13 @@
 \section{Introduction}
 In the following two chapters, we will look into two different subsets of Rust. This first chapter is concerned with a very simple language where we will just focus on \emph{ownership} and \emph{moving}. We will first look into the syntax of this small language and then move on to the semantics. 
 
-In the next chapter, we will add some interesting features, and again look at both the syntax and semantics of those featurs. This first chapter will go into detail at every step, while the following chapter will not do this anymore and assume that what was mentioned here is known to the reader.
+In the next chapter, we will add some interesting features, and again look at both the syntax and semantics of those features. This first chapter will go into detail at every step, while the following chapter will not do so anymore and assume that what was mentioned here is known to the reader.
 
 The subset of Rust that interests us in this chapter will be dubbed as `move only'. In this subset of Rust, you can only assign variables. If you do so, the ownership of the resource will be moved to that variable. You cannot borrow and nothing is mutable. That means everything is constant. While this does not seem like a very useful language, it will provide a good basis to work from when adding new features.
 
-We will first look at the syntax of our `move only' language.
-
 \section{Syntax}
+We will first look at the syntax of our `move only' language. We have the following defintions.
+
 \begin{definition}
 \label{statementsmove}
 A statement $S$ is defined recursively by:
@@ -27,14 +27,14 @@ A type $\tau$ is
 $$\tau ::= \textrm{Int}$$
 \end{definition}
 
-This syntax is very simple, but enough for us to say something useful about ownership. We use only one data type, as more data types will add no additional interesting facts for ownership. However, this syntax can be expanded to include more types. The data type we use is Int for all integers.
+This syntax is very simple, but enough for us to say something useful about ownership. We use only one data type, as more data types will add no additional interesting facts for ownership. However, this syntax can be expanded to include more types. The data type we use is Int to denote all integers.
 
-Different from the usual Rust syntax is our syntax for \texttt{let}-statements. We split a statement such as \verb|let x = 5| in \texttt{let x in (x = 5)} (brackets added for clearity). This can be done for every type of let-statement. It was done to show that there are actually two steps in a statement such as \texttt{let x = 5}. First of all, the variable \verb|x| is declared. Then, a value is assigned to this \verb|x|. 
+Our syntax for \texttt{let}-statements is different from the usual Rust syntax. We split up a statement such as \verb|let x = 5| in \texttt{let x in (x = 5)} (brackets added for clearity). This can be done for every type of let-statement. It is done to show that there are actually two steps in a statement such as \texttt{let x = 5}. First of all, the variable \verb|x| is declared. Then, a value is assigned to the resource \verb|x| owns. 
 
-After splitting a \texttt{let}-statement if necessary, we include a type. While this is not done in Rust, it makes things more clear for the reader, especially in the following chapter where we will include borrows. 
+Besides splitting up a \texttt{let}-statement if necessary, we include a type in our \texttt{let}-statements. While this is not done in Rust, it makes things more clear for the reader, especially in the following chapter where we will include borrows. 
 %After the splitting (when necessary), we've 'desugared' the statement in a similar way as was done in \ref{desugar}. This is done to make lifetimes explicit\footnote{We do not use the lifetimes explicitly in this thesis due to time constraints. However, including them . That means we change \verb|let x in (x = 5)| to \verb|a: {let x in (x = 5)}|. We do not add the \verb|'| for the \verb|a|, as we will not be talking about generics and this only complicates the syntax. Lastly, we desugar more, to also include the type $\tau$, so that the previous statement becomes \verb|a: {let x:i32 in (x = 5)}|. 
 
-In order to illustrate this, let's write the following program (taken from \ref{desugar}) in our syntax: 
+In order to illustrate this, the following program (taken from \ref{desugar}) is written in our syntax. 
 
 \begin{minted}[linenos, frame=lines]{rust}
 let x = 0;
@@ -49,11 +49,13 @@ let x: Int in (x = 0;
               )
 \end{minted}
 
-This looks a lot like the desugaring in \ref{desugar}, but we removed the lifetimes, in order to simplify the syntax. We do not need the lifetimes for the very simple features of Rust. 
+We will often put the closing bracket at the same indenting height as the opening brackets, contrary to normal programming standards. This is done to clearly show the scopes. 
+
+Our syntax looks like the desugaring in \ref{desugar}, but we removed the lifetimes in order to simplify the syntax. We do not need the lifetimes for the very simple features of Rust we will be looking at. 
 
 
 \section{Semantics: Framework}
-In this chapter we will look at two types of semantics. The first is a big step semantics and the second a small steps semantics. Both are based on the exposition in \cite{nielson1992semantics}. 
+In this chapter, we will look at two types of semantics. The first is a big step semantics and the second a small steps semantics. Both are based on the exposition in \cite{nielson1992semantics}. 
 
 Our big step semantics is called `natural semantics'. Its rules are of the form: 
 
@@ -67,9 +69,9 @@ $$\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$$
 
 Where $S$, $S'$ and $s$, $s'$ are again statements and states respectively. $L$ and $L'$ are lists of program parts, which will also be defined later on. 
 
-In order to work with these rules, we need some more mathematical definitions of different kinds of sets and functions we are interested in. Therefore, we will first define a framework in this section, and then move on to the actual rules in the next two sections. 
+In order to work with these rules, we need some more mathematical definitions for the different kinds of sets and functions we are interested in. Therefore, we will first set up a mathematical framework in this section, and then move on to the actual rules in the following two sections. 
 
-In this section we will need to distinguish actual definitions from pseudo-definitions. The latter means we give an intended interpretation for a symbol or a set in natural language. This is done to show what the symbol or set is supposed to represent in the real world. However, the actual meaning of the symbol or set will depend on how we will use it in other definitions later on. They are added nonetheless to help the reader navigate through the many difficult notations introduced in the chapter and to give them some intuition to what is happening. To distinguish between actual definitions and these pseudo-definitions, the latter is preceded by `Informal', as below. 
+In this section we will need to distinguish actual definitions from pseudo-definitions. The latter means we give an intended interpretation for a symbol or a set in natural language. This is done to show what the symbol or set is supposed to represent in the real world. However, the actual meaning of the symbol or set will depend on how we will use it in other definitions later on. The pseudo-definitions are added to help the reader navigate through the many difficult notations introduced in the chapter and to give them some intuition to what is happening. To distinguish between actual definitions and these pseudo-definitions, the latter is preceded by `Informal', as below. 
 
 \subsection*{Variable values}
 The symbols in this subsection will be defined informally.  
@@ -84,7 +86,7 @@ We will need the following symbols
 
 Intuitively, these are some special kind of values a variable can have. 
 
-As is conventional, the set $\mathbb{Z}$ will be used to denote the set of integers. We extent $\mathbb{Z}$ with two new symbols mentioned in the previous section, to get $\mathbb{Z}_{ext}$. Therefore: 
+As is conventional, the set $\mathbb{Z}$ will be used to denote the set of integers. We extend $\mathbb{Z}$ with two new symbols mentioned in the previous section, to get $\mathbb{Z}_{ext}$. Therefore: 
 
 \begin{definition}
 $\mathbb{Z}_{ext} := \mathbb{Z} ~\cup ~ \{\perp, -\}$.
