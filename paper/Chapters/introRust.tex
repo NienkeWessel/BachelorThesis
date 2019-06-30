@@ -2,14 +2,14 @@ This chapter provides an introduction to Rust, specifically to the features that
 
 Rust is an imperative programming language, with some functional and object orientated aspects. The language has similarities to C and especially C++, but is different in that it claims to provide memory safety whereas C and C++ do not. One of the most important concepts in this \emph{RAII}, which stands for Resource Acquisition Is Initialization. This term was introduced by \cite{stroustrup1994design} when talking about the design of C++.
 
-The idea behind RAII is that a resource (a piece of memory) is allocated during the creation (initialization) of the data/variable and a resource is deallocated during the the destruction of the data/variable. As long as the programmer does not ``lose'' the data (i.e. a reference to the data), there are no memory leaks. To help the programmer do this, there are several important terms/concepts which will be discussed here. We start with \textbf{ownership} and \textbf{borrowing}. At the end of this chapter, we briefly also discuss \textbf{lifetimes}, as this is an important aspect of memory safety in Rust. This will only very briefly return in the remainder of this thesis. 
+The idea behind RAII is that a resource (a piece of memory) is allocated during the creation (initialization) of the data/variable and a resource is deallocated during the the destruction of the data/variable. As long as the programmer does not ``lose'' the data (i.e. a reference to the data), there are no memory leaks. To help the programmer do this, there are several important terms/concepts which will be discussed here. We start with \textbf{ownership} and \textbf{borrowing}. At the end of this chapter, we briefly also discuss \textbf{lifetimes}, as this is an important aspect of memory safety in Rust. We will not be using lifetimes explicitly, but it is helpful for understanding Rust in general and the syntax we chose.  
 
 \section{Ownership} %http://theburningmonk.com/2015/05/rust-memory-safety-without-gc/
 Since variables are in charge of freeing their own resources, resources must have exactly one owner. Otherwise, a resource could be freed more than once by different owners or left to dangle if there are no owners at all. This concept is called \textbf{ownership} in Rust terminology. 
 
-This is not very useful when you want to program. Sometimes you would want a variable to have the information from another variable, for example. So you need to access this variable, but then there are two owners, which is not allowed. Luckily, there are several ways in Rust to deal with this. The most basic is moving the ownership of a variable. In Rust, this is called a \textbf{move}. After moving the ownership, the previous owner can no longer use the resource. 
+When programming, this can lead to problems. Sometimes it is convenient to have a variable access the resource of another variable. However, accessing this resource  means there are two owners: the variable that is accessing the resource and the original variable that had the resource. This is not allowed in Rust. Luckily, Rust has some ways to deal with these kind of scenarios. The easiest solution is \emp{moving} the ownership of a resource to another variable. In Rust terminology, this is called a \textbf{move}. After moving the ownership, the previous owner can no longer use the resource. 
 
-To illustrate this, take a look at the following piece of code. 
+The following example illustrates this. 
 \begin{minted}[linenos, frame=lines]{rust}
 let vector = vec![37, 42];
 let vector2 = vector;
@@ -17,9 +17,9 @@ println!("vector[0] + vector[1] = {}", vector[0] + vector[1]);
 \end{minted}
 This program gives the compile error \texttt{use of moved value: `vector'}. 
 
-So what is happening here? The variable \verb|vector| is initialized in line 1. That means \verb|vector| owns a piece of memory to store the values of the vector. Next, the ownership is transferred to \verb|vector2|. That means \verb|vector2| now owns the piece of memory and \verb|vector| cannot do anything with it anymore. So when \verb|vector| tries to access that piece of memory in line 3 to print its value, this is not possible because the ownership has already been transferred. The interesting thing about Rust is that these things are not checked at run tine, but already at compile time.
+We will briefly walk through the program line by line. The variable \verb|vector| is initialized in line 1. That means \verb|vector| owns a piece of memory to store the values of the vector. Next, the ownership is transferred to \verb|vector2|. That means \verb|vector2| now owns the piece of memory and \verb|vector| cannot access it anymore. Then, when \verb|vector| tries to access that piece of memory in line 3 to print its value, it cannot do so because the ownership has been transferred. When compiling a Rust program such as in this example, the compiler checks whether the ownership rules are abided. If this is not the case, it produces an error and the program does not compile. 
 
-There are also other methods to take ownership of a piece of memory. Another frequently occurring method is passing the variable as an argument to a function. For example:
+Besides assignments, there are also other methods to take ownership of a piece of memory. Another frequently occurring method is passing the variable as an argument to a function. For example:
 
 \begin{minted}[linenos, frame=lines]{rust}
 fn function(v : Vec<i32>) {
@@ -30,7 +30,7 @@ let vector = vec![37, 42];
 function(vector);
 println!("vector[0] + vector[1] = {}", vector[0] + vector[1]);
 \end{minted}
-This gives the same error as above, texttt{error: use of moved value: vector}. 
+This gives the same error as before, texttt{error: use of moved value: vector}. 
 
 Here, the ownership is moved to the variable \verb|v| in the function \texttt{function}. When \verb|function| is finished, all local variables release their resources. So \verb|v| releases the memory space it had for its vector. Later on, \verb|vector| wants access to the resource, but it gave away ownership in the function call, so it can no longer access the resource. Besides, the resource was removed after the function returned, so there is also nothing left to access. Again, this is error is given already at compile time instead of run time. 
 
@@ -97,7 +97,7 @@ For a data race, you need to have two pointers to the same piece of memory and a
 This means that the following piece of code is allowed (multiple borrows to one owner):
 
 \begin{minted}[linenos, frame=lines]{rust}
-let y=0;
+	let y=0;
 	let x = & y; 
 	let z = & y;
 \end{minted}
