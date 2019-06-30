@@ -1,12 +1,12 @@
 @article{reed2015patina,
-  title={Patina: A formalization of the Rust programming language},
+  title={Patina: A formalization of the {Rust} programming language},
   author={Reed, Eric},
   journal={University of Washington, Department of Computer Science and Engineering, Tech. Rep. UW-CSE-15-03-02},
   year={2015}
 }
 
 @inproceedings{benitez2016rusty,
-  title={Short Paper: Rusty Types for Solid Safety},
+  title={Short Paper: {Rusty Types for Solid Safety}},
   author={Benitez, Sergio},
   booktitle={Proceedings of the 2016 ACM Workshop on Programming Languages and Analysis for Security},
   pages={69--75},
@@ -15,7 +15,7 @@
 }
 
 @article{jung2017rustbelt,
-  title={RustBelt: Securing the foundations of the Rust programming language},
+  title={RustBelt: Securing the foundations of the {Rust} programming language},
   author={Jung, Ralf and Jourdan, Jacques-Henri and Krebbers, Robbert and Dreyer, Derek},
   journal={Proceedings of the ACM on Programming Languages},
   volume={2},
@@ -34,7 +34,7 @@
 }
 
 @inproceedings{jespersen2015session,
-  title={Session types for Rust},
+  title={Session types for {Rust}},
   author={Jespersen, Thomas Bracht Laumann and Munksgaard, Philip and Larsen, Ken Friis},
   booktitle={Proceedings of the 11th ACM SIGPLAN Workshop on Generic Programming},
   pages={13--22},
@@ -43,10 +43,10 @@
 } %Communication  in  concurrent  applications  is  often  implementedby  message-passing,  in  which  two  processes  can  exchange  in-formation  via  a  channel.  Typically  channels  are  uni-directionaland  reciprocal  interaction  is  implemented  by  means  of  two  uni-directional channels. In large concurrent applications the commu-nication schemes often implement an implicit ad hoc protocol, andit is the responsibility of the programmer to ensure that the proto-col is obeyed, as message-passing libraries usually do not offer anymechanisms for specifying protocols.Session types allow the specification of protocols as types andits associated type discipline ensures that only compatible sessiontype protocols are typeable. Session types require a linear usage ofthe channels and this is a challenge in the majority of programminglanguages where aliasing is allowed.We implement session types in the programming language Rustwhich provides affine types and argue that affine types are sufficientfor preventing protocol violations.The appeal of session types is that they provide a static guar-antee  of  protocol  safety  and  in  our  implementation  there  are  norun-time checks to ensure protocol safety, so we argue that the per-formance overhead of using session types is small
 
 
-@inproceedings{matsakis2014rust,
+@article{matsakis2014rust,
   title={The rust language},
   author={Matsakis, Nicholas D and Klock II, Felix S},
-  booktitle={ACM SIGAda Ada Letters},
+  journal={ACM SIGAda Ada Letters},
   volume={34},
   number={3},
   pages={103--104},
@@ -56,7 +56,7 @@
 
 
 @inproceedings{levy2017kernel,
-  title={The case for writing a kernel in Rust},
+  title={The case for writing a kernel in {Rust}},
   author={Levy, Amit and Campbell, Bradford and Ghena, Branden and Pannuto, Pat and Dutta, Prabal and Levis, Philip},
   booktitle={Proceedings of the 8th Asia-Pacific Workshop on Systems},
   pages={1},
@@ -65,7 +65,7 @@
 } %An operating system kernel written in the Rust language would have extremely fine-grained isolation boundaries, have no memory leaks, and be safe from a wide range of security threats and memory bugs. Previous efforts towards this end concluded that writing a kernel requires changing Rust. This paper reaches a different conclusion, that no changes to Rust are needed and a kernel can be implemented with a very small amount of unsafe code. It describes how three sample kernel mechanisms---DMA, USB, and buffer caches---can be built using these abstractions.
 
 @inproceedings{ding2017sgx,
-  title={Poster: Rust sgx sdk: Towards memory safety in intel sgx enclave},
+  title={Poster: {Rust} sgx sdk: Towards memory safety in intel sgx enclave},
   author={Ding, Yu and Duan, Ran and Li, Long and Cheng, Yueqiang and Zhang, Yulong and Chen, Tanghui and Wei, Tao and Wang, Huibo},
   booktitle={Proceedings of the 2017 ACM SIGSAC Conference on Computer and Communications Security},
   pages={2491--2493},
@@ -74,7 +74,7 @@
 }
 
 @article{balasubramanian2017system,
-  title={System programming in Rust: Beyond safety},
+  title={System programming in {Rust: Beyond safety}},
   author={Balasubramanian, Abhiram and Baranowski, Marek S and Burtsev, Anton and Panda, Aurojit and Rakamari, Zvonimir and Ryzhyk, Leonid},
   journal={ACM SIGOPS Operating Systems Review},
   volume={51},
@@ -118,25 +118,27 @@
   school={Inria}
 }
 
-@online{github,
+@misc{github,
 author = {Nienke Wessel},
-  title = {Coq Formalization of moving in Rust},
+  title = {Coq Formalization of moving in {Rust}},
   url = {https://github.com/NienkeWessel/BachelorThesis/tree/master/coq},
-  year = {2019}
+  year = {2019},
   urldate = {2019-06-30}
 }
 
-@online{lifetimes,
+@book{lifetimes,
   author = {{The Rust Project}},
   title = {Validating References with Lifetimes},
-  url = {https://doc.rust-lang.org/book/second-edition/ch10-03-lifetime-syntax.html},
+  year = {2017},
+  publisher = {https://doc.rust-lang.org/book/second-edition/ch10-03-lifetime-syntax.html},
   urldate = {2017-12-07}
 }
 
-@online{lifetimes2,
+@book{lifetimes2,
   author = {{The Rust Project}},
   title = {Lifetimes},
-  url = {https://doc.rust-lang.org/beta/nomicon/lifetimes.html},
+  year = {2017},
+  publisher = {https://doc.rust-lang.org/beta/nomicon/lifetimes.html},
   urldate = {2017-12-07}
 }
 
