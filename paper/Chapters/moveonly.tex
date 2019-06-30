@@ -594,7 +594,7 @@ The proof proceeds by induction on the shape of the derivation tree.
 % En daarmee [skip,S2::L,r''] -> true
 % En dan mochten we dus die eerste applicatie van de IH inderdaad doen. 
 % En dan komt alles goed
-    \item We assume the last rule applied was [let$_{\textrm{ns}}$]. This means
+    \item We assume the last rule applied was \letns. This means
     $$\AxiomC{$\ns{S}{s[x\mapsto \perp]}{s'}$}
 \UnaryInfC{$\ns{\letm{x}{S}}{s}{s'[x \mapsto s(x)]}$}
 \DisplayProof$$
@@ -602,7 +602,7 @@ The proof proceeds by induction on the shape of the derivation tree.
     $$\sos{\letm{x}{S}}{L}{s} \Rightarrow \sos{S}{(x,s(x))::L}{s[x\mapsto \perp]}$$
     We can now apply the IH to $\sos{S}{(x,s(x))::L}{s[x\mapsto \perp]}$, as we have $\ns{S}{s[x\mapsto \perp]}{s'}$. This gives us
     $$\sos{S}{(x,s(x))::L}{s[x\mapsto \perp]} \Rightarrow ^{*} \sos{\sk}{(x,s(x))::L}{s'}$$
-    Then per [load$_{\textrm{sos}}$] and [set$_{\textrm{sos}}$] we have
+    Then per \loadsos and [set$_{\textrm{sos}}$] we have
     $$\sos{\sk}{(x,s(x))::L}{s'} \Rightarrow \sos{(x,s(x))}{L}{s'} \Rightarrow \sos{\sk}{L}{s'[x \mapsto s(x)]}$$
     In total, this gives us
     $$\sos{\letm{x}{S}}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s'[x \mapsto s(x)]} $$
@@ -622,16 +622,36 @@ The lemma now follows by induction.
 
 \begin{lemma}
 \label{sosimpns}
+If $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s'}$ and $\cc{S}{L}{r} \to^{*} \tr$, then $\ns{S}{s}{s'}$. Note that $S$ is a statement here, and not a program instruction. 
 \end{lemma}
 \begin{proof}
+We do some form of induction. We will look at the possible forms of $S$.
+\begin{itemize}[noitemsep]
+\item $\sk$ : assume $\sos{\sk}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s'}$ and $\cc{\sk}{L}{r} \to^{*} \tr$. Then $s$ must be equal to $s'$. Then we have $\ns{\sk}{s}{s}$, which was to be proven. 
+\item $x = e$ : assume $\sos{x=e}{L}{s} \Rightarrow^{*} \sos{\sk}{L}{s'}$ and $\cc{x=e}{L}{r} \to^{*} \tr$. Then \asssos ~must have been applied, so 
+$$\sos{x=e}{L}{s} \Rightarrow \sos{\texttt{skip}}{L}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]} \Rightarrow^{*} \sos{\sk}{L}{s'}$$
+This must mean $s' = s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$. We could make $\ns{x=e}{s}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$ per \assns, if we can assure that $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e}s \neq \perp$ and $\letterfunc{A}{e}s \neq -$. In $\cc{x=e}{L}{r} \to^{*} \tr$, we know that 
+$$\cc{x=e}{L}{r} \to \cc{\sk}{L}{r[x \mapsto \star][\mathcal{V}(e)\mapsto-]} \to^{*} \tr$$ 
+and we only could have applied that rule if $\textrm{if }r(x) = \perp \textrm{ and } \forall y \in \mathcal{V}(e), r(y) = \star$. If $r$ and $s$ equivalent, this means that the conditions are fulfilled and we can apply \assns. 
+\item $S_1; S_2$ : assume $\sos{S_1; S_2}{L}{s} \Rightarrow^{*} \sos{\sk}{L}{s'}$ and $\cc{S_1; S_2}{L}{r} \to^{*} \tr$. Then per \ref{breakingdowncomp} we have 
+$$\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$$
+Now if $\cc{S_1}{S_2::L}{r} \to ^{*} \tr$ we can apply the Induction Hypothesis (IH). 
+As we have $\cc{S_1; S_2}{L}{r} \to^{*} \tr$, we can make
+$$\cc{S_1; S_2}{L}{r} \to \cc{S_1}{S_2::L}{r} \to ^{*} \tr$$
+so we can indeed apply the IH. 
+This gives us $\ns{S_1}{s}{s''}$. 
+
+Now, if also $\cc{S_2}{L}{r''} \to ^{*} \tr$, we can again apply the IH. 
+\item $\letm{x}{S}$ :
+\end{itemize}
 \end{proof}
 
 \begin{theorem}
-For all $S$, $S'$, $s$, $s'$, $L$, $\ns{S}{s}{s'}$ if and only if $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s'}$ and for some $L$ $\cc{S}{L}{s} \to \tr$.
+For all $S$, $S'$ (statements), $s$, $s'$, $L$, $\ns{S}{s}{s'}$ if and only if $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s'}$ and $L$ $\cc{S}{L}{s} \to^{*} \tr$.
 \end{theorem}
 
 \begin{proof}
-This follows from the proofs for Lemma \ref{nsimpsos} and \ref{sosimpns}. (Something with lists TODO) %TODO
+This follows from the proofs for Lemma \ref{nsimpsos} and \ref{sosimpns}.
 \end{proof}
 
 \subsection{Memory safety}
