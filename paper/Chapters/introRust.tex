@@ -7,7 +7,7 @@ The idea behind RAII is that a resource (a piece of memory) is allocated during 
 \section{Ownership} %http://theburningmonk.com/2015/05/rust-memory-safety-without-gc/
 Since variables are in charge of freeing their own resources, resources must have exactly one owner. Otherwise, a resource could be freed more than once by different owners or left to dangle if there are no owners at all. This concept is called \textbf{ownership} in Rust terminology. 
 
-When programming, this can lead to problems. Sometimes it is convenient to have a variable access the resource of another variable. However, accessing this resource  means there are two owners: the variable that is accessing the resource and the original variable that had the resource. This is not allowed in Rust. Luckily, Rust has some ways to deal with these kind of scenarios. The easiest solution is \emp{moving} the ownership of a resource to another variable. In Rust terminology, this is called a \textbf{move}. After moving the ownership, the previous owner can no longer use the resource. 
+When programming, this can lead to problems. Sometimes it is convenient to have a variable access the resource of another variable. However, accessing this resource  means there are two owners: the variable that is accessing the resource and the original variable that had the resource. This is not allowed in Rust. Luckily, Rust has some ways to deal with these kind of scenarios. The easiest solution is \emph{moving} the ownership of a resource to another variable. In Rust terminology, this is called a \textbf{move}. After moving the ownership, the previous owner can no longer use the resource. 
 
 The following example illustrates this. 
 \begin{minted}[linenos, frame=lines]{rust}
@@ -23,7 +23,7 @@ Besides assignments, there are also other methods to take ownership of a piece o
 
 \begin{minted}[linenos, frame=lines]{rust}
 fn function(v : Vec<i32>) {
-    // Do something, it does not really matter what
+    // Do something
 }
 
 let vector = vec![37, 42];
@@ -32,16 +32,21 @@ println!("vector[0] + vector[1] = {}", vector[0] + vector[1]);
 \end{minted}
 This gives the same error as before, texttt{error: use of moved value: vector}. 
 
-Here, the ownership is moved to the variable \verb|v| in the function \texttt{function}. When \verb|function| is finished, all local variables release their resources. So \verb|v| releases the memory space it had for its vector. Later on, \verb|vector| wants access to the resource, but it gave away ownership in the function call, so it can no longer access the resource. Besides, the resource was removed after the function returned, so there is also nothing left to access. Again, this is error is given already at compile time instead of run time. 
+In this case, the ownership is moved to the variable \verb|v| in the function \texttt{function}. When \verb|function| is finished, all local variables release their resources. So \verb|v| releases the memory space it had for its vector. Later on, \verb|vector| wants access to the resource, but it gave away ownership in the function call, so it can no longer access the resource. Also, the resource was removed after the function returned, so there is also nothing left to access. Again, this is error is produced compile time instead of run time. 
+
+Moving and ownership are the focus of the next chapter, Chapter \ref{Moving}. There, we will derive semantic rules for these concepts. 
 
 \section{Borrowing}
-It seems impractical, however, to always move the ownership so that the original owner cannot use the variable anymore. That is why the concept of \textbf{borrowing} was introduced. This way, the original owner only temporarily gives up its access to the resource only to have it returned later on. This ensures that only one variable owns a resource at a time,  %This is where it gets interesting, because the compiler will have to check at compile time if all references point to valid objects. It should also be impossible to destroy an object while there is some pointer to it, even if it is a borrowed pointer. 
+Always moving the variable seems unpractible in many common programming situations. Especially function calls become unpractical. Luckily, Rust also has another way of dealing with the ownership problem. 
 
-To illustrate the concept of borrowing, we take a look at the following piece code. The code is almost the same as the example above, but here we give \verb|function| the variable \verb|vector| only to borrow by putting an \verb|&| in front of it when giving it as an argument to the function. 
+If you want a variable to temporarily give up its access rights, you can perform a \textbf{borrow}. This way, the original owner only temporarily gives up its access to the resource only to have it returned later on. This ensures that only one variable owns a resource at a time.  %This is where it gets interesting, because the compiler will have to check at compile time if all references point to valid objects. It should also be impossible to destroy an object while there is some pointer to it, even if it is a borrowed pointer. 
+The checks to make that happen all happen at compile time.
+
+The code below illustrates how borrowing is done in Rust. The code is similar to the example above, but \verb|function| only borrows the resource behind \verb|vector|, which is indicated by the \verb|&| in front of \verb|vector| in the function call. Also, the function signature now contains an \verb|&|, to indicate that the function in the end will return the borrowed resource. 
 
 \begin{minted}[linenos, frame=lines]{rust}
 fn function(v : &Vec<i32>) {
-// Do something, it does not really matter what
+// Do something
 }
 
 let vector = vec![37, 42];
@@ -51,7 +56,24 @@ println!("vector[0] + vector[1] = {}", vector[0] + vector[1]);
 
 This code will give no error, as the piece of memory used by \verb|vector| was only borrowed by \verb|function| and returned to \verb|vector| when \verb|function| was done. 
 
-However, by default, borrowed variables are not mutable. In the following example, we try to change \verb|vector| after it was borrowed. 
+\subsection{Mutability}
+So far, we have only looked at what in Rust are called \textbf{immutable} variables. That means we cannot change what these variables point to. Doing so results in a (compile time) error. This is also not convenient when programming: we often want to update our variables. To be able to do so, one makes the variables \textbf{mutable}.
+
+Some very simple examples can illustrate the difference.
+
+\begin{minted}[linenos, frame=lines]{rust}
+let x = 0;
+x = 1;
+\end{minted}
+This is not allowed as \verb|x| is immutable, but the program tries to mutate it anyways. 
+
+\begin{minted}[linenos, frame=lines]{rust}
+let mut x = 0;
+x = 1;
+\end{minted}
+This program is allowed, as \verb|x| is now mutable, which is shown by the \verb|mut| in front of it. 
+
+The following example shows what happens when we combine mutability with borrowing. Here, the function tries to alter \verb|vector| while it is immutable. 
 
 \begin{minted}[linenos, frame=lines]{rust}
 fn function(v : &Vec<i32>) {
@@ -63,9 +85,9 @@ function(&vector);
 println!("vector[0] + vector[1] = {}", vector[0] + vector[1]);
 \end{minted}
 
-This gives the compile time error: \texttt{cannot borrow immutable borrowed content `*v' as mutable}, which means that by calling \verb|push| on \verb|vector| you are passing \verb|vector| as if it is mutable, but \verb|vector| was not as a mutable passed to \verb|function|. 
+This gives the compile time error: \texttt{cannot borrow immutable borrowed content `*v' as mutable}. This means that by calling \verb|push| on \verb|vector|, vector is passed as if it were mutable, but \verb|vector| was not passed as mutable to \verb|function|. 
 
-This is fixable by letting \verb|function| borrow \verb|vector| as a mutable reference. 
+One can fix this by letting \verb|function| borrow \verb|vector| as a mutable reference. 
 
 \begin{minted}[linenos, frame=lines]{rust}
 fn function(v : &mut Vec<i32>) {
@@ -80,7 +102,9 @@ println!("vector[0] + vector[1] = {}", vector[0] + vector[1]);
 This is allowed and compiles. 
 
 \subsection{Rules for borrowing}
-So this begs the question why would you not simply always use borrowing instead of moving the ownership? But if you do that, why does Rust have moving in the first place? The answer here is that it is not always possible to borrow a variable. There are several rules for when you can use borrowing. These rules were introduced to eliminate data races. 
+One can wonder why one would not simply always perform a borrow instead of a move. And if so, why does Rust even have moving and does it not do borrow as a default (as is often done in other programming languages)? 
+
+Unlike other programming languages, it is not always possible to borrow a resource in Rust. Borrowing is only allowed in specific cases. These rules were introduced to eliminate data races. They are as follows:
 \begin{enumerate}[noitemsep]
     \item The scope of the borrower cannot outlast the scope of the original owner
 \item Only one of the following can be true at any moment:
@@ -90,11 +114,11 @@ So this begs the question why would you not simply always use borrowing instead 
     \end{enumerate}
 \end{enumerate}
 
-Rule 1. is there to make sure the original owner is able to clean up the resource without problems when done. The second rule is there to eliminate data races. 
+The first rule is to make sure that the original owner is able to clean up the resource without problems after it is done. If the original owner does not exist anymore when the resource is returned, it cannot clean up the resource. The second rule is to eliminate data races. 
 
-For a data race, you need to have two pointers to the same piece of memory and at least one of them is writing to that resource, while the operations are not synchronized. By following the second rule for borrowing, one makes sure a data race cannot exist. If the first part of the second rule holds, the shared resource cannot be written to, as it is immutable. If the the second part of the second rule is true, there are no two pointers in the first place. For a more semantic justification of these rules/this idea, we refer to \cite{boyland2003checking}.
+For a data race to happen, there need to be two pointers to the same piece of memory at the same time, at least one of them needs to be writing and their operations are not synchronized. By following the second rule for borrowing, one makes sure a data race cannot exist. If the first part of the second rule holds, the shared resource cannot be written to, as it is immutable. If the the second part of the second rule holds, there are no two pointers in the first place. For a more semantic justification of these rules/this idea, we refer to \cite{boyland2003checking}.
 
-This means that the following piece of code is allowed (multiple borrows to one owner):
+This means that the following piece of code is allowed (multiple borrows to one immutable owner):
 
 \begin{minted}[linenos, frame=lines]{rust}
 	let y=0;
@@ -102,7 +126,7 @@ This means that the following piece of code is allowed (multiple borrows to one 
 	let z = & y;
 \end{minted}
 
-While the next piece of code is not allowed and produces the error \texttt{cannot borrow `y` as mutable more than once at a time}
+The next piece of code is not allowed and produces the error \texttt{cannot borrow `y` as mutable more than once at a time}
 
 \begin{minted}[linenos, frame=lines]{rust}
 let mut y=0;
@@ -110,10 +134,16 @@ let mut y=0;
 	let z = &mut y;
 \end{minted}
 
+This concludes the section on borrowing. We will look at some more examples in Chapter \ref{Borrowing}, when we derive the semantic rules for it. 
+
 \section{Lifetimes}
-Another important concept is \textbf{lifetimes}. 
-Lifetimes are what the compiler keeps track of in order to enforce the concepts mentioned above. Before we dive into the rules and theory and whatnot, we first need to take a look at what lifetimes are and what the syntax of lifetimes in Rust looks like. 
-We will first take a look at the syntax of lifetimes. In all code mentioned before, we did not write down the lifetimes explicitly. This is because the Rust compiler is able to deduce the rules in `trivial' cases (more on that later). In the following piece of code, it is shown what it would have looked like if we had written the lifetimes explicitly. You can do this for all Rust functions that you write, so that the compiler does not have to derive the lifetimes. Note that it is the same \verb|function| as above. 
+The final important concept in Rust's ownership system is that of \textbf{lifetimes}. While this thesis does not use the life times in the semantic rules, a description of Rust's system would not be complete without a section on lifetimes. 
+
+Lifetimes are often used by the compiler to keep track of what mentioned above, when simple scopes are not sufficient. Before we look at the theory of lifetimes, we first take a look at what lifetimes are and what they look like in Rust.
+ 
+In all code mentioned before, we did not write down the lifetimes explicitly. This is because the Rust compiler is able to deduce the rules in `trivial' cases. Later on, there will be a bit of an explanation on what makes a case trivial for the compiler.
+
+In the following piece of code, it is shown what it would have looked like if we had written the lifetimes explicitly. You can do this for all Rust functions that you write, so that the compiler does not have to derive the lifetimes. Note that it is the same \verb|function| as above. 
 
 \begin{minted}[linenos, frame=lines]{rust}
 fn function<'a>(v : &'a mut Vec<i32>) {
@@ -121,9 +151,9 @@ fn function<'a>(v : &'a mut Vec<i32>) {
 }
 \end{minted}
 
-Strictly speaking, lifetimes are a form of generics, which is why they have generics-like syntax.  However for all lifetimes, you are required to place an apostrophe \verb|'|. Just like generics, you can use any name for a lifetime. However, it is customary that you use \verb|a, b, c| etc. 
+Strictly speaking, lifetimes are a form of generics, which is why they have generics-like syntax.  However for all lifetimes, you are required to place an apostrophe \verb|'|. Just like generics, you can use any name for a lifetime. However, it is customary that you use \verb|a|, \verb|b|, \verb|c| etc. 
 
-To see why lifetimes are useful, we will need to take a look at a more interesting piece of code. 
+To see when lifetimes are useful, we can take a look at a more interesting piece of code. 
 
 \begin{minted}[linenos, frame=lines]{rust}
 fn function(v : &Vec<i32>, w : &Vec<i32>) -> &Vec<i32>{
@@ -141,7 +171,7 @@ let f = function(&vector, &another_vector);
 println!("f[0] + f[1] = {}", f[0] + f[1]);
 \end{minted}
 
-This piece of code defines two vectors, passes them to a function, that functions returns one of them and then uses that result to print something. Even though this looks like a good piece of code, the Rust compiler will not accept it. It will give an error asking for lifetime parameters: \texttt{error: missing lifetime specifier}. It is saying that the function's return type contains a borrowed value, but the signature doesn't say what is was borrowed from. The problem here is that rust does not know how the lifetimes of the input and the output are related to each other. The borrow checker now cannot make sure that the rules mentioned above are enforced. 
+This piece of code defines two vectors and passes them to a function. That function then returns one of them. The result is used to print something. Even though this looks like a good piece of code, the Rust compiler will not accept it. It will give an error asking for lifetime parameters: \texttt{error: missing lifetime specifier}. It is saying that the function's return type contains a borrowed value, but the signature doesn't say what is was borrowed from. The problem here is that rust does not know how the lifetimes of the input and the output are related to each other. The borrow checker now cannot make sure that the rules mentioned above are enforced. 
 
 It is good to realize that by adding lifetime notations you cannot actually change the lifetime of any variable. They are a way of telling the compiler how the lifetimes of variables are related. We are basically saying to the Rust compiler that any variables passed to a function that do not adhere to the rules should result in an error. 
 
@@ -163,11 +193,12 @@ let f = function(&vector, &another_vector);
 println!("f[0] + f[1] = {}", f[0] + f[1]);
 \end{minted}
 
-What we are telling the compiler, is that we have a lifetime \verb|'a| and that the function gets two arguments that will live at least as long as \verb|'a|. The function also returns a variable that will also live at least as long as \verb|'a|. If you would want to use the function but do something different than specified here, this will result in a compile time error. 
+We are telling the compiler that we have a lifetime \verb|'a| and that the function gets two arguments that will live at least as long as \verb|'a|. The function also returns a variable that will also live at least as long as \verb|'a|. If you would want to use the function but do something different than specified here, this will result in a compile time error. 
 
 When concrete vectors are passed to \verb|function| the lifetime that will be substituted for \verb|'a| is the part of the scopes of \verb|v| and \verb|w| that overlap. Since scopes are always nested, this comes down to that \verb|'a| is the smaller of the lifetimes of \verb|v| and \verb|w|. So, the returned reference will be guaranteed to valid at least as long as the shorter of \verb|v| and \verb|w|.
 
-To show how this works in practice, we take a look at the following pieces of code. 
+However, we can also manipulate the order in which variables are declared. This will change the lifetimes. 
+For example, the following piece of code \emph{is} allowed.
 
 \begin{minted}[linenos, frame=lines]{rust}
 fn function<'a>(v : &'a Vec<i32>, w : &'a Vec<i32>) -> &'a Vec<i32>{
@@ -186,7 +217,7 @@ let vector = vec![37, 42];
     println!("f[0] + f[1] = {}", f[0] + f[1]);
 }
 \end{minted}
-The curly brackets indicate a scope here. This piece of code will compile just fine. The result of \verb|function| does not live longer than the input variables of \verb|function|, so nothing can go wrong. However, if we shuffle the order in which things are declared, we get a problem, as shown in the following piece of code: 
+The curly brackets indicate a scope here. The code will compile. The result of \verb|function| does not live longer than the input variables of \verb|function|, so nothing can go wrong. However, if we shuffle the order in which variables are declared, we get a problem. This is shown in the following example.
 
 \begin{minted}[linenos, frame=lines]{rust}
 fn function<'a>(v : &'a Vec<i32>, w : &'a Vec<i32>) -> &'a Vec<i32>{
@@ -207,14 +238,14 @@ let f;
 println!("f[0] + f[1] = {}", f[0] + f[1]);
 \end{minted}
 
-So now we declare \verb|f| before we declare the vector \verb|another_vector|, which means \verb|f| will live longer than \verb|another_vector|. If \verb|f| then points to \verb|another_vector|, because \verb|another_vector| was returned in the function, this would cause a problem, which is why this will give a compile time error \texttt{error: `another\_vector` does not live long enough}. We, as humans, can see that there will be no problem if you do run the code, since \verb|function| will return \verb|vector| and not \verb|another_vector|. The Rust compiler, however, still does not allow it. 
+We now declare \verb|f| before the vector \verb|another_vector| is declared. This means \verb|f| will live longer than \verb|another_vector|. If \verb|function| now returns the resource of \verb|another_vector|, \verb|f| lives longer than the variable it borrowed from. As said, before, this is a problem, because the original owner can no longer clean up after it is returned ownership. The program gives the compile time error \texttt{error: `another\_vector` does not live long enough}. We, as humans, can see that there will be no problem if you do run the code, since \verb|function| will return the resource of \verb|vector| and not that of \verb|another_vector|. The Rust compiler, however, still does not allow it. 
 
 \subsection{Lifetime elision}
-As mentioned above, in some cases you don't need to state the lifetimes explicitly. The compiler can infere the lifetimes in these cases. This is called \textbf{elision}. As of now, there are only very few specific cases in which the compiler can infere the lifetimes. It is certainly possible that the amount of cases in which this can be done grows as newer versions of the language are made available. In the earlier versions of the language, there we no cases at all in which lifetimes were elided. 
+As mentioned above, it is not necessary to explicitly state lifetimes in all cases. The compiler can sometimes infere the lifetimes. Not explicitly stating lifetimes is called \textbf{elision}. At the time of writing, there are only very few specific cases in which the compiler can infere the lifetimes. It is certainly possible that the amount of cases in which this can be done grows as newer versions of the language are made available. There was no elision in earlier versions of the language. 
 
-The compiler has a set of rules it follows to determine what the lifetimes in a function signature should be. If after following these rules the compiler still has references for which it cannot figure out the lifetimes, there will be an error. 
+The compiler has a set of rules it follows to determine what the lifetimes in a function signature should be. If, after following these rules, the compiler still has references for which it cannot figure out the lifetimes, there will be an error. 
 
-These rules are the following (as taken from the website "The Rust Programming Language" \footnote{https://doc.rust-lang.org/book/second-edition/ch10-03-lifetime-syntax.html Make some fancy way of referencing later})
+These rules are the following (as taken from the website "The Rust Programming Language" \citep{lifetimes}):
 
 \begin{enumerate}[noitemsep]
     \item Each parameter that is a reference gets its own lifetime parameter. In other words, a function with one parameter gets one lifetime parameter: \verb|fn foo<'a>(x: &'a i32)|, a function with two arguments gets two separate lifetime parameters: \verb|fn foo<'a, 'b>(x: &'a i32,| \verb|y: &'b i32)|, and so on.
@@ -222,7 +253,7 @@ These rules are the following (as taken from the website "The Rust Programming L
 \item If there are multiple input lifetime parameters, but one of them is \verb|&self| or \verb|&mut self| because this is a method, then the lifetime of \verb|self| is assigned to all output lifetime parameters.
 \end{enumerate}
 
-All of the cases in the first two parts of this chapter had only one input lifetime parameter and no return lifetime parameter. This means that following the rules no lifetime parameters would be left and the compiler has infered the right lifetimes. 
+All of the cases in the first two parts of this chapter had only one input lifetime parameter and no return lifetime parameter. This means that, following the rules, no lifetime parameters are left and the compiler has infered the right lifetimes. 
 
 %https://doc.rust-lang.org/1.9.0/book/lifetimes.html
 %https://doc.rust-lang.org/book/second-edition/ch10-03-lifetime-syntax.html
@@ -250,7 +281,9 @@ All of the cases in the first two parts of this chapter had only one input lifet
 %\end{minted}
 
 \subsection{Lifetimes of statements}\label{desugar}
-In this section we have only looked at lifetimes of variables that are passed to functions and how they relate. However, the compiler also keeps track of the lifetimes of variables, even when we use no other functions. To illustrate this, take a look at the following set of declarations. This example is taken from The Rustonomicon which is a piece of documentation about advanced and unsafe Rust programming \footnote{https://doc.rust-lang.org/beta/nomicon/lifetimes.html}.
+In this section we have only looked at lifetimes of variables that are passed to functions and how they relate. However, the compiler also keeps track of the lifetimes of variables, even when we use no functions. In most of this thesis, we will be looking at declarations only, so it is worthwhile to look at how the lifetimes work there. 
+
+The example is taken from The Rustonomicon which is a piece of documentation about advanced and unsafe Rust programming \citep{lifetimes2}.
 
 \begin{minted}[linenos, frame=lines]{rust}
 let x = 0;
@@ -266,18 +299,20 @@ We are now going to `desugar' this piece of code and write out all lifetimes exp
     let x: i32 = 0;
     'b: {
         // lifetime used is 'b because that's good enough.
-        let y: &'b i32 = &'b x; // this is only valid if x lives at least as 
-                            // long as y, which is clearly the case
+        let y: &'b i32 = &'b x; // this is only valid if x lives 
+                                // at least as long as y, 
+                                // which is clearly the case
         'c: {
-            // in the following line, it is stated that y has to live at least
-        // as long as z, which is clearly the case. 
+            // in the following line, it is stated that y has to 
+            // live at least as long as z, which is clearly 
+            // the case. 
             let z: &'c &'b i32 = &'c y;
         }
     }
 }
 \end{minted}
 
-We can also this for a piece of code where we pass references to an outer scope:
+We can do the same for a small program where we pass references to an outer scope:
 
 \begin{minted}[linenos, frame=lines]{rust}
 let x = 0;
@@ -286,7 +321,7 @@ let y = &x;
 z = y;
 \end{minted}
 
-So in this example we first declare \verb|z| before we declare \verb|y|. After declaring \verb|y| we finally assign a value to \verb|z|. This example desugars to:
+In this example, we first declare \verb|z| before we declare \verb|y|. After declaring \verb|y| we finally assign a value to \verb|z|. This example desugars to:
 
 \begin{minted}[linenos, frame=lines]{rust}
 'a: {
@@ -303,7 +338,7 @@ So in this example we first declare \verb|z| before we declare \verb|y|. After d
 }
 \end{minted}
 
-Now we take a look at one last example program where we are aliasing a mutable reference. Keep the rules for borrowing in mind and take a look at the following program:
+For our last example program, we alias a mutable reference. That means the rules for borrowing are relevant.
 
 \begin{minted}[linenos, frame=lines]{rust}
 let mut vector = vec![1, 2, 3];
@@ -312,9 +347,9 @@ vector.push(4);
 println!("{}", x);
 \end{minted}
 
-This program has a \textit{mutable} vector \texttt{vector} and a variable \texttt{x} that points to a part of \texttt{vector}. This means we have a problem:  \texttt{vector} is mutable but \texttt{x} also points to the same piece of memory! The second rule of borrowing is not adhered to here. 
+This program has a \textit{mutable} vector \texttt{vector} and a variable \texttt{x} that points to a part of \texttt{vector}. This means we have a problem:  \texttt{vector} is mutable but \texttt{x} also points to the same piece of memory. That means the second rule of borrowing is broken and the program is rejected. 
 
-However, Rust does not look at it like that. It does reject the program, but for completely different reasons. Rust does not know that \texttt{x} is a reference to a part of \texttt{vector}. Rust does not even know what the \texttt{vec} macro is about. In order to understand what Rust does know and how it still rejects this code is to again desugar the piece of code. This gives the following: 
+The compiler will reject the program, but for completely different reasons. It does not know that \texttt{x} is a reference to a part of \texttt{vector}, because it does not know what the \texttt{vec} macro does. We desugar the program to see what is happening.
 
 \begin{minted}[linenos, frame=lines]{rust}
 'a: {
@@ -333,4 +368,4 @@ However, Rust does not look at it like that. It does reject the program, but for
 }
 \end{minted}
 
-Here, Rust does know that \verb|x| has to live as long as \verb|`b| to be printed. The signature of \verb|Index::index| says that \verb|vector| has to live as long as \verb|`b| as well. When \verb|push| is then called, Rust sees that we try to make a mutable reference to \verb|vector| with lifetime \verb|`c|. Rust knows that \verb|`c| is contained within \verb|`b|, so \verb|&`b data| must still be live, so when trying to do \verb|Vec::push|, the program is rejected. 
+The compiler does know that \verb|x| has to live as long as \verb|`b| to be printed. The signature of \verb|Index::index| says that \verb|vector| has to live as long as \verb|`b| as well. When \verb|push| is then called, Rust sees that we try to make a mutable reference to \verb|vector| with lifetime \verb|`c|. Rust knows that \verb|`c| is contained within \verb|`b|, so \verb|&`b data| must still be live. Therefore, when trying to do \verb|Vec::push|, the program is rejected. 
