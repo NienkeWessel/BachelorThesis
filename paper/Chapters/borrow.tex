@@ -3,6 +3,7 @@ We will now add an extra feature to our language, namely borrowing. Borrowing pr
 
 \section{Syntax}
 First, we need to update our syntax to reflect the possibility of borrowing. The possible statements from definition \ref{statementsmove} can remain the same. We will need to update our expressions.
+NOT TRUE INCLUDE LETMUT AS STATEMENT
 
 \begin{definition}
 \label{expressionsborrow}
@@ -259,16 +260,16 @@ Our analysis of this piece of code results in the following:
 
 \begin{minted}[linenos, frame=lines]{rust}
 //s(y)=s(x)=s(z)=-,M(x)=M(y)=M(z)={}
-a: {let mut y            //s(y)=|, M(y)={mut}
-    in y=0;              //s(y)=0
-    b: {let mut z in     //s(z)=|, M(z)={mut}
+let mut y in (           //s(y)=|, M(y)={mut}
+    y=0;                 //s(y)=0
+    let mut z in (       //s(z)=|, M(z)={mut}
         z=1;             //s(z)=1
-        c: {let mut x in //s(x)=|, M(x)={mut}
+        let mut x in (   //s(x)=|, M(x)={mut}
             x = & mut y; //s(x)=0, M(x)={y},M(y)={mut,bor}
             x = & mut z; //s(x)=1, M(x)={y,z},M(z)={mut,bor}
-        }                //s(x)=-, M(x)={},M(y)=M(z)={mut}
-    }                    //s(z)=-, M(z)={}
-}                        //s(y)=-, M(y)={}
+        )                //s(x)=-, M(x)={},M(y)=M(z)={mut}
+    )                    //s(z)=-, M(z)={}
+)                        //s(y)=-, M(y)={}
 \end{minted}
 
 It might be surprising to see that after the \texttt{x} is reassigned, the borrow of \texttt{y} is not undone. However, this is the case in the Rust compiler. The compiler (version 1.22.1) does not accept a reborrow of y even after x has gotten a new value. So adding the line \texttt{let v = \& mut y} after line 8 leads to a compile error. 

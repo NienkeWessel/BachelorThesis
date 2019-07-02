@@ -15,7 +15,7 @@ let vector = vec![37, 42];
 let vector2 = vector;
 println!("vector[0] + vector[1] = {}", vector[0] + vector[1]);
 \end{minted}
-This program gives the compile error \texttt{use of moved value: `vector'}. 
+This program gives the compile error \texttt{use of moved value: `vector`}. 
 
 We will briefly walk through the program line by line. The variable \verb|vector| is initialized in line 1. That means \verb|vector| owns a piece of memory to store the values of the vector. Next, the ownership is transferred to \verb|vector2|. That means \verb|vector2| now owns the piece of memory and \verb|vector| cannot access it anymore. Then, when \verb|vector| tries to access that piece of memory in line 3 to print its value, it cannot do so because the ownership has been transferred. When compiling a Rust program such as in this example, the compiler checks whether the ownership rules are abided. If this is not the case, it produces an error and the program does not compile. 
 
@@ -30,7 +30,7 @@ let vector = vec![37, 42];
 function(vector);
 println!("vector[0] + vector[1] = {}", vector[0] + vector[1]);
 \end{minted}
-This gives the same error as before, texttt{error: use of moved value: vector}. 
+This gives the same error as before, texttt{error: use of moved value: `vector`}. 
 
 In this case, the ownership is moved to the variable \verb|v| in the function \texttt{function}. When \verb|function| is finished, all local variables release their resources. So \verb|v| releases the memory space it had for its vector. Later on, \verb|vector| wants access to the resource, but it gave away ownership in the function call, so it can no longer access the resource. Also, the resource was removed after the function returned, so there is also nothing left to access. Again, this is error is produced compile time instead of run time. 
 
@@ -65,7 +65,7 @@ Some very simple examples can illustrate the difference.
 let x = 0;
 x = 1;
 \end{minted}
-This is not allowed as \verb|x| is immutable, but the program tries to mutate it anyways. 
+This is not allowed as \verb|x| is immutable, but the program tries to mutate it anyways. It gives the error \texttt{re-assignment of immutable variable `x`}.
 
 \begin{minted}[linenos, frame=lines]{rust}
 let mut x = 0;
@@ -129,7 +129,7 @@ This means that the following piece of code is allowed (multiple borrows to one 
 The next piece of code is not allowed and produces the error \texttt{cannot borrow `y` as mutable more than once at a time}
 
 \begin{minted}[linenos, frame=lines]{rust}
-let mut y=0;
+    let mut y=0;
 	let x = &mut y; 
 	let z = &mut y;
 \end{minted}
