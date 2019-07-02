@@ -6,7 +6,7 @@
 \usepackage{amssymb} %To denote the set of integers with correct type of letter
 
 \usetheme{AnnArbor}
-\usecolortheme{wolverine}
+\usecolortheme{beaver}
 
 \title[Rust Semantics]{The Semantics of Ownership and Borrowing in the Rust Programming Language}
 \author[Nienke Wessel]{Nienke Wessel\\
@@ -64,6 +64,17 @@
 	\item Compile time check!
 	\item Ownership, moving \& borrowing
 \end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{This thesis}
+\begin{itemize}
+	\item Focus on the semantics of ownership, moving \& borrowing
+	\item Want to prove some aspects of the semantics
+	\item Keep it simple
+\end{itemize}
+
 \end{frame}
 
 
@@ -181,9 +192,9 @@ Compiles! \Checkmark
 \begin{frame}[fragile]
 \frametitle{Our syntax}
 
-$$S ::= \sk \mid S_1; S_2 \mid \letm{x}{S'} \mid x = e$$
+$$S ::= \sk \mid S_1; S_2 \mid \letm{x}{S'} \mid \letmut{x}{S'} \mid x = e$$
 $$e ::= x \mid i \mid e_1 + e_2 \mid \&a~e$$
-$$\tau ::= \texttt{Int}$$
+$$\tau ::= \texttt{Int} \mid \& \tau$$
 
 We split up statements such as \texttt{let x = 5} in \texttt{let x in (x = 5)}
 \end{frame}
@@ -249,7 +260,7 @@ which eventually results in either \tr ~or \fa
 \begin{frame}[fragile]
 \frametitle{Some examples}
 \begin{lstlisting}
-//s(y) = -, s(y) = -, M(x) = {}, M(y) = {}                          
+start: s(y) = -, s(y) = -, M(x) = {}, M(y) = {}                          
 let mut x: Int in (  -> s(x) = |, M(x) = {mut}
     x = 0;           -> s(x) = 0
     let y: &Int in ( -> s(y) = |
@@ -261,6 +272,26 @@ let mut x: Int in (  -> s(x) = |, M(x) = {mut}
 \end{lstlisting}
 \end{frame}
 
+
+\begin{frame}[fragile]
+\frametitle{Some examples}
+\begin{lstlisting}
+start: s(y)=s(x)=s(z)=-,M(x)=M(y)=M(z)={}
+let mut y in (           -> s(y)=|, M(y)={mut}
+    y=0;                 -> s(y)=0
+    let mut z in (       -> s(z)=|, M(z)={mut}
+        z=1;             -> s(z)=1
+        let mut x in (   -> s(x)=|, M(x)={mut}
+            x = & mut y; -> s(x)=0, M(x)={y}
+                            M(y)={mut,bor}
+            x = & mut z; -> s(x)=1, M(x)={y,z}
+                            M(z)={mut,bor}
+        )                -> s(x)=-, M(x)={}
+                            M(y)=M(z)={mut}
+    )                    -> s(z)=-, M(z)={}
+)                        -> s(y)=-, M(y)={}
+\end{lstlisting}
+\end{frame}
 
 
 \begin{frame}
@@ -301,6 +332,7 @@ We have also proven that...
     \item ... for the currently executing statement it does not matter what is in the list.
     \item ... in a composition, the execution of the first statement is not influenced by whatever is in the second statement.
     \item ... the semantic rules are deterministic.
+    \item ... and some more.
 \end{itemize}
 \end{frame}
 
@@ -309,12 +341,12 @@ We have also proven that...
     %Supervisors toevoegen
 %Versies van Rust
 %Rust is een hipstertaal
-%performance is goed (omdat compile time check)
-%Opzoeken of er grote projecten in Rust zijn
+    %performance is goed (omdat compile time check)
+    %Opzoeken of er grote projecten in Rust zijn
     %Pauzes misschien weg
     %Int even in texttt
-%Gelijk naar de borrowing ipv eerst door de move
+    %Gelijk naar de borrowing ipv eerst door de move
     %L als tekst ook op de slides zetten
-%safety = progress + preservation
-%Compile checker vertellen
+    %safety = progress + preservation
+    %Compile checker vertellen
 % Rust logo toevoegen (\titlegraphic)
