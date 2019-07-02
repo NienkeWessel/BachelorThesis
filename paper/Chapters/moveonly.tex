@@ -11,7 +11,7 @@ We will first look at the syntax of our `move only' language. We have the follow
 \begin{definition}
 \label{statementsmove}
 A statement $S$ is defined recursively by:
-$$S ::= \textrm{skip} \mid S_1; S_2 \mid \letm{x}{S'} \mid x = e$$
+$$S ::= \sk \mid S_1; S_2 \mid \letm{x}{S'} \mid x = e$$
 where $e$ is an expression as defined below, $\tau$ is a type as defined below and $S_1$, $S_2$ and $S'$ are again statements.
 \end{definition}
 
@@ -24,12 +24,12 @@ $$e ::= x \mid i \mid e_1 + e_2$$
 \begin{definition}
 \label{typesmove}
 A type $\tau$ is
-$$\tau ::= \textrm{Int}$$
+$$\tau ::= \texttt{Int}$$
 \end{definition}
 
 This syntax is very simple, but enough for us to say something useful about ownership. We use only one data type, as more data types will add no additional interesting facts for ownership. However, this syntax can be expanded to include more types. The data type we use is Int to denote all integers.
 
-Our syntax for \texttt{let}-statements is different from the usual Rust syntax. We split up a statement such as \verb|let x = 5| in \texttt{let x in (x = 5)} (brackets added for clearity). This can be done for every type of let-statement. It is done to show that there are actually two steps in a statement such as \texttt{let x = 5}. First of all, the variable \verb|x| is declared. Then, a value is assigned to the resource \verb|x| owns. 
+Our syntax for \texttt{let}-statements is different from the usual Rust syntax. We split up a statement such as \verb|let x = 5| in \texttt{let x in (x = 5)} (brackets added for clarity). This can be done for every type of let-statement. It is done to show that there are actually two steps in a statement such as \texttt{let x = 5}. First of all, the variable \verb|x| is declared. Then, a value is assigned to the resource \verb|x| owns. 
 
 Besides splitting up a \texttt{let}-statement if necessary, we include a type in our \texttt{let}-statements. While this is not done in Rust, it makes things more clear for the reader, especially in the following chapter where we will include borrows. 
 %After the splitting (when necessary), we've 'desugared' the statement in a similar way as was done in \ref{desugar}. This is done to make lifetimes explicit\footnote{We do not use the lifetimes explicitly in this thesis due to time constraints. However, including them . That means we change \verb|let x in (x = 5)| to \verb|a: {let x in (x = 5)}|. We do not add the \verb|'| for the \verb|a|, as we will not be talking about generics and this only complicates the syntax. Lastly, we desugar more, to also include the type $\tau$, so that the previous statement becomes \verb|a: {let x:i32 in (x = 5)}|. 
@@ -45,6 +45,8 @@ let z = y;
 \begin{minted}[linenos, frame=lines]{rust}
 let x: Int in (x = 0;
     let y: Int in (y = x;
+        let z: Int in (z = y;
+                      )
                   )
               )
 \end{minted}
@@ -287,7 +289,7 @@ This concludes our section of the big step semantics. As these semantics are rat
 
 
 \section{Semantics: Small step}
-We now move on to a small step semantics. We mostly use the same framework as in the big step semnatics, unless stated otherwise. Our small step semantics, as stated above, has rules of the form $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$, where $S$, $S'$ are statements and $s$, $s'$ are states as defined above. To properly define what kind of things $L$ and $L'$ are, we first need to define what we mean by `a program instruction'. 
+We now move on to a small step semantics. We mostly use the same framework as in the big step semantics, unless stated otherwise. Our small step semantics, as stated above, has rules of the form $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$, where $S$, $S'$ are statements and $s$, $s'$ are states as defined above. To properly define what kind of things $L$ and $L'$ are, we first need to define what we mean by `a program instruction'. 
 
 \begin{definition}
 A program instruction $I$ has the following form:
@@ -344,19 +346,22 @@ We will be using $\sos{S}{L}{s} \Rightarrow ^{*} \sos{S'}{L'}{s'}$ to indicate w
 
 \subsection{Properties of our semantic rules}
 
-\subsubsection*{Concerning lists and compositions}
-First, we will see that it is irrelevant what is in the list for a statement currently executing. In order to prove that, we will need to prove a lemma that states that if a composition evaluates in a certain amount of steps to a \texttt{skip}, this must be done by first evaluating $S_1$, then loading $S_2$ and evaluating it. 
+\subsubsection*{Concerning lists and recursive statements}
+In this section, we will prove some properties about the lists in combination with the semantics. For example, we will see that it is irrelevant what is in the list for a statement that is currently executing. 
+In order to prove these properties, we need some helping lemmas. These lemmas help us break down the recursive statements: the composition and the \texttt{let}-statement. Proving this now will save us some work later on, also in the following sections.  
+
+The first of these lemmas states that if we have a derivation from a composition to a \sk, we must have first pushed the second part to the list and then have executed the first part. Then you pop the second part from the list and execute that. 
 
 \begin{lemma}
 \label{breakingdowncomp}
-For every statement $S_1$, $S_2$, for every list $L$, for every state $s$, $s'$, if $\sos{S_1; S_2}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$, then it must be the case that $\sos{S_1;S_2}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ for some state $s''$. 
+For every statement $S_1$, $S_2$, for every list $L$, for every state $s$, $s'$, if $\sos{S_1; S_2}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$, then it must be the case that $\sos{S_1;S_2}{L}{s}  \Rightarrow \sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ for some state $s''$. 
 \end{lemma}
 
 \begin{proof}
-Assume $\sos{S_1; S_2}{L}{s } \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$. Now look at $\sos{S_1; S_2}{L}{s}$. We know there must be a derivation. The only possible rule is [comp$_{\textrm{os}}$], so we have $\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}$. Now we see that our list has grown by one item. However we know there is a derivation and it ends with the list $L$, instead of $S_2::L$. So at some point in the derivation the list must be reduced again. The only possible rule that could have done that is [load$_{\textrm{os}}$]. So we must have $\sos{\texttt{skip}}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''}$ at some point in the derivation. Therefore we have $\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$, which was to be proven.
+Assume $\sos{S_1; S_2}{L}{s } \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$. Now look at $\sos{S_1; S_2}{L}{s}$. We know there must be a derivation. The only possible rule is \compsos, so we have $\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}$. Now we see that our list has grown by one item. However we know there is a derivation and it ends with the list $L$, instead of $S_2::L$. So at some point in the derivation the list must be reduced again. The only possible rule that could have done that is [load$_{\textrm{os}}$]. So we must have $\sos{\texttt{skip}}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''}$ at some point in the derivation. Therefore we have $\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$, which was to be proven.
 \end{proof}
 
-We will look at a similar lemma for the let statement:
+We have a similar lemma to the \texttt{let}-statement. We will not be proving that one as rigorously, as the proof is very similar to the one of the previous lemma. 
 
 \begin{lemma}
 \label{breakingdownlet}
@@ -364,36 +369,38 @@ For every statement $S$, for every list $L$, for every state $s$, $s'$, if $\sos
 \end{lemma}
 
 \begin{proof}
-The proof is similar to lemma \ref{breakingdowncomp}. 
+The proof is similar to lemma \ref{breakingdowncomp}. Note that we can actually say some more about the relation between $s''$ and $s'$ because of how the rule \setsos works. 
 \end{proof}
 
-Now we will move on, to proof that for evaluating a statement, it is irrelevant what is in the list. 
+We are now ready to prove that when executing a statement, it is irrelevant what is in the list.  
 
 \begin{proposition}
-For every program instruction $S$, every state $s$, $s'$, if $\sos{S}{\texttt{Nil}}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'}$ for some list $L'$, then we have $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ for all lists $L$. 
+For every program instruction $S$, every state $s$, $s'$, if $\sos{S}{L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'}$ for some list $L'$, then we have $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ for all lists $L$. 
 \end{proposition}
 
 \begin{proof}
 We know that there must be a derivation from $\sos{S}{L'}{s}$ to $\sos{\texttt{skip}}{L'}{s'}$, so $S$ must be of one of the forms from definition \ref{os}. We therefore prove the proposition by induction on the form of the program instruction $S$.
 
 \begin{itemize}[noitemsep]
-    \item $S = \texttt{skip}$ : then $\sos{\texttt{skip}}{L}{s}$ is already of the correct form, so we can evaluate to the desired state in zero steps, which proves this case. 
+    \item $S = \texttt{skip}$ : we look at $\sos{\texttt{skip}}{L}{s}$. This is already of the correct form, so we can evaluate to the desired state in zero steps, which proves this case. 
     
-    \item $S = x =  e$ : assume $\sos{x = e}{L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'}$. Then we know the rule that must have been applied first is [ass$_{\textrm{os}}$], so we have 
+    \item $S = x =  e$ : assume $\sos{x = e}{L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'}$. Then we know the rule that must have been applied first is \asssos, so we have 
     $$\sos{x = e}{L'}{s} \Rightarrow \sos{\texttt{skip}}{L'}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$$
-    which is of the desired form. So it must be that $s' = s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$. Now we look at $\sos{x = e}{L}{s}$. The only rule we can apply is [ass$_{\textrm{os}}$], so we get 
+    which is of the desired form. So it must be that $s' = s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$. Now we look at $\sos{x = e}{L}{s}$. The only rule we can apply is \asssos, so we get 
     $$\sos{x = e}{L}{s} \Rightarrow \sos{\texttt{skip}}{L}{s [x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$$
     which is of the desired form, and has the right $s'$. This proves this case. 
     
-    \item $S = (v,e)$ : assume $\sos{(v,e)}{L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'}$. Then we know the rule that must have been applied first was [set$_{\textrm{os}}$]. So we get
+    \item $S = (v,e)$ : assume $\sos{(v,e)}{L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'}$. Then we know the rule that must have been applied first was \setsos. So we get
     $$\sos{(v,e)}{L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s[x\mapsto v]}$$ 
-    This is of the desired form, so it must be the case that $s' = s[x\mapsto v]$. Now we look at $\sos{(v,e)}{L}{s}$. The only rule that can be applied is [free$_{\textrm{os}}$], so we get $$\sos{(v,e)}{L}{s} \Rightarrow  \sos{\texttt{skip}}{L}{s[x\mapsto v]}$$
+    This is of the desired form, so it must be the case that $s' = s[x\mapsto v]$. Now we look at $\sos{(v,e)}{L}{s}$. The only rule that can be applied is \setsos, so we get $$\sos{(v,e)}{L}{s} \Rightarrow  \sos{\texttt{skip}}{L}{s[x\mapsto v]}$$
     which is of the desired form, and has the right $s'$. This proves this case.
     
-    \item $S = S_1; S_2$ : assume $\sos{ S_1;S_2}{L'}{ s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'}$. Then by [comp$_{\textrm{os}}$] and lemma \ref{breakingdowncomp}, we have $$\sos{S_1;S_2}{L'}{s} \Rightarrow \sos{S_1}{S_2::L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L'}{s''}$$ $$\Rightarrow \sos{S_2}{L'}{s''} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'} ~( * )$$
-    Now we look at $\sos{S_1;S_2}{L}{s}$ with $L$ random. We can apply the rule [comp$_{\textrm{os}}$] to see $$\sos{S_1;S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}$$ Now we can apply the induction hypothesis to $\sos{S_1}{S_2::L}{s}$, as we have $\sos{S_1}{L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s''}$ by $( * )$. So we get 
+    \item $S = S_1; S_2$ : assume $\sos{ S_1;S_2}{L'}{ s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'}$. Then by \compsos and lemma \ref{breakingdowncomp}, we have 
+    $$\sos{S_1;S_2}{L'}{s} \Rightarrow \sos{S_1}{S_2::L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L'}{s''}$$ $$\Rightarrow \sos{S_2}{L'}{s''} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'} ~( * )$$
+    Now we look at $\sos{S_1;S_2}{L}{s}$ with $L$ random. We can apply the rule \compsos to see $$\sos{S_1;S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}$$ Now we can apply the induction hypothesis to $\sos{S_1}{S_2::L}{s}$, as we have $\sos{S_1}{L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s''}$ by $( * )$. So we get 
     $$\sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L}{s''}$$
-    Then by [load$_{\textrm{os}}$], $$\sos{\texttt{skip}}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''}$$
+    Then by \loadsos, 
+    $$\sos{\texttt{skip}}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''}$$
     Now we can apply the induction hypothesis to $\sos{S_2}{L}{s''}$, as we have $\sos{S_2}{L'}{s''} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'}$ by $( * )$. We get 
     $$\sos{S_2}{L}{s''} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$$
     That means we can form the derivation sequence $$\sos{S_1;S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L}{s''} $$ $$ \Rightarrow \sos{S_2}{L}{s''} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$$
@@ -401,13 +408,12 @@ We know that there must be a derivation from $\sos{S}{L'}{s}$ to $\sos{\texttt{s
     $$\sos{S_1;S_2}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$$
     which was to be proven. 
         
-    \item $S = \letm{x}{S'}$ : assume $\sos{\letm{x}{S'}}{L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'}$. There is only one rule that could have been applied first, [let$_{\textrm{os}}$], which gives us 
+    \item $S = \letm{x}{S'}$ : assume $\sos{\letm{x}{S'}}{L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'}$. There is only one rule that could have been applied first, \letsos, which gives us 
     $$\sos{\letm{x}{S'}}{L'}{s} \Rightarrow \sos{S}{(x,s(x))::L'}{s[x\mapsto v]} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'}$$
     By lemma \ref{breakingdownlet} we get 
-    $$\sos{\letm{x}{S'}}{L'}{s} \Rightarrow \sos{S}{(x,s(x))::L'}{s[x\mapsto v]}$$ $$\Rightarrow ^{*} \sos{\texttt{skip}}{(x,s(x))::L'}{s''} \Rightarrow \sos{(x,s(x))}{L}{s''} \Rightarrow \sos{\texttt{skip}}{L'}{s'} ~ ( * )$$
-    From this and the rule [set$_{\textrm{os}}$], we can conclude that $s' = s''[x\mapsto v]$.
-    
-    Now we look at $\sos{\letm{x}{S'}}{L}{s}$ for some list $L$. Then we can apply [let$_{\textrm{os}}$] to get 
+    $$\sos{\letm{x}{S'}}{L'}{s} \Rightarrow \sos{S}{(x,s(x))::L'}{s[x\mapsto v]}$$ $$\Rightarrow ^{*} \sos{\texttt{skip}}{(x,s(x))::L'}{s''} \Rightarrow \sos{(x,s(x))}{L'}{s''} \Rightarrow \sos{\texttt{skip}}{L'}{s'} ~ ( * )$$
+    From this and the rule \setsos, we can conclude that $s' = s''[x\mapsto v]$.
+    Now we look at $\sos{\letm{x}{S'}}{L}{s}$ for some list $L$. Then we can apply \letsos to get 
     $$\sos{\letm{x}{S'}}{L}{s} \Rightarrow \sos{S}{(x,s(x))::L}{s[x\mapsto v]}$$
     We can now apply the induction hypothesis to $\sos{S}{(x,s(x))::L}{s[x\mapsto v]}$, as we know $\sos{S}{(x,s(x))::L'}{s[x\mapsto v]} \Rightarrow ^{*} \sos{\texttt{skip}}{(x,s(x))::L'}{s''}$ by $( * )$. We get
     $$\sos{S}{(x,s(x))::L}{s[x\mapsto v]} \Rightarrow ^{*} \sos{\texttt{skip}}{(x,s(x))::L}{s''}$$
@@ -418,7 +424,7 @@ We know that there must be a derivation from $\sos{S}{L'}{s}$ to $\sos{\texttt{s
 This exhausts all possible cases and hence proves the theorem.
 \end{proof}
 
-Intuitively, this makes sense. If we look at the rules, we see that we can only move something from the list to the front if the front only contains a \texttt{skip} statement, and that thus everything that had been there, must have been finished evaluating. 
+Intuitively, this makes sense. If we look at the rules, we see that we can only move something from the list to the front if the front only contains a \sk statement, and that thus everything that had been there, must have finished evaluating. 
 
 We will now do a simple proof to show that in a composition, the execution of $S_1$ does not depend on what $S_2$ entails. 
 
@@ -509,7 +515,7 @@ The \emph{compile time checker} is a derivation system that has the following ru
 \end{align*}
 \end{definition}
 
-Now first of all, we want this checker to always finish, no matter what the program it needs to check is. It would be impractical if a checker would not terminate when compiling a program, because the compilation would take infinitely long. In order to prove this, we will asign a (nonnegative) `length' to every possible input of the checker and show that with every step the checker takes, this `length' decreases. This in turn gives us a decreasing sequence of nonnegative numbers. This sequence must always be finite, since there is no infinite decreasing sequence of nonnegative numbers. 
+Now first of all, we want this checker to always finish, no matter what the program it needs to check is. It would be impractical if a checker would not terminate when compiling a program, because the compilation would take infinitely long. In order to prove this, we will assign a (non-negative) `length' to every possible input of the checker and show that with every step the checker takes, this `length' decreases. This in turn gives us a decreasing sequence of non-negative numbers. This sequence must always be finite, since there is no infinite decreasing sequence of non-negative numbers. 
 
 \begin{theorem}
 \label{termination}
