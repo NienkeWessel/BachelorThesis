@@ -1,27 +1,50 @@
 \documentclass{beamer}
  
 \usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{bbding} % For the check mark symbol
+\usepackage{amssymb} %To denote the set of integers with correct type of letter
 
 \usetheme{AnnArbor}
 \usecolortheme{wolverine}
 
 \title[Rust Semantics]{The Semantics of Ownership and Borrowing in the Rust Programming Language}
-\author{Nienke Wessel}
+\author[Nienke Wessel]{Nienke Wessel\\
+\small Supervisors: Freek Wiedijk \& Marc Schoolderman}
 \institute{Radboud University}
 \date{July 2nd, 2019}
  
+
+\newcommand{\letterfunc}[2]{\mathcal{#1} \llbracket #2 \rrbracket}
+
+\newcommand{\sk}[0]{\texttt{skip}}
+\newcommand{\nil}[0]{\texttt{Nil}}
+\newcommand{\tr}[0]{\texttt{true}}
+\newcommand{\fa}[0]{\texttt{false}} 
+
+\newcommand{\ns}[3]{\langle #1, #2 \rangle \to #3}
+
+\newcommand{\sos}[3]{\langle #1, #2, #3 \rangle}
+
+\newcommand{\cc}[3]{[ #1, #2, #3 ]}
+
+\newcommand{\letm}[2]{\texttt{let }#1 : \tau \texttt{ in } #2}
+
+\newcommand{\sosb}[4]{\langle #1, #2, #3, \mathcal{#4} \rangle}
+
+\newcommand{\letmut}[2]{\texttt{let mut }#1 : \tau \texttt{ in } #2}
+
+\newcommand{\ccb}[4]{[ #1, #2, #3, \mathcal{#4} ]}
+
+\newcommand{\whi}[1]{\texttt{while } b~ \{ #1 \}}
+
+\newcommand{\ccwhile}[5]{[ #1, #2, #3, \mathcal{#4}, #5 ]}
  
  
 \begin{document}
  
 \frame{\titlepage}
 
-
-
-\begin{frame}
-\frametitle{Table of Contents}
-\tableofcontents
-\end{frame}
 
 
 
@@ -44,9 +67,254 @@
 \end{frame}
 
 
+\begin{frame}[fragile]
+\frametitle{Ownership \& moving}
+
+\begin{lstlisting}
+let vector = vec![37, 42];
+let vector2 = vector;
+println!("vector[0] + vector[1] = {}", vector[0] 
+         + vector[1]);
+\end{lstlisting}
+
+\texttt{error: use of moved value: `vector`}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Ownership \& moving}
+Also a move when passing arguments to a function
+
+\begin{lstlisting}
+fn function(v : Vec<i32>) {
+    // Do something
+}
+
+let vector = vec![37, 42];
+function(vector);
+println!("vector[0] + vector[1] = {}", vector[0] 
+         + vector[1]);
+\end{lstlisting}
+
+\texttt{error: use of moved value: `vector`}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Borrowing}
+\begin{lstlisting}
+fn function(v : &Vec<i32>) {
+    // Do something
+}
+
+let vector = vec![37, 42];
+function(&vector);
+println!("vector[0] + vector[1] = {}", vector[0]
+         + vector[1]);
+\end{lstlisting}
+
+Compiles! \Checkmark
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Mutability}
+
+\begin{lstlisting}
+let x = 0;
+x = 1;
+\end{lstlisting}
+
+\texttt{error: re-assignment of immutable variable `x`}
+\end{frame}
+
+
+
+\begin{frame}[fragile]
+\frametitle{Mutability}
+
+\begin{lstlisting}
+let mut x = 0;
+x = 1;
+\end{lstlisting}
+
+Compiles! \Checkmark
+\end{frame}
+
 \begin{frame}
-\frametitle{Ownership}
+\frametitle{Rules for borrowing}
+\begin{enumerate}
+    \item The scope of the borrower cannot outlast the scope of the original owner
+\item Only one of the following can be true at any moment:
+    \begin{enumerate}
+        \item there are one or more references to a non-mutable resource
+        \item there is exactly one reference to a mutable resource
+    \end{enumerate}
+\end{enumerate}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Rules for borrowing}
+
+\begin{lstlisting}
+    let y=0;
+    let x = & y; 
+    let z = & y;
+\end{lstlisting}
+
+Compiles! \Checkmark
+
+\pause 
+
+\begin{lstlisting}
+    let mut y=0;
+    let x = &mut y; 
+    let z = &mut y;
+\end{lstlisting}
+
+\texttt{error: cannot borrow `y` as mutable more than once at a time}
 
 \end{frame}
 
+
+\begin{frame}[fragile]
+\frametitle{Our syntax}
+
+$$S ::= \sk \mid S_1; S_2 \mid \letm{x}{S'} \mid x = e$$
+$$e ::= x \mid i \mid e_1 + e_2 \mid \&a~e$$
+$$\tau ::= \texttt{Int}$$
+
+We split up statements such as \texttt{let x = 5} in \texttt{let x in (x = 5)}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Our syntax}
+\begin{lstlisting}
+let x = 0;
+let y = x;
+let z = y;
+\end{lstlisting}
+Becomes
+\begin{lstlisting}
+let x: Int in (x = 0;
+    let y: Int in (y = x;
+        let z: Int in (z = y;
+                      )
+                  )
+              )
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Semantics}
+We will be using the same notation that was used in the Semantics \& Correctness course as much as possible.
+
+$$\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$$
+
+$L$ and $L'$ are lists that function like a sort of stack/list. Push part of programs that you will want to do later. Then pop them when the current instruction is empty (\sk).
+
+$s$ and $\mathcal{M}$ are state-like functions.
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Semantics}
+We have a state $s: \textbf{Var} \to \mathbb{Z}_{ext}$ and a function $\mathcal{M}$ that does some additional bookkeeping:
+$$\mathcal{M}: \textbf{Var} \to \mathcal{P}(\{\texttt{bor}, \texttt{mut}\} \cup \textbf{Var})$$ 
+
+$\mathcal{M}$ gives for a variable
+\begin{itemize}
+\item Whether the variable is mutable
+\item Whether the resource of the variable has been borrowed
+\item What variables it is currently borrowing from
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Compile time check}
+However, in Rust the compiler does a lot of checks, while the actual execution is not bothered with them (hence no performance loss).
+
+We want to model this in our semantics!
+
+Solution: a compile time checker derivation system next to the normal semantics.
+
+$$\ccb{S}{L}{s}{M} \to \ccb{S'}{L'}{s'}{M'}$$
+
+which eventually results in either \tr ~or \fa
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Some examples}
+\begin{lstlisting}
+//s(y) = -, s(y) = -, M(x) = {}, M(y) = {}                          
+let mut x: Int in (  -> s(x) = |, M(x) = {mut}
+    x = 0;           -> s(x) = 0
+    let y: &Int in ( -> s(y) = |
+        y = & mut x; -> s(y) = 0, M(x) = {bor,mut}
+                        M(y) = {x}
+    )                -> s(y) = -, M(y) = {}
+                        M(x) = {mut}
+)                    -> s(x) = -, M(x) = {}
+\end{lstlisting}
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Proving}
+Proving anything generally boils down to induction.
+
+Inductive statements:  $S_1; S_2$, $\letm{x}{S'}$
+
+For example, 
+$$\sosb{S_1; S_2}{L}{s}{M} \Rightarrow \sosb{S_1}{S_2::L}{s}{M}$$
+and
+$$\ccb{S_1; S_2}{L}{r}{M} \to \ccb{S_1}{S_2::L}{r}{M}$$
+
+Use the Induction Hypothesis to prove for $S_1$ and $S_2$. 
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Safety}
+Now we want to prove that this compile time checker and our semantics actually go well together.
+
+Idea by Wright and Felleisen (1994): prove \emph{progress} and \emph{preservation}.
+
+\vspace{0.7cm}
+\textbf{Progress:} if the compile time checker says a program is o.k. (i.e results in \tr), then we can make a step (or are in the final state $\sosb{\sk}{\nil}{s}{M}$).
+
+\vspace{0.2cm}
+\textbf{Preservation:} if the compile time checker says a program is o.k. and you can move a step with the semantics, then the compile time checker will also say that the resulting program is o.k.
+\end{frame}
+
+
+\begin{frame}
+\frametitle{What else}
+We have also proven that...
+\begin{itemize}
+    \item ... the compile time checker always terminates.
+    \item ... for the currently executing statement it does not matter what is in the list.
+    \item ... in a composition, the execution of the first statement is not influenced by whatever is in the second statement.
+    \item ... the semantic rules are deterministic.
+\end{itemize}
+\end{frame}
+
 \end{document}
+
+    %Supervisors toevoegen
+%Versies van Rust
+%Rust is een hipstertaal
+%performance is goed (omdat compile time check)
+%Opzoeken of er grote projecten in Rust zijn
+    %Pauzes misschien weg
+    %Int even in texttt
+%Gelijk naar de borrowing ipv eerst door de move
+    %L als tekst ook op de slides zetten
+%safety = progress + preservation
+%Compile checker vertellen
+% Rust logo toevoegen (\titlegraphic)
