@@ -121,17 +121,17 @@ For a data race to happen, there need to be two pointers to the same piece of me
 This means that the following piece of code is allowed (multiple borrows to one immutable owner):
 
 \begin{minted}[linenos, frame=lines]{rust}
-	let y=0;
-	let x = & y; 
-	let z = & y;
+let y=0;
+let x = & y; 
+let z = & y;
 \end{minted}
 
 The next piece of code is not allowed and produces the error \texttt{cannot borrow `y` as mutable more than once at a time}
 
 \begin{minted}[linenos, frame=lines]{rust}
-    let mut y=0;
-	let x = &mut y; 
-	let z = &mut y;
+let mut y=0;
+let x = &mut y; 
+let z = &mut y;
 \end{minted}
 
 This concludes the section on borrowing. We will look at some more examples in Chapter \ref{Borrowing}, when we derive the semantic rules for it. 
