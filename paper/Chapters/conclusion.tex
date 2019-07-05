@@ -1,12 +1,12 @@
 In the previous chapters, we have seen how ownership, borrowing and mutability work together to provide memory safety and how we write these concepts down in relatively simple semantic rules. We have also proved preservation and progress, to prove memory safety in a more classical way. 
 
 \section[discussion]{Discussion and future work}
-While we have looked at some important concepts of Rust, there is of course many many more to Rust that we did not look at extensively. 
+While we have looked at some important concepts of Rust, there is much more to Rust, which we did not look at extensively. In this section, we discuss some of these features and propose some angles for investigation of these features.
 
 \subsection{While}
-For example, we did not include loops in our very limited language, even though loops have been kept in mind while designing the derivation rules for both the semantics and compile time checker. 
+We did not include loops in our very limited language, even though loops have been kept in mind while designing the derivation rules for both the semantics and compile time checker. 
 
-It is interesting to add some form of looping, as that makes it for example possible for a program to not ever finish. As said in the introduction of this thesis, we want the compile time check to always finish, even if the program itself does not finish. 
+It is interesting to add some form of looping, as that makes it possible for a program to not ever finish. As said in the introduction of this thesis, we want the compile time check to always finish, even if the program itself does not finish. 
 
 For example, the very simple program 
 
@@ -18,14 +18,14 @@ fn main() {
 }
 \end{minted}
 
-produces no error. \footnote{It does give the warning \texttt{denote infinite loops with `loop { ... }`}, but as said in the introduction, we will only be trying to model actual errors.}
+produces no error.\footnote{It does give the warning \texttt{denote infinite loops with `loop { ... }`}, but as said in the introduction, we will only be trying to model actual errors.}
 
-During the making of the thesis, we briefly looked at how we could add while loops to our syntax. 
+During the making of the thesis, we briefly looked at how we could add while loops to our syntax and semantics. 
 
 \begin{definition}
 \label{statementswhile}
 A statement $S$ is defined recursively by:
-$$S ::= \textrm{skip} \mid S_1; S_2 \mid a: \textrm{let } x:\tau \textrm{ in } S' \mid x := e \mid \whi{S'}$$
+$$S ::= \textrm{skip} \mid S_1; S_2 \mid \letm{x}{S'} \letmut{x}{S'} \mid x := e \mid \whi{S'}$$
 where $e$ is an expression, $\tau$ is a type and $S_1$, $S_2$ and $S'$ are again statements.
 \end{definition}
 
@@ -55,11 +55,11 @@ while false {
 
 This program gives the error \texttt{re-assignment of immutable variable `x}.
 
-So we will have to keep track of whether we are in a while loop or not. We can do that for example by adding and extra little bit of information to our derivation system, so that our derivation system has rules of the form 
+So we will have to keep track of whether we are in a while loop or not. We can do that, for example, by adding an extra bit of information to our derivation system, so that our derivation system has rules of the form 
 
 $$\ccwhile{S}{L}{s}{M}{c} \to \ccwhile{S'}{L'}{s'}{M'}{c'}$$
 
-We use the boolean to indicate whether we are in a while loop or not, but more about that later. 
+The $c$ is sort of a counter that registers in how many nested loops we currently are. 
 
 We will not provide a complete definition for the whole checker, but will sketch what this definition will have to keep track off. 
 %\begin{definition}
@@ -85,33 +85,35 @@ First of all, we need to make sure that the compile time checker does not actual
 
 $$\ccwhile{\whi{S}}{L}{r}{M}{c} \to \ccwhile{S}{\texttt{dec}::L}{r}{M}{c+1}$$
 
-It is important that there should be no immutable assignment within a loop, as that would make it possible for an assignment to happen multiple times. As we saw before, the compile checker of the actual Rust Programming Language does not keep track of whether an assignment actually will happen multiple times, so  neither do we. This simplifies the process. 
+The \texttt{dec} in this rule refers to decreasing the counter after we have walked through the body of the loop.
 
-We will need some way to keep track of whether we are in a while loop. Our proposal is to add an extra variable, a counter, in the tuple that will be incremented once we enter a while loop and decremented once we exit the while loop. If the compile time checker comes accross an immutable assignment when the counter is strict larger than zero, it should reject the program. 
+It is important to note that there should be no immutable assignment within a loop, as that would make it possible for an assignment to happen multiple times. As we saw before, the compile checker of the actual Rust Programming Language does not keep track of whether an assignment actually will happen multiple times, so  neither do we. This simplifies the process. 
+
+We will need some way to keep track of whether we are in a while loop. Our proposal is to add an extra variable, a counter, in the tuple that will be incremented once we enter a while loop and decremented once we exit the while loop. If the compile time checker comes accross an immutable assignment when the counter is strictly larger than zero, it should reject the program. 
 
 The compile time checker pushes a decrease opertaion to our stack/list to make sure that after the while loop finishes, the counter will be reduced by one. 
 
 We need a counter and cannot simply do with for example a boolean, as there might be multiple nested while loops. After the inner while loop, you might naively put the boolean to false when you finish, but then this would not be correct as you are still in the outer while loops. You could make an extra program instruction with the value of the boolean when you enter the loop to keep track of what it was, but this is extra bookkeeping and more difficult than our proposed solution.
 
-The progress and preservation proofs get more complicated when we add while loops to our language. This is because our semantic rules no longer match as perfect with our compile time check anymore as in the previous chapters. This will mean we will have to do some extra work, or adjust our theorems. The compile time checker has an instruction that is not included in the semantics, so that we will need to adjust for that. 
+The progress and preservation proofs get more complicated when we add while loops to our language. This is because our semantic rules no longer match as perfect with our compile time check anymore as in the previous chapters. This will mean we will have to do some extra work. Also the formulation of the theorems sometimes has to be changed, as there are program instruction types in the compile time checker that do not exist in the semantics. 
 
 \subsection{Lifetimes}
-Due to time constraints, we did not really include lifetimes in this thesis. We mostly used scope properties instead of the lifetimes themselves. A more elaborate research should look into how to incorporate lifetimes in the current semantics. This would include choosing a suitable mathematical representation for lifetimes. 
+Due to time constraints, we did not really include lifetimes in this thesis. We mostly used scope properties instead of the lifetimes themselves. A more extensive investigation could look into how to incorporate lifetimes in the current semantics. This would include choosing a suitable mathematical representation for lifetimes. 
 
 A possible choice would be to make lifetimes a lattice. Not all lifetimes are necessarily comparable, but those within one function should be. There should be an upper bound and lower bound. 
 
 Later research could look into this possibility. 
 
 \subsection{Functions}
-To make a usuable programming language, functions are very important. From chapter \ref{Rust}, it seems likely that lifetimes will be needed to make a successful semantic implementation of this. Future research could look into this. 
+Functions are important to make a usuable programming language. From chapter \ref{Rust}, it seems likely that lifetimes will be needed to make a successful semantic implementation of this. Future research could look into this. 
 
 \subsection{Formalization}
-All of the work in this thesis is done on paper and lacks computer verification. While a start was made to formalize the move only language (Chapter \ref{Moving}) in Coq \citep{barras1997coq}, this was not finished due to time constraints. The first attempt can be found on the Github page of the author \citep{github}. 
+All of the work in this thesis is done on paper and lacks computer verification. While a start was made to formalize the move only language (Chapter \ref{Moving}) in the Coq Theorem Prover \citep{barras1997coq}, this was not finished due to time constraints. The first attempt can be found on the Github page of the author \citep{github}. 
 
 In order to make completely sure that all proofs presented in this thesis are correct, they should be verified in Coq or a similar program in the future. 
 
-\subsection{Account for translation}
-While we proved some minor properties of our compile time checker in the previous chapters, this is in no way a guartantee that the translation is 100\% correct and completely models the Rust language. Therefore, future research could focus on the translation process and verify that the translation process went as it should have gone.
+\subsection{Correctness of translation}
+While we proved some minor properties of our compile time checker in the previous chapters, this is in no way a guartantee that the translation is a 100\% correct and completely models the Rust language. Therefore, future research could focus on the translation process and verify that the translation process went as it should have gone. Then we can be certain that the theorems provided here are applicable to the Rust language. 
 
 \section{Conclusion}
-In the previous chapters we looked at a small but interesting part of Rust. We made semantic rules and a compile time check derivation system to model the way Rust rejects programs compile time. While a lot of work remains to be done (as sketched in the prevous section), we managed to prove some interesting properties, such as progress and preservation of our operational semantics.
+In the previous chapters we looked at a small but interesting part of Rust. We made semantic rules and a compile time check derivation system to model the way Rust rejects programs compile time. While work remains to be done (as sketched in the prevous section), we managed to prove some interesting properties, such as progress and preservation of our operational semantics.
