@@ -5,6 +5,9 @@ In the next chapter, we will add some interesting features, and again look at bo
 
 The subset of Rust that interests us in this chapter will be dubbed as `move only'. In this subset of Rust, you can only assign variables. If you do so, the ownership of the resource will be moved to that variable. You cannot borrow and nothing is mutable. That means everything is constant. While this does not seem like a very useful language, it will provide a good basis to work from when adding new features.
 
+\subsection{A note on types}
+In this chapter and the following chapter, we will assume that all programs are typed correctly. We will not develop a type system here, as that is not particularly interesting for what we are investigating now: the compile timed check of moving, borrowing and mutability. Therefore, the assumption is that we are only dealing with well-typed programs. 
+
 \section{Syntax}
 We will first look at the syntax of our `move only' language. We have the following defintions.
 
@@ -292,6 +295,7 @@ This concludes our section of the big step semantics. As these semantics are rat
 We now move on to a small step semantics. We mostly use the same framework as in the big step semantics, unless stated otherwise. Our small step semantics, as stated above, has rules of the form $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$, where $S$, $S'$ are statements and $s$, $s'$ are states as defined above. To properly define what kind of things $L$ and $L'$ are, we first need to define what we mean by `a program instruction'. 
 
 \begin{definition}
+\label{programinstruction}
 A program instruction $I$ has the following form:
 $$I ::= S \mid (x,v)$$
 where $S$ is a statement, $x$ a variable from \textbf{Var} and $v$ an element from $\mathbb{Z}_{ext}$.
