@@ -1,9 +1,17 @@
 \section{Introduction}
-We will now add an extra feature to our language, namely borrowing. Borrowing presents us with new challenges, as we need to make sure that the variable we borrow from is not accessible during the borrow, but becomes accessible again after the borrow. We will need to keep track of what variables we have borrowed from. If we do not do so, we cannot free them afterwards. 
+In the previous chapter, we looked quite extensively at a very simple language. In this chapter, we will add some of the more interesting features, namely borrowing and mutability. Borrowing presents us with new challenges, as we need to make sure that the variable we borrow from is not accessible during the borrow, but becomes accessible again after the borrow. We will need to keep track of what variables we have borrowed from. If we do not do so, we cannot free them afterwards. 
 
 \section{Syntax}
-First, we need to update our syntax to reflect the possibility of borrowing. The possible statements from definition \ref{statementsmove} can remain the same. We will need to update our expressions.
-NOT TRUE INCLUDE LETMUT AS STATEMENT
+First, we need to update our syntax to reflect the possibility of borrowing. The possible statements from definition \ref{statementsmove} can remain almost the same. We just need to make a new statement for a mutable let. We will also have to update our expressions and types. 
+
+\begin{definition}
+\label{statementsborrow}
+A statement $S$ is defined recursively by:
+$$S ::= \sk \mid S_1; S_2 \mid \letm{x}{S'} \mid \letmut{x}{S'} \mid x = e $$
+where $e$ is an expression as defined below, $\tau$ is a type as defined below and $S_1$, $S_2$ and $S'$ are again statements.
+\end{definition}
+
+Our definition of a program instruction (Definition \ref{programinstruction}) updates accordingly with this new definition of a statement. 
 
 \begin{definition}
 \label{expressionsborrow}
@@ -11,15 +19,13 @@ An expression $e$ is defined recursively by:
 $$e ::= x \mid i \mid e_1 + e_2 \mid \&a~e$$
 \end{definition}
 
-We will also need to update our types, to indicate that a variable can have an indirect type.
-
 \begin{definition}
 \label{typesborrow}
 A type $\tau$ is
 $$\tau ::= \textrm{Int} \mid \& \tau$$
 \end{definition}
 
-\section{Some examples}
+\section{Examples}
 
 In order to illustrate what is happening in this chapter and therefore what should be happening in the semantics, we will walk through some small pieces of example code. 
 
@@ -27,23 +33,21 @@ In order to illustrate what is happening in this chapter and therefore what shou
 To start of easy, we will first look at an example of mutability without borrowing. 
 
 \begin{minted}[linenos, frame=lines]{rust}
-let mut y=0;
+let mut y = 0;
 y = 1;
 \end{minted}
 
 We can desugar this to our own syntax:
 
 \begin{minted}[linenos, frame=lines]{rust}
-a: {
-    let mut y in 
-        y = 0;
-        y = 1;
-   }
+let mut y in 
+    y = 0;
+    y = 1;
 \end{minted}
 
-Let's see what happens here. We will try to use the semantics of the previous chapter as much as possible. At the \texttt{let}-statement, besides initializing \texttt{x} to $\perp$, we need to somehow save that \texttt{x} is mutable. We can do that by introducing a new function besides the state, $\mathcal{M}$, which tells us whether a variable is mutable or not. For purposes that will become clear later on, we will choose to let this function return $\{\texttt{mut}\}$ if the variable is mutable and let it return $\emptyset$ if the variable is not mutable. 
+We will walk through teh example line by line and try to use the semantics of the previous chapter as much as possible. At the \texttt{let}-statement, besides initializing \texttt{y} to $\perp$, we need to somehow save that \texttt{y} is mutable. We can do that by introducing a new function besides the state, $\mathcal{M}$, which tells us whether a variable is mutable or not. For purposes that will become clear later on, we will choose to let this function return $\{\texttt{mut}\}$ if the variable is mutable and let it return $\emptyset$ if the variable is not mutable. 
 
-Then in line 4, we assign a value to \texttt{x}, which makes that $s(x) = 0$. Then in line 5, instead of rejecting the program because \texttt{x} already has a value and thus is not $\perp$, we see that \texttt{x} is mutable and accept the assignment if \texttt{x} is either $\perp$ or an element from $\mathbb{Z}$. If \texttt{x} were not mutable, then only $\perp$ would have sufficed. 
+Then in line 2, we assign a value to \texttt{y}, which makes that $s(y) = 0$. Then in line 3, instead of rejecting the program because \texttt{y} already has a value and thus is not $\perp$, we see that \texttt{y} is mutable and accept the assignment if \texttt{y} is either $\perp$ or an element from $\mathbb{Z}$. If \texttt{y} were not mutable, only $\perp$ would have sufficed. 
 
 \subsection{Nonmutable borrow}
 The example of this section looks at just borrowing and no mutability. 
@@ -57,113 +61,76 @@ z = y;
 If we write this in our syntax, we get: 
 
 \begin{minted}[linenos, frame=lines]{rust}
-a: {
-    let x: Int in x = 0;
-    b: {
-        let z: &Int in 
-        c: {
-            let y: &Int in
+let x: Int in (
+    x = 0;
+    let z: &Int in (
+        let y: &Int in (
             y = & x;
             z = y;
-        }
-    }
-}
+        )
+    ) 
+)
 \end{minted} 
 
-Now let's look per step at what should be happening in the semantics. At the start, we have no borrows and every variable is undefined, i.e. $-$. Then we look at the code. 
+We will again walk through this example step by step. At the start, we have no borrows and every variable is undefined, i.e. $-$.
 
 \begin{minted}[linenos, frame=lines]{rust}
-a: {
-    let x: Int in 
+let x: Int in 
+    x = 0;
 \end{minted}
 
-Like in the previous chapter, it seems wise to keep track of what variables have been initialized and which have not been. So lets make a state again as we did in the previous chapter to keep track of the values of the variables. So we will say \texttt{x} now is $\perp$ or $s(x) = \perp$.  
+We will again use a state to keep track of the values of the variables. After the first line, we will say \texttt{x} is now $\perp$: $s(x) = \perp$.  
+After line 2, \verb|x| will be equal to $0 \in \mathbb{Z}$. Now we move on to the next \verb|let|-statements.
 
 \begin{minted}[linenos, frame=lines]{rust}
-a: {
-    let x: Int in x = 0;
+let x: Int in 
+    x = 0;
+    let z: &Int in 
+        let y: &Int in
 \end{minted}
 
-Obviously, we will now want \verb|x| to equal $0 \in \mathbb{Z}$. Now we move on to the next \verb|let|-statement.
+Now \verb|z| has been initiazed. So we have $s(x) = 0$ and $s(z) = \perp$. For all other variables $v$, we have $s(v) = -$ after line 3. After line 4, we also have $s(y) = \perp$.
 
 \begin{minted}[linenos, frame=lines]{rust}
-a: {
-    let x: Int in x = 0;
-    b: {
-        let z: &Int in
-\end{minted}
-
-Now \verb|z| has been initiazed. So we have $s(x) = 0$ and $s(z) = \perp$. For all other variables $v$, we have $s(v) = -$. 
-
-\begin{minted}[linenos, frame=lines]{rust}
-a: {
-    let x: Int in x = 0;
-    b: {
-        let z: &Int in 
-        c: {
-            let y: &Int in
-\end{minted}
-
-Now we also have $s(y) = \perp$.
-
-\begin{minted}[linenos, frame=lines]{rust}
-a: {
-    let x: Int in x = 0;
-    b: {
-        let z: &Int in 
-        c: {
-            let y: &Int in
+let x: Int in (
+    x = 0;
+    let z: &Int in (
+        let y: &Int in (
             y = & x;
+            z = y;
 \end{minted}
 
-Now we have $s(y) = 0$ and we have $s(x) = 0$. As you might remember from the chapter about Rust, you can have multiple `readers' to one location, as long as you cannot change the content of that location (to prevent data races). 
+Now we have $s(y) = 0$ in line 5 and we have $s(x) = 0$. As you might remember from the chapter about Rust, you can have multiple `readers' to one location, as long as you cannot change the content of that location (to prevent data races). After line 6, the value that $y$ had will be moved to $z$. So $s(y) = -$ and $s(z) = 0$.
 
 \begin{minted}[linenos, frame=lines]{rust}
-a: {
-    let x: Int in x = 0;
-    b: {
-        let z: &Int in 
-        c: {
-            let y: &Int in
+let x: Int in (
+    x = 0;
+    let z: &Int in (
+        let y: &Int in (
             y = & x;
-            z = y
-\end{minted}
-
-Now the value that $y$ had will be moved to $z$. So $s(y) = -$ and $s(z) = 0$. 
-
-\begin{minted}[linenos, frame=lines]{rust}
-a: {
-    let x: Int in x = 0;
-    b: {
-        let z: &Int in 
-        c: {
-            let y: &Int in
-            y = & x;
-            z = y
-        }
+            z = y;
+        )
 \end{minted}
 
 Now $z$ goes out of scope, so we have $s(z) = -$, while still having $s(x) = 0$. 
 
 \begin{minted}[linenos, frame=lines]{rust}
-a: {
-    let x: Int in x = 0;
-    b: {
-        let z: &Int in 
-        c: {
-            let y: &Int in
+let x: Int in (
+    x = 0;
+    let z: &Int in (
+        let y: &Int in (
             y = & x;
             z = y;
-        }
-    }
-}
+        )
+    ) 
+)
 \end{minted} 
 
 After the second \}, nothing happens, as $s(y)$ already was $-$. After the last bracket, $x$ is also again set to $-$. 
 
 \subsection{Mutable borrow}
 
-For the second example, we will look at some mutable borrowing. As explained in the chapter about Rust, the following program produces an error, as it makes two mutable references to the same piece of memory. This makes the code prone to data races. 
+For the third example, we will look at some mutable borrowing. As explained in the chapter about Rust, the following program produces an error, as it makes two mutable references to the same piece of memory. This makes the code prone to data races. 
 
 \begin{minted}[linenos, frame=lines]{rust}
 let mut x=0;
@@ -174,61 +141,59 @@ let z = & mut x;
 If we write this in our syntax, we get: 
 
 \begin{minted}[linenos, frame=lines]{rust}
-a: {
-    let mut x: Int in x = 0;
-    b: {
-        let y: &Int in y = & mut x;
-        c: {
-            let z: &Int in z = & mut x;
-        }
-    }
-}
+let mut x: Int in (
+    x = 0;
+    let y: &Int in (
+        y = & mut x;
+        let z: &Int in (
+            z = & mut x;
+        )
+    )
+)
 \end{minted} 
 
 So now we will walk through the code and see where the code should not be accepted. 
 
 \begin{minted}[linenos, frame=lines]{rust}
-a: {
-    let mut x: Int in x = 0;
+let mut x: Int in (
+    x = 0;
 \end{minted}
 
-After the \texttt{let}, we have $s(x) = -$. Then after the \texttt{x = 0}, we have $s(x) = 0$. This should be surprising in the light of the previous chapter and previous example. However, it is very important to not that our \texttt{x} here is \texttt{mut}able. We will need this information inside the \texttt{let}, so we should have some way to keep track of it. Let's say we have a function $\mathcal{M}$ that tells us whether a variable is \texttt{mut} or not. So we will say $\mathcal{M}(x) = \{\texttt{mut}\}$. 
+After the \texttt{let}, we have $s(x) = -$. Then after the \texttt{x = 0}, we have $s(x) = 0$. This should not be surprising in the light of the previous chapter and previous example. However, it is very important to not that our \texttt{x} here is mutable. So we will say $\mathcal{M}(x) = \{\texttt{mut}\}$. 
 
 \begin{minted}[linenos, frame=lines]{rust}
-a: {
-    let mut x: Int in x = 0;
-    b: {
-        let y: &Int in y = & mut x;
+let mut x: Int in (
+    x = 0;
+    let y: &Int in (
+        y = & mut x;
 \end{minted}
 
-For \texttt{y}, the same story holds as for \texttt{x} above, but \texttt{y} is not mutable. So at the end, $s(y) = 0$ and $\mathcal{M}(y) = \emptyset$. However, we want \texttt{x} to know that it has been borrowed, so cannot be changed directly anymore and we want \texttt{y} to know where it borrowed from, so we can release the borrow after the scope of \texttt{y} ends. Therefore, we need to do some additional bookkeeping. We will say $\mathcal{M}(x) = \{\texttt{bor}, \texttt{mut}\}$ and $\mathcal{M}(y) = \{x\}$. So our $\mathcal{M}$ will have a signature of the form $\textbf{Var} \to \mathcal{P}(\{\texttt{bor}, \texttt{mut}\} \cup \textbf{Var})$.
+For \texttt{y}, the same story holds as for \texttt{x} above, but \texttt{y} is not mutable. So at the end, $s(y) = 0$ and $\texttt{mut} \not \in \mathcal{M}(y)$. However, we want \texttt{x} to know that it has been borrowed, so cannot be changed directly anymore and we want \texttt{y} to know where it borrowed from, so we can release the borrow after the scope of \texttt{y} ends. Therefore, we need to do some additional bookkeeping. We will say $\mathcal{M}(x) = \{\texttt{bor}, \texttt{mut}\}$ and $\mathcal{M}(y) = \{x\}$. So our $\mathcal{M}$ will have a signature of the form $\textbf{Var} \to \mathcal{P}(\{\texttt{bor}, \texttt{mut}\} \cup \textbf{Var})$.
 
 \begin{minted}[linenos, frame=lines]{rust}
-a: {
-    let mut x: Int in x = 0;
-    b: {
-        let y: &Int in y = & mut x;
-        c: {
-            let z: &Int in z = & mut x;
+let mut x: Int in (
+    x = 0;
+    let y: &Int in (
+        y = & mut x;
+        let z: &Int in (
+            z = & mut x;
 \end{minted}
 
 An error should occur here, as this will be the second borrow to the mutable variable \texttt{x}. This could be discovered by looking at $\mathcal{M}(x)$ and seeing that both \texttt{mut} and \texttt{bor} are in there. No new borrow could be made. 
 
-Looking at the same program, but without the last \texttt{let}, we get the following structure:
+Looking at the same program, but without the last \texttt{let}, we get the following structure (where \texttt{|} is used to designate $\perp$):
 
 \begin{minted}[linenos, frame=lines]{rust}
-//s(y) = -, s(y) = -, M(x) = {}, M(y) = {}
-a: {                          
-    let mut x: Int in         //s(x) = |, M(x) = {mut}
-        x = 0;                //s(x) = 0
-        b: {
-            let y: &Int in    //s(y) = |
-                y = & mut x;  //s(y) = 0, M(x) = {bor,mut}, M(y) = {x}
-        }                     //s(y) = -, M(y) = {}, M(x) = {mut}
-}                             //s(x) = -, M(x) = {}
+//s(x) = -, s(y) = -, M(x) = {}, M(y) = {}
+let mut x: Int in (   //s(x) = |, M(x) = {mut}
+    x = 0;            //s(x) = 0
+    let y: &Int in (  //s(y) = |
+         y = & mut x; //s(y) = 0, M(x) = {bor,mut}, M(y) = {x}
+    )                 //s(y) = -, M(y) = {}, M(x) = {mut}
+)                     //s(x) = -, M(x) = {}
 \end{minted}
 
-Here, we can see that at the end, everything is freed. After the borrow of \texttt{x} ends, we remove the \texttt{bor}row status from our $\mathcal{M}$, as \texttt{x} now can be borrowed again. 
+Here, we can see that at the end, everything is freed. After the borrow of \texttt{x} ends, we remove the borrow status from our $\mathcal{M}$, as \texttt{x} now can be borrowed again. 
 
 \subsection{Another example of mutable borrowing}
 The following piece of code is incorrect and produces the error \texttt{re-assignment of immutable variable}. This is because even though \texttt{y} and \texttt{z} are mutable, \texttt{x} is not, and thus cannot be reassigned to borrow from \texttt{z}. 
@@ -256,7 +221,7 @@ let mut x = & mut y;
 x = & mut z
 \end{minted}
 
-Our analysis of this piece of code results in the following: 
+Our analysis of this piece of code is the following: 
 
 \begin{minted}[linenos, frame=lines]{rust}
 //s(y)=s(x)=s(z)=-,M(x)=M(y)=M(z)={}
@@ -274,7 +239,7 @@ let mut y in (           //s(y)=|, M(y)={mut}
 
 It might be surprising to see that after the \texttt{x} is reassigned, the borrow of \texttt{y} is not undone. However, this is the case in the Rust compiler. The compiler (version 1.22.1) does not accept a reborrow of y even after x has gotten a new value. So adding the line \texttt{let v = \& mut y} after line 8 leads to a compile error. 
 
-Now we will look at one more example before putting what we've learned so far into use. The following piece of code passes through the compile time checker.
+Now we will look at one more example before moving on to the semantics. The following piece of code passes through the compile time checker.
 
 \begin{minted}[linenos, frame=lines]{rust}
 let y=0;
@@ -287,16 +252,16 @@ We will again analyze this piece to see what happens here.
 
 \begin{minted}[linenos, frame=lines]{rust}
 //s(y)=s(x)=s(z)=-,M(x)=M(y)=M(z)={}
-a:{let y in             //s(y)=|
+let y in (              //s(y)=|
     y=0;                //s(y)=0
-    b:{let z in         //s(z)=|
+    let z in (          //s(z)=|
         z=1;            //s(z)=1
-        c:{let mut x in //s(x)=|,M(x)={mut}
+        let mut x in (  //s(x)=|,M(x)={mut}
             x = & y;    //s(x)=0
             x = & z;    //s(x)=1
-        }               //s(x)=-,M(x)={}
-    }                   //s(z)=-
-}                       //s(y)=-
+        )               //s(x)=-,M(x)={}
+    )                   //s(z)=-
+)                       //s(y)=-
 \end{minted}
 
 In comparison to the previous example, very little bookkeeping needed to be done. We only need to keep track of the values of the variables, and keep in mind that \texttt{x} is mutable. There is no need to remember which variables have been borrowed or not, since we can have zero, one or multiple borrows anyways. 
@@ -317,6 +282,8 @@ We define the function $\mathcal{V}: \textbf{Exp} \to \mathcal{P}(\textbf{Var})$
 \end{align*}
 \end{definition}
 
+This function is used to collect all variables in an expression that are not being borrowed in that expression. We used this function in the previous chapter already. 
+
 \begin{definition}
 We define the function $\mathcal{B}: \textbf{Exp} \to \mathcal{P}(\textbf{Var})$ recursively by:
 \begin{align*}
@@ -326,6 +293,8 @@ We define the function $\mathcal{B}: \textbf{Exp} \to \mathcal{P}(\textbf{Var})$
 \\  \mathcal{B}(\& x)       &= \{ x \} \textrm{ if } \texttt{mut} \in \mathcal{M}(x) 
 \end{align*}
 \end{definition}
+
+This function is used to collect all variables in an expression that are being borrowed in that expression, but only if they are mutable. This is done because, as we saw in the examples above, there can only arise problems if a mutable variable has already been borrowed. This function thus gathers all `at risk' variables in an expression. 
 
 \begin{definition}
 We define the function $\mathcal{C}: \textbf{Exp} \to \mathcal{P}(\textbf{Var})$ recursively by:
@@ -337,20 +306,25 @@ We define the function $\mathcal{C}: \textbf{Exp} \to \mathcal{P}(\textbf{Var})$
 \end{align*}
 \end{definition}
 
+This function is used to collect all variables in an expression. 
+
+We also need to update the evaluation function. 
 \begin{definition}
 The evaluation function $\mathcal{A}: \textbf{Exp} \times \textbf{State} \to \mathbb{Z}_{ext}$ is defined by:
 \begin{align*}
-    \letterfunc{A}{i}s          &= \letterfunc{N}{i}
-\\  \letterfunc{A}{x}s          &= s(x)
-\\  \letterfunc{A}{e_1 + e_2}s  &= \letterfunc{A}{e_1}s + \letterfunc{A}{e_2}s \textrm{ if } \letterfunc{A}{e_1}s \in \mathbb{Z} \textrm{ and } \letterfunc{A}{e_2}s \in \mathbb{Z}
-\\  \letterfunc{A}{e_1 + e_2}s  &= - \textrm{ otherwise}
-\\ \letterfunc{A}{\&a~x}s       &= \letterfunc{A}{x}s
+    \letterfunc{A}{i}s          &= \letterfunc{N}{i} &
+\\  \letterfunc{A}{x}s          &= s(x) &
+\\  \letterfunc{A}{e_1 + e_2}s  &= \letterfunc{A}{e_1}s + \letterfunc{A}{e_2}s & \textrm{ if } \letterfunc{A}{e_1}s \in \mathbb{Z} \textrm{ and } \letterfunc{A}{e_2}s \in \mathbb{Z}
+\\  \letterfunc{A}{e_1 + e_2}s  &= - & \textrm{ otherwise}
+\\ \letterfunc{A}{\&a~x}s       &= \letterfunc{A}{x}s &
 \end{align*}
 \end{definition}
 Notice it is the same as in the previous chapter, except for the added last line. 
 
-\section{Semantics: Big step}
-In this chapter, we will move to the small step semantics right away and skip the big step semantics. These are of similar form to the previous chapter, except that we have rules of the form $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$, where $S$, $S'$ are statements and $s$, $s'$ are states as defined later TODOOOO Fix official definitions. %TODO
+\section{Semantics: Small step}
+In this chapter, we will move to the small step semantics right away and skip the big step semantics. This is because the latter, as mentioned in the previous chapter, allows for better separation in a semantic derivation system and a compile time check system. The semantic rules are of similar form to the previous chapter, except that we have rules of the form $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$.
+
+$S$ and $S'$ are again statements as defined in Definition \ref{statementsborrow}. $L$ and $L'$ are again lists as defined in the previous chapter. $s$ and $s'$ are again states as defined in the previous chapter. $\mathcal{M}$ is a function with signature $\textbf{Var} \to \mathcal{P}(\{\texttt{bor}, \texttt{mut}\} \cup \textbf{Var})$.
 
 \begin{definition} 
 \label{osb}
@@ -359,17 +333,17 @@ We define the following semantic derivation rules (name on the left):
 \begin{tabular}{p{5em}p{23em}p{1em}}
 & & \\
 
-[load$_{\textrm{os}}$] &
+\loadsosb &
 \centering$\sosb{\texttt{skip}}{I::L}{s}{M} \Rightarrow \sosb{I}{L}{s}{M}$ & \\
 
 & & \\
 
-[comp$_{\textrm{os}}$] &
+\compsosb &
 \centering$\sosb{S_1; S_2}{L}{s}{M} \Rightarrow \sosb{S_1}{S_2::L}{s}{M}$ & \\
 
 & & \\
 
-[ass$_{\textrm{os}}$] &
+\asssosb &
 \centering $\sosb{\texttt{x = } e}{L}{s}{M} \Rightarrow \sosb{\texttt{skip}}{L}{$& \\
 & \centering $s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]
 \centering }{M[\forall \textit{y} \in B(\textit{e}), \textit{y}\mapsto M(\textit{y})\cup \{\texttt{bor} \} ] 
@@ -377,22 +351,30 @@ We define the following semantic derivation rules (name on the left):
 
 & & \\
 
-[let$_{\textrm{os}}$] &
+\letsosb &
 \centering $\sos{\letm{x}{S}}{L}{s} \Rightarrow \sosb{S}{(x,s(x),\mathcal{M}(x))::L}{s[x\mapsto \perp]}{M}$ & \medskip\\
 
 & & \\
 
-[letmut$_{\textrm{os}}$] &
+\letmutsosb &
 \centering $\sosb{\letmut{x}{S}}{L}{s}{M} \Rightarrow \sosb{S}{(x,s(x),\mathcal{M}(x))::L}{s[x\mapsto \perp]}{M[\texttt{x}\mapsto\{\texttt{mut}\}]}$ & \medskip\\
 
 & & \\
 
-[set$_{\textrm{os}}$] &
-\centering$\sosb{(x,v,m)}{L}{s}{M} \Rightarrow \sosb{\texttt{skip}}{L}{s[x\mapsto v]}{M[\forall \textit{y} \in M(\textit{x})\cap\textbf{Var}, \textit{y} \mapsto M(\textit{y}) \setminus \{\texttt{bor}\}][\texttt{x}\mapsto \textit{m}]}$ & \medskip\\
+\setsosb &
+\centering$\sosb{(x,v,m)}{L}{s}{M} \Rightarrow \sosb{\sk}{L}{s[x\mapsto v]}{M[\forall \textit{y} \in M(\textit{x})\cap\textbf{Var} \setminus \textit{m}, \textit{y} \mapsto M(\textit{y}) \setminus \{\texttt{bor}\}][\textit{x}\mapsto \textit{m}]}$ & \medskip\\
 \end{tabular} 
 %Where $\mathcal{V}(e)\mapsto-$ is an abbreviation for `for all $x \in \mathcal{V}(e)$, $x \mapsto -$'.
 \end{definition} 
-Note that $\sosb{\texttt{skip}}{\texttt{Nil}}{s}{M}$ has no derivation; this is the/an end state. The other definitions are mostly self-explanatory. Instead of two values in the set-rule, we now have three to also keep track of $\mathcal{M}(x)$. 
+Note that $\sosb{\texttt{skip}}{\texttt{Nil}}{s}{M}$ has no derivation; this is the/an end state. 
+
+The \loadsosb ~ rule and the \compsosb ~rule are assumed to be self-explanatory. As for the \asssosb ~rule, besides updating the state like we used to, we need to add all borrowed variables to the $\mathcal{M}$ of $x$. We do this by gathering all those variables with the $\mathcal{B}$ function. For all those variables, their $\mathcal{M}$ needs to include \texttt{bor} from now on as they have been borrowed. 
+
+For the \letsosb ~ and \letmutsosb ~rules, we added the $\mathcal{M}$-function to the tuple, because we also need to reset that one in the reset. Also, in the \letmutsosb ~rule, we need $\mathcal{M}$ to reflect that $x$ is mutable. 
+
+For the \setsosb ~rule, besides resetting $s$ and $\mathcal{M}$, we also need to let all the variables $x$ has borrowed from know that the borrow has stopped. This should not happen when a similarly named variable $x$ already borrowed the variable in the higher scope. This is done by removing all variables in $m$ from the set under consideration.  
+
+\subsection{Compile time check}
 
 We can now look at the compile time checker. In the following definition we show the actual rules. An explanation will be given below. 
 
@@ -403,19 +385,29 @@ The \emph{compile time checker} is a derivation system that has the following ru
 \ccb{\texttt{skip}}{\texttt{Nil}}{r}{M} & \to \texttt{true}  \\
 \ccb{\texttt{skip}}{P::L}{r}{M}       & \to \ccb{P}{L}{r}{M}  \\
 \ccb{S_1; S_2}{L}{r}{M}                 & \to \ccb{S_1}{S_2::L}{r}{M}  \\
-\ccb{x=e}{L}{r}{M}                     & \to \ccb{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]}{M[\forall \textit{y} \in B(\textit{e}), \textit{y}\mapsto M(\textit{y})\cup \{\texttt{bor} \} ][\textit{x} \mapsto M(\textit{x}) \cup B(\textit{e})]} \\
-                                    & \textrm{if } \texttt{mut} \in \mathcal{M}(x), r(x) = \perp \textrm{ or } r(x) = \star, \\ &  \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
-                                    & \textrm{if } \neg \texttt{mut} \in \mathcal{M}(x), r(x) = \perp,  \\ & \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e) \\
-                                    & \to \texttt{false} \textrm{ otherwise}\\
 \ccb{\letm{x}{S}}{L}{r}{M} & \to \ccb{S}{(x,r(x),\mathcal{M}(x))::L}{r[x\mapsto \perp]}{M} \\
 \ccb{\letmut{x}{S}}{L}{r}{M} & \to \ccb{S}{(x,r(x),\mathcal{M}(x))::L}{r[x\mapsto \perp]}{M[\texttt{x}\mapsto\{\texttt{mut}\}]} \\
 \ccb{(x,v,m)}{L}{r}{M}                    & \to \ccb{\texttt{skip}}{L}{r[x \mapsto v]}{M[\forall \textit{y} \in M(\textit{x})\cap\textbf{Var}, \textit{y} \mapsto M(\textit{y}) \setminus \{\texttt{bor}\}][\texttt{x} \mapsto \textrm{m}]} 
 \end{align*}
+
+Also, if $\texttt{mut} \in \mathcal{M}(x), r(x) = \perp \textrm{ or } r(x) = \star, \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e)$, \textbf{OR} if $\neg \texttt{mut} \in \mathcal{M}(x), r(x) = \perp, \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e)$, we have the rule
+
+$$\ccb{x=e}{L}{r}{M}\to$$ 
+$$\ccb{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]}{M[\forall \textit{y} \in B(\textit{e}), \textit{y}\mapsto M(\textit{y})\cup \{\texttt{bor} \} ][\textit{x} \mapsto M(\textit{x}) \cup B(\textit{e})]}$$
+
+If neither of these conditions hold, we have the rule 
+$$\ccb{x=e}{L}{r}{M} \to \texttt{false}$$
 \end{definition}
 
-The first three rules are to be assumed to be self-explanatory. As for the second rule, this one has a complicated set of conditions that should apply. ADD EXPLANATION
+\subsubsection*{Explanation}
+The rules are almost identical to those of the semantics. The difference here is the set of conditions that should apply in an assignment. 
 
-Of course, we again want this compile time checker to always terminate. 
+First of all, we distinguish two cases: whether $x$ is mutable or not. If $x$ is mutable, then $r(x)$ should be either $\perp$ or $\star$ as that means $x$ is at least initialized and might or might not have a value. Also, all variables in the expression should be $\star$. Otherwise the expression $e$ has no well-defined value. Lastly, for all variables that are being borrowed in $e$ and are mutable (so $\mathcal{B}(e)$), we check that they have not been borrowed before. If they have, they cannot be borrowed again after all. 
+
+The other case is that $x$ is not mutable. Then we only accept it if $x$ has been initialized but has not been assigned a value yet. So $r(x) = \perp$. The rest is the same as above. 
+
+\subsubsection*{Termination}
+We again want to prove that this compile time checker always terminates. 
 
 \begin{theorem}
 \label{terminationb}
@@ -426,39 +418,42 @@ The compile checker from definition \ref{compiletimecheckerb} always terminates.
 This proof is almost completely similar to that of \ref{termination}, if we define $|\letmut{x}{S}| = |S| + 3$. We therefore omit the details.
 \end{proof}
 
+\subsubsection*{Progress and preservation}
+Just like in the previous chapter, we will prove progress and preservation. We start with preservation.
 
 \begin{theorem}
 \label{preservationb}
-If $\ccb{S}{L}{r}{M} \to ^* \texttt{true}$ and $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$ with $r$ equivalent to $s$, then there is an $r'$ that is equivalent to $s'$ and we have $\ccb{S'}{L'}{r'}{M'} \to ^* \texttt{true}$.
+If $\ccb{S}{L}{r}{M} \to ^* \texttt{true}$ and $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$ with $r$ related to $s$, then there is an $r'$ that is related to $s'$ and we have $\ccb{S'}{L'}{r'}{M'} \to ^* \texttt{true}$.
 \end{theorem}
 
 \begin{proof}
 We assume $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$. We look at the different possible rules $\Rightarrow$. 
 \begin{itemize}[noitemsep]
-    \item $\sosb{\texttt{skip}}{I::L}{s}{M} \Rightarrow \sos{I}{L}{s}{M}$. We assume $\ccb{\texttt{skip}}{I::L}{r}{M} \to ^* \texttt{true}$. We try to determine which derivation steps could have let to \texttt{true}. The only possible step is 
+    \item $\sosb{\texttt{skip}}{I::L}{s}{M} \Rightarrow \sosb{I}{L}{s}{M}$. We assume $\ccb{\texttt{skip}}{I::L}{r}{M} \to ^* \texttt{true}$. We try to determine which derivation steps could have let to \texttt{true}. The only possible step is 
     $$\ccb{\texttt{skip}}{I::L}{r}{M}\to \ccb{I}{L}{r}{M}$$
     Then we have our $r' = r$, and obviously we also have $\ccb{I}{L}{r}{M} \to^* \texttt{true}$.
     \item $\sosb{S_1; S_2}{L}{s}{M} \Rightarrow \sosb{S_1}{S_2::L}{s}{M}$. We assume $\ccb{S_1; S_2}{L}{r}{M} \to ^* \texttt{true}$. We try to determine which derivation steps could have led to \texttt{true}. The only possible step is 
     $$\ccb{S_1; S_2}{L}{r}{M} \to \ccb{S_1}{S_2::L}{r}{M}$$
     Then we have our $r' = r$ and obviously we also have $\ccb{S_1}{S_2::L}{r}{M} \to^* \texttt{true}$.
-    \item The other cases are similar. \emph{Might add them later.}
+    \item The other cases are similar and therefore omitted.
 \end{itemize}
-This exhausts all possible cases and hence proves our theorem.
+This proves our theorem.
 \end{proof}
 
 
 \begin{theorem}
 \label{progressb}
-If $\ccb{S}{L}{r}{M} ->^* \texttt{true}$, then $S = \texttt{skip}$ and $L = \texttt{Nil}$ or we have $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$ for some $S'$, $L'$, $s'$ and $M'$, and every $s$ equivalent to $r$.
+If $\ccb{S}{L}{r}{M} ->^* \texttt{true}$, then $S = \texttt{skip}$ and $L = \texttt{Nil}$ or we have $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$ for some $S'$, $L'$, $s'$ and $M'$, and every $s$ related to $r$.
 \end{theorem}
 
 \begin{proof}
 We assume $\ccb{S}{L}{r}{M} ->^* \texttt{true}$. We look at the possible derivation steps that could have led to this form. 
 \begin{itemize}[noitemsep]
     \item $\ccb{\texttt{skip}}{\texttt{Nil}}{r}{M} \to \texttt{true}$. This means $S = \texttt{skip}$ and $L = \texttt{Nil}$ and that means we are done.
-    \item $\ccb{\texttt{skip}}{P::L}{r}{M} \to \ccb{P}{L}{r}{M}$. This means we have $\sosb{\texttt{skip}}{P::L}{s}{M}$ with $s$ any state equivalent to $r$. We can then apply the rule [load$_{\textrm{os}}$], to get $\sosb{\texttt{skip}}{P::L}{s}{M} \Rightarrow \sosb{P}{L}{s}{M}$, which means we are done.
-    \item The other cases are similar. \emph{Might add them later.}
+    \item $\ccb{\texttt{skip}}{P::L}{r}{M} \to \ccb{P}{L}{r}{M}$. This means we have $\sosb{\texttt{skip}}{P::L}{s}{M}$ with $s$ any state related to $r$. We can then apply the rule [load$_{\textrm{os}}$], to get $\sosb{\texttt{skip}}{P::L}{s}{M} \Rightarrow \sosb{P}{L}{s}{M}$, which means we are done.
+    \item The other cases are similar and therefore omitted.
 \end{itemize}
+This proves our theorem
 \end{proof}
 
 
