@@ -45,7 +45,7 @@ let mut y in
     y = 1;
 \end{minted}
 
-We will walk through teh example line by line and try to use the semantics of the previous chapter as much as possible. At the \texttt{let}-statement, besides initializing \texttt{y} to $\perp$, we need to somehow save that \texttt{y} is mutable. We can do that by introducing a new function besides the state, $\mathcal{M}$, which tells us whether a variable is mutable or not. For purposes that will become clear later on, we will choose to let this function return $\{\texttt{mut}\}$ if the variable is mutable and let it return $\emptyset$ if the variable is not mutable. 
+We will walk through the example line by line and try to use the semantics of the previous chapter as much as possible. At the \texttt{let}-statement, besides initializing \texttt{y} to $\perp$, we need to somehow save that \texttt{y} is mutable. We can do that by introducing a new function besides the state, $\mathcal{M}$, which tells us whether a variable is mutable or not. For purposes that will become clear later on, we will choose to let this function return $\{\texttt{mut}\}$ if the variable is mutable and let it return $\emptyset$ if the variable is not mutable. 
 
 Then in line 2, we assign a value to \texttt{y}, which makes that $s(y) = 0$. Then in line 3, instead of rejecting the program because \texttt{y} already has a value and thus is not $\perp$, we see that \texttt{y} is mutable and accept the assignment if \texttt{y} is either $\perp$ or an element from $\mathbb{Z}$. If \texttt{y} were not mutable, only $\perp$ would have sufficed. 
 

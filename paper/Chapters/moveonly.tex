@@ -66,7 +66,7 @@ Our big step semantics is called `natural semantics'. Its rules are of the form:
 
 $$\ns{S}{s}{s'}$$
 
-Where $S$ is a statement as defined in the previous section. $s$ and $s'$ are states, for which an exact definition will be given shortly. 
+$S$ is a statement as defined in the previous section. $s$ and $s'$ are states, for which an exact definition will be given shortly. 
 
 Our small step semantics is called `structural operational semantics'. Its rules are of the form:
 
@@ -110,7 +110,7 @@ We have the following sets:
 
 Notice that we have a recursive definition of \textbf{Exp}. \textbf{Exp} should be interpreted as a representation for all possible syntactic expressions. Note that elements from \textbf{Add} will usually be denoted as ``$e_1 + e_2$'' instead of ``$(e_1, e_2)$''.
 
-As \textbf{Exp} is a recursive set, it will turn out to be useful to also be able to gather all the variables that are in an expression $e$. We do this by defining a new function $\mathcal{V}$.
+As \textbf{Exp} is a inductive set, it will turn out to be useful to also be able to gather all the variables that are in an expression $e$. We do this by defining a new function $\mathcal{V}$.
 
 \begin{definition}
 We define the function $\mathcal{V}: \textbf{Exp} \to \mathcal{P}(\textbf{Var})$ recursively by:
@@ -260,7 +260,7 @@ The proof proceeds by induction on the structure of $S$. We distinguish the foll
         \item $y\not = x$ : we again assume $\letterfunc{A}{y}s = -$, as otherwise there is nothing to prove. Then we can again distinguish two cases: 
         \begin{itemize}[noitemsep]
             \item $y \in \mathcal{V}(e)$ \footnote{Note: in practice, it will not be possible for $y$ to be both an element of $\mathcal{V}(e)$ and $\letterfunc{A}{y}s = -$, as one of the assumptions of the rule [ass$_{\textrm{ns}}$] assumes $\letterfunc{A}{e}s \neq -$. However, we would need to prove this with induction on the shape of an expression and it turns out not to be necessary as the proof is rather simple anyways.} : in $s'$, we have $\mathcal{V}(e)\mapsto-$, so $y \mapsto -$, which means $\letterfunc{A}{y}s = -$.
-            \item $y \not \in \mathcal{V}(e)$ : as $x \not = y$ and $y \not \in \mathcal{V}(e)$, the assignment of $y$ is not any different from $s$ in $s'=s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$, so $\letterfunc{A}{y}s' = -$
+            \item $y \not \in \mathcal{V}(e)$ : as $x \not = y$ and $y \not \in \mathcal{V}(e)$, the value of $y$ is not any different from $s$ in $s'=s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$, so $\letterfunc{A}{y}s' = -$
         \end{itemize}
     \end{itemize}
     This exhausts all possible cases and therefore proves the case where $S$ is of the form $x = e$.
