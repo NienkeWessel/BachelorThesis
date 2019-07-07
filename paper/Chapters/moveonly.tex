@@ -15,7 +15,7 @@ We will first look at the syntax of our `move only' language. We have the follow
 \label{statementsmove}
 A statement $S$ is defined recursively by:
 $$S ::= \sk \mid S_1; S_2 \mid \letm{x}{S'} \mid x = e$$
-where $e$ is an expression as defined below, $\tau$ is a type as defined below and $S_1$, $S_2$ and $S'$ are again statements.
+where $e$ is an expression as defined below, $\tau$ is a type as defined below and $S_1$, $S_2$ and $S'$ are statements themselves.
 \end{definition}
 
 \begin{definition}
@@ -49,9 +49,9 @@ let z = y;
 let x: Int in (x = 0;
     let y: Int in (y = x;
         let z: Int in (z = y;
-                      )
-                  )
-              )
+        }
+    )
+)
 \end{minted}
 
 We will often put the closing bracket at the same indenting height as the opening brackets, contrary to normal programming standards. This is done to clearly show the scopes. 
@@ -479,7 +479,7 @@ The proof proceeds by induction on the structure of $S$, the program instruction
     $$\sos{\letm{x}{S'}}{L}{s} \Rightarrow \sos{S'}{(x,s(x))::L}{s[x\mapsto \perp]} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$$
     and 
     $$\sos{\letm{x}{S'}}{L}{s} \Rightarrow \sos{S'}{(x,s(x))::L}{s[x\mapsto \perp]} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$$
-    By Proposition \ref{breakingdownlet}, we know that we can break the latter $\Rightarrow ^{*}$ can be broken up into smaller parts, so we have 
+    By Proposition \ref{breakingdownlet}, we know that the latter $\Rightarrow ^{*}$ can be broken up into smaller parts, so we have 
     $$\sos{\letm{x}{S}}{L}{s} \Rightarrow \sos{S'}{(x,s(x))::L}{s[x\mapsto \perp]} \Rightarrow ^{*}$$ $$\sos{\texttt{skip}}{(x,s(x))::L}{s'''} \Rightarrow \sos{(x,s(x))}{L}{s'''} \Rightarrow \sos{\texttt{skip}}{L}{s'}$$
     and 
     $$\sos{\letm{x}{S}}{L}{s} \Rightarrow \sos{S'}{(x,s(x))::L}{s[x\mapsto \perp]} \Rightarrow ^{*}$$ $$\sos{\texttt{skip}}{(x,s(x))::L}{s''''} \Rightarrow \sos{(x,s(x))}{L}{s''''} \Rightarrow \sos{\texttt{skip}}{L}{s''}$$
@@ -726,7 +726,7 @@ The first thing we will prove is \emph{preservation}, where we will show that if
 
 \begin{theorem}
 \label{preservation}
-If $\cc{S}{L}{r} \to ^* \texttt{true}$ and $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$ with $r$ related to $s$, then there is an $r'$ that is related to $s'$ and we have $\cc{S'}{L'}{r'} \to ^* \texttt{true}$.
+For all statements $S$, $S'$, lists $L$, $L'$, states $s$, $s'$, reduced states $r$: if $\cc{S}{L}{r} \to ^* \texttt{true}$ and $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$ with $r$ related to $s$, then there is an $r'$ that is related to $s'$ and we have $\cc{S'}{L'}{r'} \to ^* \texttt{true}$.
 \end{theorem}
 
 \begin{proof}
@@ -747,7 +747,7 @@ The second property we are interested in is called \emph{progress}. This means t
 
 \begin{theorem}
 \label{progress}
-If $\cc{S}{L}{r} \to ^* \texttt{true}$, then $S = \texttt{skip}$ and $L = \texttt{Nil}$ or we have, for all $s$ related to $r$, $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$ for some statement $S'$, list $L'$ and state $s'$.
+For all statements $S$, reduced states $r$, lists $L$: if $\cc{S}{L}{r} \to ^* \texttt{true}$, then $S = \texttt{skip}$ and $L = \texttt{Nil}$ or we have, for all $s$ related to $r$, $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$ for some statement $S'$, list $L'$ and state $s'$.
 \end{theorem}
 
 \begin{proof}
