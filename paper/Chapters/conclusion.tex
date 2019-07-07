@@ -118,7 +118,7 @@ Functions are important to make a usable programming language. From chapter \ref
 Rust contains many more features that are interesting to look into. Think of vectors or other more complicated data structures, concurrency and I/O. 
 
 \subsection{Formalization}
-All of the work in this thesis is done on paper and lacks computer verification. While a start was made to formalize the move only language (Chapter \ref{Moving}) in the Coq Theorem Prover \citep{barras1997coq}, this was not finished due to time constraints. The first attempt can be found on the GitHub page of the author \citep{github}. 
+All of the work in this thesis is done on paper and lacks computer verification. While a start was made to formalize the `move only'-language (Chapter \ref{Moving}) in the Coq Theorem Prover \citep{barras1997coq}, this was not finished due to time constraints. The first attempt can be found on the GitHub page of the author \citep{github}. 
 
 In order to make completely sure that all proofs presented in this thesis are correct, they should be verified in Coq or a similar program in the future. 
 
@@ -126,4 +126,6 @@ In order to make completely sure that all proofs presented in this thesis are co
 While we proved some minor properties of our compile time checker in the previous chapters, this is in no way a guarantee that the translation is a 100\% correct and completely models the Rust language. Therefore, future research could focus on the translation process and verify that the translation process went as it should have gone. Then we can be certain that the theorems provided here are applicable to the Rust language. 
 
 \section{Conclusion}
-In the previous chapters we looked at a small but interesting part of Rust. We made semantic rules and a compile time check derivation system to model the way Rust rejects programs compile time. While work remains to be done, we managed to prove some interesting properties, such as progress and preservation of our operational semantics.
+In the previous chapters we looked at a small but interesting part of Rust. After a walk through of the interesting features of Rust in Chapter 2, we started out with a big step semantics of only the moving feature. Later on, we moved on to a small step semantics, where we separated the checks the Rust compiler does from the semantic rules. 
+
+In the chapter after that we added more features to the subset under consideration: borrowing and mutability. In both chapters, we proved safety by proving at progress and preservation. 

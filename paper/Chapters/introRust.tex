@@ -1,6 +1,6 @@
 This chapter provides an introduction to Rust, specifically to the features that are considered interesting for this thesis. 
 
-Rust is an imperative programming language, with some functional and object orientated aspects. The language has similarities to C and especially C++, but is different in that it claims to provide memory safety whereas C and C++ do not. One of the most important concepts in this \emph{RAII}, which stands for Resource Acquisition Is Initialization. This term was introduced by \cite{stroustrup1994design} when talking about the design of C++.
+Rust is an imperative programming language, with some functional and object orientated aspects. The language has similarities to C and especially C++, but is different in that it claims to provide memory safety whereas C does not. One of the most important concepts in this \emph{RAII}, which stands for Resource Acquisition Is Initialization. This term was introduced by \cite{stroustrup1994design} when talking about the design of C++.
 
 The idea behind RAII is that a resource (a piece of memory) is allocated during the creation (initialization) of the data/variable and a resource is deallocated during the the destruction of the data/variable. As long as the programmer does not ``lose'' the data (i.e. a reference to the data), there are no memory leaks. To help the programmer do this, there are several important terms/concepts which will be discussed here. We start with \textbf{ownership} and \textbf{borrowing}. At the end of this chapter, we briefly also discuss \textbf{lifetimes}, as this is an important aspect of memory safety in Rust. We will not be using lifetimes explicitly, but it is helpful for understanding Rust in general and the syntax we chose.  
 
@@ -151,7 +151,7 @@ fn function<'a>(v : &'a mut Vec<i32>) {
 }
 \end{minted}
 
-Strictly speaking, lifetimes are a form of generics, which is why they have generics-like syntax.  However for all lifetimes, you are required to place an apostrophe \verb|'|. Just as with generics, one can use any name for a lifetime. However, it is customary that you use \verb|a|, \verb|b|, \verb|c| etc. 
+Strictly speaking, lifetimes are a form of generics, which is why they have generics-like syntax.  However for all lifetimes, you are required to place an apostrophe \verb|'|. Just as with generics, one can use any name for a lifetime\footnote{Except for \texttt{'static}, as that has a special meaning,}. However, it is customary that you use \verb|'a|, \verb|'b|, \verb|'c| etc. 
 
 To see when lifetimes are useful, we can take a look at a more interesting case. 
 
@@ -250,7 +250,7 @@ These rules are the following (as taken from the website "The Rust Programming L
 \begin{enumerate}[noitemsep]
     \item Each parameter that is a reference gets its own lifetime parameter. In other words, a function with one parameter gets one lifetime parameter: \verb|fn foo<'a>(x: &'a i32)|, a function with two arguments gets two separate lifetime parameters: \verb|fn foo<'a, 'b>(x: &'a i32,| \verb|y: &'b i32)|, and so on.
 \item If there is exactly one input lifetime parameter, that lifetime is assigned to all output lifetime parameters: \verb|fn foo<'a>(x: &'a i32) -> &'a i32|.
-\item If there are multiple input lifetime parameters, but one of them is \verb|&self| or \verb|&mut self| because this is a method, then the lifetime of \verb|self| is assigned to all output lifetime parameters.
+\item If there are multiple input lifetime parameters, but one of them is \verb|&self| or \verb|&mut self| because this is a method\footnote{In Rust, methods are functions attached to objects}, then the lifetime of \verb|self| is assigned to all output lifetime parameters.
 \end{enumerate}
 
 All of the cases in the first two parts of this chapter had only one input lifetime parameter and no return lifetime parameter. This means that, following the rules, no lifetime parameters are left and the compiler has inferred the right lifetimes. 
@@ -368,4 +368,4 @@ The compiler will reject the program, but for completely different reasons. It d
 }
 \end{minted}
 
-The compiler does know that \verb|x| has to live as long as \verb|`b| to be printed. The signature of \verb|Index::index| says that \verb|vector| has to live as long as \verb|`b| as well. When \verb|push| is then called, Rust sees that we try to make a mutable reference to \verb|vector| with lifetime \verb|`c|. Rust knows that \verb|`c| is contained within \verb|`b|, so \verb|&`b data| must still be live. Therefore, when trying to do \verb|Vec::push|, the program is rejected. 
+The compiler does know that \verb|x| has to live as long as \verb|'b| to be printed. The signature of \verb|Index::index| says that \verb|vector| has to live as long as \verb|'b| as well. When \verb|push| is then called, Rust sees that we try to make a mutable reference to \verb|vector| with lifetime \verb|'c|. Rust knows that \verb|'c| is contained within \verb|'b|, so \verb|&'b data| must still be live. Therefore, when trying to do \verb|Vec::push|, the program is rejected. 
