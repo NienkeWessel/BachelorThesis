@@ -2,6 +2,7 @@
 In the previous chapter, we looked quite extensively at a very simple language. In this chapter, we will add some of the more interesting features, namely borrowing and mutability. Borrowing presents us with new challenges, as we need to make sure that the variable we borrow from is not accessible during the borrow, but becomes accessible again after the borrow. We will need to keep track of what variables we have borrowed from. If we do not do so, we cannot free them afterwards. 
 
 \section{Syntax}
+\label{syntaxborrow}
 First, we need to update our syntax to reflect the possibility of borrowing. The possible statements from definition \ref{statementsmove} can remain almost the same. We just need to make a new statement for a mutable let. We will also have to update our expressions and types. 
 
 \begin{definition}
