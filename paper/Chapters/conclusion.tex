@@ -1,9 +1,12 @@
-In the previous chapters, we have seen how ownership, borrowing and mutability work together to provide memory safety and how we write these concepts down in relatively simple semantic rules. We have also proved preservation and progress, to prove memory safety in a more classical way. 
+In the previous chapters, we have seen how ownership, borrowing and mutability work together to provide memory safety and how we write these concepts down in relatively simple semantic rules. We have also proved preservation and progress, to prove safety in a more classical way. 
 
 \section[discussion]{Discussion and future work}
-While we have looked at some important concepts of Rust, there is much more to Rust, which we did not look at extensively. In this section, we discuss some of these features and propose some angles for investigation of these features.
+
+\subsection{On safety and memory safety: revisited}
+In the introduction, we shortly talked about safety and memory safety. In the previous chapters, we proven a safety aspect of our semantics: it cannot get stuck if the programs adhere to some condition (our compile time check). We have also looked very briefly at memory safety when we proved that all memory should be cleaned up after a program terminates. Of course, many other properties could be proven. For example, one could prove (in Chapter \ref{Borrowing}) that every variable is in at most one $\mathcal{M}$ of another variable at all times. More of these properties could be formulated and proved to say more about memory safety. Of course, one should not forget that of several ideas, a more general proof already has been given, such as for a justification of the borrow rules \citep{boyland2003checking}. 
 
 \subsection{Other Rust features}
+While we have looked at some important concepts of Rust, there is much more to Rust, which we did not look at extensively. In this section, we discuss some of these features and propose some angles for investigation of these features.
 
 \subsubsection*{While loops}
 We did not include loops in our very limited language, even though loops have been kept in mind while designing the derivation rules for both the semantics and compile time checker. 
@@ -112,10 +115,10 @@ In this thesis we did not look at more types than simply \texttt{Int}. While we 
 Also, the current thesis did not provide a type check at all. With the syntax of section \ref{syntaxborrow} we can make programs that are not typed correctly. As stated there, we simply assumed all programs under consideration were typed correctly, but this is obviously not very satisfactory when looking at the bigger picture. A type checker could be incorporated in the compile check or could be a separate check. Either way, a more complete description of Rust needs a type checker. 
 
 \subsubsection*{Functions}
-Functions are important to make a usable programming language. From chapter \ref{Rust}, it seems likely that lifetimes will be needed to make a successful semantic implementation of this. 
+Functions are important to make a usable programming language. From Chapter \ref{Rust}, it seems likely that lifetimes will be needed to make a successful semantic implementation of this. 
 
 \subsubsection*{Other features of Rust}
-Rust contains many more features that are interesting to look into. Think of vectors or other more complicated data structures, concurrency and I/O. 
+Rust contains many more features that are interesting to look into. Think of vectors or other more complicated data structures, concurrency and I/O. All of these will be interesting, because differences with other programming languages will occur due to the ownership system.  
 
 \subsection{Formalization}
 All of the work in this thesis is done on paper and lacks computer verification. While a start was made to formalize the `move only'-language (Chapter \ref{Moving}) in the Coq Theorem Prover \citep{barras1997coq}, this was not finished due to time constraints. The first attempt can be found on the GitHub page of the author \citep{github}. 
@@ -123,7 +126,8 @@ All of the work in this thesis is done on paper and lacks computer verification.
 In order to make completely sure that all proofs presented in this thesis are correct, they should be verified in Coq or a similar program in the future. 
 
 \subsection{Correctness of translation}
-While we proved some minor properties of our compile time checker in the previous chapters, this is in no way a guarantee that the translation is a 100\% correct and completely models the Rust language. Therefore, future research could focus on the translation process and verify that the translation process went as it should have gone. Then we can be certain that the theorems provided here are applicable to the Rust language. 
+While we proved some minor properties of our compile time checker in the previous chapters, this is in no way a guarantee that the translation is a 100\% correct and completely models the Rust language. We did run quite a few experiments with the Rust compiler to see what is accepted and what is rejected. Some of these experiments are in this thesis as examples. 
+However, a more thorough investigation could certainly be useful. 
 
 \section{Conclusion}
 In the previous chapters we looked at a small but interesting part of Rust. After a walk through of the interesting features of Rust in Chapter 2, we started out with a big step semantics of only the moving feature. Later on, we moved on to a small step semantics, where we separated the checks the Rust compiler does from the semantic rules. 

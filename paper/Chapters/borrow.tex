@@ -12,7 +12,7 @@ $$S ::= \sk \mid S_1; S_2 \mid \letm{x}{S'} \mid \letmut{x}{S'} \mid x = e $$
 where $e$ is an expression as defined below, $\tau$ is a type as defined below and $S_1$, $S_2$ and $S'$ are again statements.
 \end{definition}
 
-Our definition of a program instruction (Definition \ref{programinstruction}) updates accordingly with this new definition of a statement. 
+Our definition of a program instruction (Definition \ref{programinstruction}) updates accordingly with this new definition of a statement. Again, we will be using $S$ to refer to both, but will make explicit what we are talking about in another way.
 
 \begin{definition}
 \label{expressionsborrow}
@@ -395,7 +395,7 @@ The proof is similar to lemma \ref{breakingdowncomp} and therefore omitted.
 Now we can prove that the semantics are deterministic. 
 
 \begin{theorem}
-For every statement $S$, every state $s, s', s''$, every list $L$, if $\sosb{S}{L}{s}{M} \Rightarrow ^{*} \sosb{\texttt{skip}}{L}{s'}{M'}$ and $\sosb{S}{L}{s}{M} \Rightarrow ^{*} \sosb{\sk}{L}{s''}{M'}$, then $s' = s''$ and $\mathcal{M}' = \mathcal{M}''$.
+For every program instruction $S$, every state $s, s', s''$, every list $L$, if $\sosb{S}{L}{s}{M} \Rightarrow ^{*} \sosb{\texttt{skip}}{L}{s'}{M'}$ and $\sosb{S}{L}{s}{M} \Rightarrow ^{*} \sosb{\sk}{L}{s''}{M'}$, then $s' = s''$ and $\mathcal{M}' = \mathcal{M}''$.
 \end{theorem}
 
 \begin{proof}
@@ -473,7 +473,7 @@ Just like in the previous chapter, we will prove progress and preservation. We s
 
 \begin{theorem}
 \label{preservationb}
-For all statements $S$, $S'$, lists $L$, $L'$, states $s$, $s'$, reduced states $r$, and for all $\mathcal{M}$, $\mathcal{M'}$: if $\ccb{S}{L}{r}{M} \to ^* \texttt{true}$ and $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$ with $r$ related to $s$, then there is an $r'$ that is related to $s'$ and we have $\ccb{S'}{L'}{r'}{M'} \to ^* \texttt{true}$.
+For all program instructions $S$, $S'$, lists $L$, $L'$, states $s$, $s'$, reduced states $r$, and for all $\mathcal{M}$, $\mathcal{M'}$: if $\ccb{S}{L}{r}{M} \to ^* \texttt{true}$ and $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$ with $r$ related to $s$, then there is an $r'$ that is related to $s'$ and we have $\ccb{S'}{L'}{r'}{M'} \to ^* \texttt{true}$.
 \end{theorem}
 
 \begin{proof}
@@ -493,7 +493,7 @@ This proves our theorem.
 
 \begin{theorem}
 \label{progressb}
-For all statements $S$, reduced states $r$, lists $L$, and for all $\mathcal{M}$'s: if $\ccb{S}{L}{r}{M} ->^* \texttt{true}$, then $S = \texttt{skip}$ and $L = \texttt{Nil}$ or we have $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$ for some $S'$, $L'$, $s'$ and $M'$, and every $s$ related to $r$.
+For all program instructions $S$, reduced states $r$, lists $L$, and for all $\mathcal{M}$'s: if $\ccb{S}{L}{r}{M} ->^* \texttt{true}$, then $S = \texttt{skip}$ and $L = \texttt{Nil}$ or we have $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$ for some $S'$, $L'$, $s'$ and $M'$, and every $s$ related to $r$.
 \end{theorem}
 
 \begin{proof}

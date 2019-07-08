@@ -686,7 +686,7 @@ To prove the other way around, we first need two helping lemmas.
 
 \begin{lemma}
 \label{relationsosccstep}
-For all program instructions $S$, $S'$, lists $L$, $L'$, statements $s$, $s'$: if $\sos{S}{L}{s} \Rightarrow  \sos{S'}{L'}{s'}$ and $\cc{S}{L}{s} \to ^{*} \tr$, then $\cc{S}{L}{r} \to \cc{S'}{L'}{r'}$ for exactly one $r'$ related to $s'$. 
+For all program instructions $S$, $S'$, lists $L$, $L'$, statements $s$, $s'$: if $\sos{S}{L}{s} \Rightarrow  \sos{S'}{L'}{s'}$ and $\cc{S}{L}{r} \to ^{*} \tr$, then $\cc{S}{L}{r} \to \cc{S'}{L'}{r'}$ for exactly one $r'$ related to $s'$. 
 \end{lemma}
 
 \begin{proof}
@@ -706,7 +706,7 @@ This proves our Lemma.
 
 \begin{lemma}
 \label{relationsoscc}
-For all program instructions $S$, $S'$, lists $L$, $L'$, statements $s$, $s'$: if $\sos{S}{L}{s} \Rightarrow ^{*} \sos{S'}{L'}{s'}$ and $\cc{S}{L}{s} \to ^{*} \tr$, then $\cc{S}{L}{r} \to^{*} \cc{S'}{L'}{r'}$ for exactly one $r'$ related to $s'$. 
+For all program instructions $S$, $S'$, lists $L$, $L'$, statements $s$, $s'$: if $\sos{S}{L}{s} \Rightarrow ^{*} \sos{S'}{L'}{s'}$ and $\cc{S}{L}{r} \to ^{*} \tr$, then $\cc{S}{L}{r} \to^{*} \cc{S'}{L'}{r'}$ for exactly one $r'$ related to $s'$. 
 \end{lemma}
 
 \begin{proof}
@@ -745,15 +745,15 @@ Now we can apply \compns ~to give us $\ns{S_1; S_2}{s}{s'}$, which was to be pro
 \end{proof}
 
 \begin{theorem}
-For all statements $S$, $S'$, states $s$, $s'$: $\ns{S}{s}{s'}$ if and only if for some $L$ $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s'}$ and $\cc{S}{L}{s} \to^{*} \tr$.
+For all statements $S$, $S'$, states $s$, $s'$, reduced states $r$: $\ns{S}{s}{s'}$ if and only if for some $L$ $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s'}$ and $\cc{S}{L}{r} \to^{*} \tr$ (with $r$ related to $s$).
 \end{theorem}
 
 \begin{proof}
 This follows from the proofs for Lemmas \ref{nsimpsos} and \ref{sosimpns}.
 \end{proof}
 
-\subsection{Memory safety}
-We now move on to the more interesting proofs where we will actually prove some memory safety properties. Here, we apply an idea originally introduced by \cite{wright1994syntactic} in a slightly different context. The original idea is that when you have a type system, you prove \emph{preservation} and \emph{progress}, and that this combines to safety. However, in our case, we do not have a type system, but we do have our compile time checker. The following pages detail these proofs.
+\subsection{Safety}
+We now move on to the more interesting proofs where we will actually prove safety properties. Here, we apply an idea originally introduced by \cite{wright1994syntactic} in a slightly different context. The original idea is that when you have a type system, you prove \emph{preservation} and \emph{progress}, and that this combines to safety. However, in our case, we do not have a type system, but we do have our compile time checker. The following pages detail these proofs.
 
 \subsubsection*{Preservation}
 The first thing we will prove is \emph{preservation}, where we will show that if the compile time checker says a program is okay, and you take a step in the semantics, the checker will say it is still okay. In general this means that the result of the checker does not depend on where you are in the program and does not change throughout running the program. 
@@ -785,7 +785,7 @@ For all program instructions $S$, reduced states $r$, lists $L$: if $\cc{S}{L}{r
 \end{theorem}
 
 \begin{proof}
-We assume $\cc{S}{L}{s} \to ^* \texttt{true}$. Since it must derive to \tr, we know that derivation steps must be taken. We walk through all the possible derivation steps. 
+We assume $\cc{S}{L}{r} \to ^* \texttt{true}$. Since it must derive to \tr, we know that derivation steps must be taken. We walk through all the possible derivation steps. 
 \begin{itemize}[noitemsep]
     \item $\cc{\sk}{\nil}{r} \to ^* \texttt{true}$. This means $S = \sk$ and $L = \texttt{Nil}$ and that means we are done.
     \item $\cc{\sk} {P::L}{ r} \to \tr$. This means we want to say something about $\sos{\texttt{skip}}{P::L}{s}$ for any $s$ related to $r$. We can apply the rule [load$_{\textrm{os}}$]. This gives us $\sos{\texttt{skip}}{P::L}{s} \Rightarrow \sos{P}{L}{s}$, which proves this case. 
