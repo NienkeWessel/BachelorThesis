@@ -17,7 +17,7 @@ Our definition of a program instruction (Definition \ref{programinstruction}) up
 \begin{definition}
 \label{expressionsborrow}
 An expression $e$ is defined recursively by:
-$$e ::= x \mid i \mid e_1 + e_2 \mid \&a~e$$
+$$e ::= x \mid i \mid e_1 + e_2 \mid \&~x \mid \&\mut ~x $$
 \end{definition}
 
 \begin{definition}
@@ -41,7 +41,7 @@ y = 1;
 We can desugar this to our own syntax:
 
 \begin{minted}[linenos, frame=lines]{rust}
-let mut y in 
+let mut y : Int in 
     y = 0;
     y = 1;
 \end{minted}
@@ -226,16 +226,16 @@ Our analysis of this piece of code is the following:
 
 \begin{minted}[linenos, frame=lines]{rust}
 //s(y)=s(x)=s(z)=-,M(x)=M(y)=M(z)={}
-let mut y in (           //s(y)=|, M(y)={mut}
-    y=0;                 //s(y)=0
-    let mut z in (       //s(z)=|, M(z)={mut}
-        z=1;             //s(z)=1
-        let mut x in (   //s(x)=|, M(x)={mut}
-            x = & mut y; //s(x)=0, M(x)={y},M(y)={mut,bor}
-            x = & mut z; //s(x)=1, M(x)={y,z},M(z)={mut,bor}
-        )                //s(x)=-, M(x)={},M(y)=M(z)={mut}
-    )                    //s(z)=-, M(z)={}
-)                        //s(y)=-, M(y)={}
+let mut y : Int in (          //s(y)=|, M(y)={mut}
+    y=0;                      //s(y)=0
+    let mut z : Int in (      //s(z)=|, M(z)={mut}
+        z=1;                  //s(z)=1
+        let mut x : &Int in ( //s(x)=|, M(x)={mut}
+            x = & mut y;      //s(x)=0, M(x)={y},M(y)={mut,bor}
+            x = & mut z;      //s(x)=1, M(x)={y,z},M(z)={mut,bor}
+        )                     //s(x)=-, M(x)={},M(y)=M(z)={mut}
+    )                         //s(z)=-, M(z)={}
+)                             //s(y)=-, M(y)={}
 \end{minted}
 
 It might be surprising to see that after the \texttt{x} is reassigned, the borrow of \texttt{y} is not undone. However, this is the case in the Rust compiler. The compiler (version 1.22.1) does not accept a reborrow of y even after x has gotten a new value. So adding the line \texttt{let v = \& mut y} after line 8 leads to a compile error. 
@@ -253,16 +253,16 @@ We will again analyze this piece to see what happens here.
 
 \begin{minted}[linenos, frame=lines]{rust}
 //s(y)=s(x)=s(z)=-,M(x)=M(y)=M(z)={}
-let y in (              //s(y)=|
-    y=0;                //s(y)=0
-    let z in (          //s(z)=|
-        z=1;            //s(z)=1
-        let mut x in (  //s(x)=|,M(x)={mut}
-            x = & y;    //s(x)=0
-            x = & z;    //s(x)=1
-        )               //s(x)=-,M(x)={}
-    )                   //s(z)=-
-)                       //s(y)=-
+let y : Int in (               //s(y)=|
+    y=0;                       //s(y)=0
+    let z : Int in (           //s(z)=|
+        z=1;                   //s(z)=1
+        let mut x : &Int in (  //s(x)=|,M(x)={mut}
+            x = & y;           //s(x)=0
+            x = & z;           //s(x)=1
+        )                      //s(x)=-,M(x)={}
+    )                          //s(z)=-
+)                              //s(y)=-
 \end{minted}
 
 In comparison to the previous example, very little bookkeeping needed to be done. We only need to keep track of the values of the variables, and keep in mind that \texttt{x} is mutable. There is no need to remember which variables have been borrowed or not, since we can have zero, one or multiple borrows anyways. 
@@ -280,6 +280,7 @@ We define the function $\mathcal{V}: \textbf{Exp} \to \mathcal{P}(\textbf{Var})$
 \\  \mathcal{V}(x)          &= \{ x \}
 \\  \mathcal{V}(e_1 + e_2)  &= \mathcal{V}(e_1) \cup \mathcal{V}(e_2)
 \\  \mathcal{V}(\& x)       &= \emptyset
+\\  \mathcal{V}(\& \mut x)  &= \emptyset
 \end{align*}
 \end{definition}
 
@@ -292,6 +293,7 @@ We define the function $\mathcal{B}: \textbf{Exp} \to \mathcal{P}(\textbf{Var})$
 \\  \mathcal{B}(x)          &= \emptyset
 \\  \mathcal{B}(e_1 + e_2)  &= \mathcal{V}(e_1) \cup \mathcal{V}(e_2)
 \\  \mathcal{B}(\& x)       &= \{ x \} \textrm{ if } \texttt{mut} \in \mathcal{M}(x) 
+\\  \mathcal{B}(\& \mut x)  &= \{ x \} \textrm{ if } \texttt{mut} \in \mathcal{M}(x) 
 \end{align*}
 \end{definition}
 
@@ -304,6 +306,7 @@ We define the function $\mathcal{C}: \textbf{Exp} \to \mathcal{P}(\textbf{Var})$
 \\  \mathcal{C}(x)          &= \emptyset
 \\  \mathcal{C}(e_1 + e_2)  &= \mathcal{V}(e_1) \cup \mathcal{V}(e_2)
 \\  \mathcal{C}(\& x)       &= \{ x \}
+\\  \mathcal{C}(\& \mut ~x)       &= \{ x \}
 \end{align*}
 \end{definition}
 
@@ -317,7 +320,8 @@ The evaluation function $\mathcal{A}: \textbf{Exp} \times \textbf{State} \to \ma
 \\  \letterfunc{A}{x}s          &= s(x) &
 \\  \letterfunc{A}{e_1 + e_2}s  &= \letterfunc{A}{e_1}s + \letterfunc{A}{e_2}s & \textrm{ if } \letterfunc{A}{e_1}s \in \mathbb{Z} \textrm{ and } \letterfunc{A}{e_2}s \in \mathbb{Z}
 \\  \letterfunc{A}{e_1 + e_2}s  &= - & \textrm{ otherwise}
-\\ \letterfunc{A}{\&a~x}s       &= \letterfunc{A}{x}s &
+\\ \letterfunc{A}{\&~x}s       &= \letterfunc{A}{x}s &
+\\ \letterfunc{A}{\&\mut~x}s       &= \letterfunc{A}{x}s &
 \end{align*}
 \end{definition}
 Notice it is the same as in the previous chapter, except for the added last line. 
@@ -375,6 +379,50 @@ For the \letsosb ~ and \letmutsosb ~rules, we added the $\mathcal{M}$-function t
 
 For the \setsosb ~rule, besides resetting $s$ and $\mathcal{M}$, we also need to let all the variables $x$ has borrowed from know that the borrow has stopped. This should not happen when a similarly named variable $x$ already borrowed the variable in the higher scope. This is done by removing all variables in $m$ from the set under consideration.  
 
+
+\subsubsection*{Determinism}
+Again, we would like our semantics to be deterministic. First, we need the following Lemma.
+
+\begin{lemma}
+\label{breakingdownletmut}
+For every statement $S$, for every list $L$, for every state $s$, $s'$, if $\sos{\letm{x}{S}}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$, then it must be the case that $\sos{\letm{x}{S}}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{(x,s(x))::L}{s''} \Rightarrow \sos{(x,s(x))}{L}{s''} \Rightarrow \sos{\texttt{skip}}{L}{s'}$ for some state $s''$. 
+\end{lemma}
+
+\begin{proof}
+The proof is similar to lemma \ref{breakingdowncomp} and therefore omitted. 
+\end{proof}
+
+Now we can prove that the semantics are deterministic. 
+
+\begin{theorem}
+For every statement $S$, every state $s, s', s''$, every list $L$, if $\sosb{S}{L}{s}{M} \Rightarrow ^{*} \sosb{\texttt{skip}}{L}{s'}{M'}$ and $\sosb{S}{L}{s}{M} \Rightarrow ^{*} \sosb{\sk}{L}{s''}{M'}$, then $s' = s''$ and $\mathcal{M}' = \mathcal{M}''$.
+\end{theorem}
+
+\begin{proof}
+The proof proceeds by induction on the structure of $S$, the program instruction. We will only prove the case for $\letmut{x}{S'}$. The other cases are similar to this case and to the proof in the previous chapter. 
+\begin{itemize}[noitemsep]
+    
+    \item $S = \letmut{x}{S'}$ : assume $\sosb{\letmut{x}{S'}}{L}{s}{M} \Rightarrow ^{*} \sosb{\sk}{L}{s'}{M'}$ and $\sosb{\letmut{x}{S'}}{L}{s}{M} \Rightarrow ^{*} \sosb{\sk}{L}{s''}{M''}$. The only rule that can be applied is \letmutsosb. This gives us
+    $$\sosb{\letmut{x}{S'}}{L}{s}{M} \Rightarrow $$
+    $$\sosb{S'}{(x,s(x))::L}{s[x\mapsto \perp]}{M[\texttt{x}\mapsto\{\texttt{mut}\}]} \Rightarrow ^{*} \sosb{\texttt{skip}}{L}{s'}{M'}$$
+    and 
+    $$\sosb{\letmut{x}{S'}}{L}{s}{M} \Rightarrow $$
+    $$\sosb{S'}{(x,s(x))::L}{s[x\mapsto \perp]}{M[\texttt{x}\mapsto\{\texttt{mut}\}]} \Rightarrow ^{*} \sosb{\texttt{skip}}{L}{s''}{M''}$$
+    By Proposition \ref{breakingdownletmut}, we know that the latter $\Rightarrow ^{*}$ can be broken up into smaller parts, so we have 
+    $$\sosb{\letmut{x}{S}}{L}{s}{M} \Rightarrow $$
+    $$\sosb{S'}{(x,s(x))::L}{s[x\mapsto \perp]}{M[\texttt{x}\mapsto\{\texttt{mut}\}]} \Rightarrow ^{*}$$ $$\sosb{\sk}{(x,s(x))::L}{s'''}{M'''} \Rightarrow$$ $$\sosb{(x,s(x))}{L}{s'''}{M'''} \Rightarrow \sosb{\sk}{L}{s'}{M'}$$
+    and 
+    $$\sosb{\letmut{x}{S}}{L}{s}{M} \Rightarrow $$
+    $$\sosb{S'}{(x,s(x))::L}{s[x\mapsto \perp]}{M[\texttt{x}\mapsto\{\texttt{mut}\}]} \Rightarrow ^{*}$$ $$\sosb{\sk}{(x,s(x))::L}{s''''}{M''''} \Rightarrow$$ $$\sosb{(x,s(x))}{L}{s''''}{M''''} \Rightarrow \sosb{\sk}{L}{s''}{M''}$$
+    Now we can apply the induction hypothesis to 
+    $$\sosb{S'}{(x,s(x))::L}{s[x\mapsto \perp]}{M[\texttt{x}\mapsto\{\texttt{mut}\}]} \Rightarrow ^{*} \sosb{\sk}{(x,s(x))::L}{s'''}{M'''}$$
+    and 
+    $$\sosb{S'}{(x,s(x))::L}{s[x\mapsto \perp]}{M[\texttt{x}\mapsto\{\texttt{mut}\}]} \Rightarrow ^{*} \sosb{\sk}{(x,s(x))::L}{s''''}{M''''}$$
+    That gives us $s''' = s''''$ and $\mathcal{M}''' = \mathcal{M}''''$. Then $\sosb{(x,s(x))}{L}{s'''}{M'''} \Rightarrow \sosb{\sk}{L}{s'''[x\mapsto v]}{M'''[\forall \textit{y} \in M(\textit{x})\cap\textbf{Var} \setminus \textit{m}, \textit{y} \mapsto M(\textit{y}) \setminus \{\texttt{bor}\}][\textit{x}\mapsto \textit{m}]}$, so $s' = s'''[x\mapsto v] = s''$ and $\mathcal{M'} = \mathcal{M}'''[\forall \textit{y} \in \mathcal{M}(\textit{x})\cap\textbf{Var} \setminus m, y \mapsto \mathcal{M}(y) \setminus \{\texttt{bor}\}][x\mapsto m] = \mathcal{M''}$, which means $s'=s''$ and $\mathcal{M}' = \mathcal{M}''$.
+\end{itemize}
+This proves the theorem.
+\end{proof}
+
 \subsection{Compile time check}
 
 We can now look at the compile time checker. In the following definition we show the actual rules. An explanation will be given below. 
@@ -383,12 +431,12 @@ We can now look at the compile time checker. In the following definition we show
 \label{compiletimecheckerb}
 The \emph{compile time checker} is a derivation system that has the following rules
 \begin{align*}
-\ccb{\texttt{skip}}{\texttt{Nil}}{r}{M} & \to \texttt{true}  \\
-\ccb{\texttt{skip}}{P::L}{r}{M}       & \to \ccb{P}{L}{r}{M}  \\
-\ccb{S_1; S_2}{L}{r}{M}                 & \to \ccb{S_1}{S_2::L}{r}{M}  \\
-\ccb{\letm{x}{S}}{L}{r}{M} & \to \ccb{S}{(x,r(x),\mathcal{M}(x))::L}{r[x\mapsto \perp]}{M} \\
-\ccb{\letmut{x}{S}}{L}{r}{M} & \to \ccb{S}{(x,r(x),\mathcal{M}(x))::L}{r[x\mapsto \perp]}{M[\texttt{x}\mapsto\{\texttt{mut}\}]} \\
-\ccb{(x,v,m)}{L}{r}{M}                    & \to \ccb{\texttt{skip}}{L}{r[x \mapsto v]}{M[\forall \textit{y} \in M(\textit{x})\cap\textbf{Var}, \textit{y} \mapsto M(\textit{y}) \setminus \{\texttt{bor}\}][\texttt{x} \mapsto \textrm{m}]} 
+\ccb{\texttt{skip}}{\texttt{Nil}}{r}{M} \to & \texttt{true}  \\
+\ccb{\texttt{skip}}{P::L}{r}{M}       \to & \ccb{P}{L}{r}{M}  \\
+\ccb{S_1; S_2}{L}{r}{M}                 \to & \ccb{S_1}{S_2::L}{r}{M}  \\
+\ccb{\letm{x}{S}}{L}{r}{M}  \to & \ccb{S}{(x,r(x),\mathcal{M}(x))::L}{r[x\mapsto \perp]}{M} \\
+\ccb{\letmut{x}{S}}{L}{r}{M}  \to & \ccb{S}{(x,r(x),\mathcal{M}(x))::L}{r[x\mapsto \perp]}{M[\texttt{x}\mapsto\{\texttt{mut}\}]} \\
+\ccb{(x,v,m)}{L}{r}{M}                     \to & [\texttt{skip},L,r[x \mapsto v],\mathcal{M}[\forall \textit{y} \in \mathcal{M}(\textit{x})\cap\textbf{Var}, \\ & \textit{y} \mapsto \mathcal{M}(\textit{y}) \setminus \{\texttt{bor}\}][\texttt{x} \mapsto \textrm{m}] 
 \end{align*}
 
 Also, if $\texttt{mut} \in \mathcal{M}(x), r(x) = \perp \textrm{ or } r(x) = \star, \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e)$, \textbf{OR} if $\neg \texttt{mut} \in \mathcal{M}(x), r(x) = \perp, \forall y \in \mathcal{C}(e), r(y) = \star \textrm{ and } \forall y \in \mathcal{B}(e), \neg \texttt{bor} \in \mathcal{M}(e)$, we have the rule
@@ -419,12 +467,13 @@ The compile checker from definition \ref{compiletimecheckerb} always terminates.
 This proof is almost completely similar to that of \ref{termination}, if we define $|\letmut{x}{S}| = |S| + 3$. We therefore omit the details.
 \end{proof}
 
+
 \subsubsection*{Progress and preservation}
 Just like in the previous chapter, we will prove progress and preservation. We start with preservation.
 
 \begin{theorem}
 \label{preservationb}
-If $\ccb{S}{L}{r}{M} \to ^* \texttt{true}$ and $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$ with $r$ related to $s$, then there is an $r'$ that is related to $s'$ and we have $\ccb{S'}{L'}{r'}{M'} \to ^* \texttt{true}$.
+For all statements $S$, $S'$, lists $L$, $L'$, states $s$, $s'$, reduced states $r$, and for all $\mathcal{M}$, $\mathcal{M'}$: if $\ccb{S}{L}{r}{M} \to ^* \texttt{true}$ and $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$ with $r$ related to $s$, then there is an $r'$ that is related to $s'$ and we have $\ccb{S'}{L'}{r'}{M'} \to ^* \texttt{true}$.
 \end{theorem}
 
 \begin{proof}
@@ -444,7 +493,7 @@ This proves our theorem.
 
 \begin{theorem}
 \label{progressb}
-If $\ccb{S}{L}{r}{M} ->^* \texttt{true}$, then $S = \texttt{skip}$ and $L = \texttt{Nil}$ or we have $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$ for some $S'$, $L'$, $s'$ and $M'$, and every $s$ related to $r$.
+For all statements $S$, reduced states $r$, lists $L$, and for all $\mathcal{M}$'s: if $\ccb{S}{L}{r}{M} ->^* \texttt{true}$, then $S = \texttt{skip}$ and $L = \texttt{Nil}$ or we have $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$ for some $S'$, $L'$, $s'$ and $M'$, and every $s$ related to $r$.
 \end{theorem}
 
 \begin{proof}

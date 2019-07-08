@@ -292,7 +292,7 @@ This concludes our section of the big step semantics. As these semantics are rat
 
 
 \section{Semantics: Small step}
-We now move on to a small step semantics. We mostly use the same framework as in the big step semantics, unless stated otherwise. Our small step semantics, as stated above, has rules of the form $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$, where $S$, $S'$ are statements and $s$, $s'$ are states as defined above. To properly define what kind of things $L$ and $L'$ are, we first need to define what we mean by `a program instruction'. 
+We now move on to a small step semantics. We mostly use the same mathematical framework as in the big step semantics, unless stated otherwise. Our small step semantics, as stated above, has rules of the form $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$, where $S$, $S'$ are statements and $s$, $s'$ are states as defined above. To properly define what $L$ and $L'$ are, we first need to define what is meant by `a program instruction'. 
 
 \begin{definition}
 \label{programinstruction}
@@ -301,7 +301,7 @@ $$I ::= S \mid (x,v)$$
 where $S$ is a statement, $x$ a variable from \textbf{Var} and $v$ an element from $\mathbb{Z}_{ext}$.
 \end{definition}
 
-Informally, a program instruction is either a statement, or some specific instruction that cannot be programmed by a user, but will be used by us to do some bookkeeping along the way. 
+Informally, a program instruction is either a statement, or some specific instruction that cannot be programmed by a user, but will be used by us to do some bookkeeping along the way. In the remainder of the thesis, we will mostly use $S$ as a letter for both, but will explicitly state whether that is a program instruction or statement. 
 
 We can now look at our \emph{lists}:
 
@@ -314,7 +314,7 @@ A \emph{list} $L$ is of the form
 \end{itemize}
 \end{definition}
 
-We can now state that our $L$ and $L'$ from the operational semantic rules should be lists as defined in definition \ref{lists}. We will use this list as a sort of stack to keep track of what program parts need to be executed later on. 
+We can now state that our $L$ and $L'$ from the operational semantic rules should be lists as defined in definition \ref{lists}. We will use this list as a sort of stack to keep track of what program parts need to be executed later on. This idea is not new. It has also been proposed by, for example, \cite{appel2007cminor}. 
 
 \subsection{Operational semantics rules}
 \begin{definition} 
@@ -452,7 +452,7 @@ which was to be proven.
 Another major desirable property of our semantics is \emph{determinism}. This means that running the program will always have the same results. Therefore, we want our derivation system to always return the same result. The proof is similar to that of the natural semantics.
 
 \begin{theorem}
-For every statement $S$, every state $s, s', s''$, every list $L$, if $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ and $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$, then $s' = s''$.
+For every program instruction $S$, every state $s, s', s''$, every list $L$, if $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$ and $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s''}$, then $s' = s''$.
 \end{theorem}
 
 \begin{proof}
@@ -536,7 +536,7 @@ The \emph{compile time checker} is a derivation system that has the following ru
 \cc{\texttt{skip}}{\texttt{Nil}}{r} & \to \texttt{true}  \\
 \cc{\texttt{skip}} {P::L}{ r}       & \to \cc{P}{L}{r}  \\
 \cc{S_1; S_2}{L}{r}                 & \to \cc{S_1}{S_2::L}{r}  \\
-\cc{x=e}{L}{r}                     & \to \cc{\texttt{skip}}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]} \\
+\cc{x=e}{L}{r}                     & \to \cc{\sk}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]} \\
                                     & \textrm{if }r(x) = \perp \textrm{ and } \forall y \in \mathcal{V}(e), r(y) = \star \\
                                     & \to \texttt{false} \textrm{ otherwise}\\
 \cc{\letm{x}{S}}{L}{r} & \to \cc{S}{(x,r(x))::L}{r[x\mapsto \perp]} \\
@@ -682,6 +682,37 @@ The proof proceeds by induction on the shape of the derivation tree.
 The lemma now follows by induction. 
 \end{proof}
 
+To prove the other way around, we first need two helping lemmas. 
+
+\begin{lemma}
+\label{relationsosccstep}
+For all program instructions $S$, $S'$, lists $L$, $L'$, statements $s$, $s'$: if $\sos{S}{L}{s} \Rightarrow  \sos{S'}{L'}{s'}$ and $\cc{S}{L}{s} \to ^{*} \tr$, then $\cc{S}{L}{r} \to \cc{S'}{L'}{r'}$ for exactly one $r'$ related to $s'$. 
+\end{lemma}
+
+\begin{proof}
+We will check the different possibilities for the rules $\Rightarrow$. 
+\begin{itemize}[noitemsep]
+\item $\sos{\sk}{I::L}{s} \Rightarrow \sos{I}{L}{s}$. Assume $\cc{\sk}{I::L}{r} \to ^{*} \tr$ with $r$ related to $s$. We can only do $\cc{\sk}{I::L}{r} \to  \cc{I}{L}{r}$. Our $r$ is of the right form and the only such $r$, which proves this case. 
+
+\item $\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}$. Assume $\cc{S_1; S_2}{L}{r} \to ^{*} \tr$ with $r$ related to $s$. We can only do $\cc{S_1; S_2}{L}{r} \to  \cc{S_1}{S_2::L}{r}$. Our $r$ is of the right form and the only such $r$, which proves this case.
+
+\item $\sos{x = e}{L}{s} \Rightarrow \sos{\texttt{skip}}{L}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$. Assume $\cc{x = e}{L}{r} \to ^{*} \tr$ with $r$ related to $s$. We can only do $\cc{x=e}{L}{r} \to \cc{\sk}{L}{r[x\mapsto \star][\mathcal{V}(e) \mapsto -]}$, because if the conditions of the rule were not met, the compile check could not have terminated in \tr, but would have terminated in \fa. Our $r$ is of the right form, because $\letterfunc{A}{e}s \in \mathbb{Z}$ and the only such $r$. This proves this case.
+
+\item The other cases are similar and therefore omitted. 
+\end{itemize}
+This proves our Lemma.
+\end{proof}
+
+
+\begin{lemma}
+\label{relationsoscc}
+For all program instructions $S$, $S'$, lists $L$, $L'$, statements $s$, $s'$: if $\sos{S}{L}{s} \Rightarrow ^{*} \sos{S'}{L'}{s'}$ and $\cc{S}{L}{s} \to ^{*} \tr$, then $\cc{S}{L}{r} \to^{*} \cc{S'}{L'}{r'}$ for exactly one $r'$ related to $s'$. 
+\end{lemma}
+
+\begin{proof}
+By induction on the result from \ref{relationsosccstep}.
+\end{proof}
+
 \begin{lemma}
 \label{sosimpns}
 For all statements $S$, for all states $s$, $s'$, for all reduced states $r$, with $r$ related to $s$: if $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s'}$ and $\cc{S}{L}{r} \to^{*} \tr$, then $\ns{S}{s}{s'}$. Note that $S$ is a statement here, and not a program instruction. 
@@ -703,15 +734,18 @@ $$\cc{S_1; S_2}{L}{r} \to \cc{S_1}{S_2::L}{r} \to ^{*} \tr$$
 so we can indeed apply the IH. 
 This gives us $\ns{S_1}{s}{s''}$. 
 
-Now, if also $\cc{S_2}{L}{r''} \to ^{*} \tr$, we can again apply the IH to get $\ns{S_2}{s''}{s'}$. We know $\cc{S_1}{S_2::L}{r} \to ^{*} \tr$. The last step before \tr must be $\cc{\sk}{\nil}{r'''}$, as that is the only rule that leads to \tr. So we know the list needs to be emptied again. Therefore, the derivation needs to be something like the following: 
-$$\cc{S_1; S_2}{L}{r} \to \cc{S_1}{S_2::L}{r} \to^{*} \cc{\sk}{S_2::L}{r''''} \to \cc{S_2}{L}{r''''} \to^{*} \cc{\sk}{\nil}{r'''} \to  \tr$$
-TODOOOOOOOOOO Fix proof %TODO
-\item $\letm{x}{S}$ :
+Now, if also $\cc{S_2}{L}{r''} \to ^{*} \tr$, we can again apply the IH to get $\ns{S_2}{s''}{s'}$. We know $\cc{S_1}{S_2::L}{r} \to ^{*} \tr$. The last step before \tr ~must be $\cc{\sk}{\nil}{r'''}$, as that is the only rule that leads to \tr. So we know the list needs to be emptied again. Therefore, the derivation needs to be something like the following: 
+$$\cc{S_1; S_2}{L}{r} \to \cc{S_1}{S_2::L}{r} \to^{*} \cc{\sk}{S_2::L}{r''''} \to \cc{S_2}{L}{r''''} \to^{*}$$ 
+$$\cc{\sk}{\nil}{r'''} \to  \tr$$
+Because of \ref{relationsoscc} we know that $r''''$ must be related to $s''$ and must be equal to $r''$. This means that we can indeed conclude that $\cc{S_2}{L}{r''} \to ^{*} \tr$ and we therefore have $\ns{S_2}{s''}{s'}$. 
+
+Now we can apply \compns ~to give us $\ns{S_1; S_2}{s}{s'}$, which was to be proven. 
+\item $\letm{x}{S}$ : This case is very similar to that of the composition, but with only one application of the Induction Hypothesis. Therefore, we leave out the details. 
 \end{itemize}
 \end{proof}
 
 \begin{theorem}
-For all $S$, $S'$ (statements), $s$, $s'$, $L$, $\ns{S}{s}{s'}$ if and only if $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s'}$ and $L$ $\cc{S}{L}{s} \to^{*} \tr$.
+For all statements $S$, $S'$, states $s$, $s'$: $\ns{S}{s}{s'}$ if and only if for some $L$ $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s'}$ and $\cc{S}{L}{s} \to^{*} \tr$.
 \end{theorem}
 
 \begin{proof}
@@ -726,7 +760,7 @@ The first thing we will prove is \emph{preservation}, where we will show that if
 
 \begin{theorem}
 \label{preservation}
-For all statements $S$, $S'$, lists $L$, $L'$, states $s$, $s'$, reduced states $r$: if $\cc{S}{L}{r} \to ^* \texttt{true}$ and $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$ with $r$ related to $s$, then there is an $r'$ that is related to $s'$ and we have $\cc{S'}{L'}{r'} \to ^* \texttt{true}$.
+For all program instructions $S$, $S'$, lists $L$, $L'$, states $s$, $s'$, reduced states $r$: if $\cc{S}{L}{r} \to ^* \texttt{true}$ and $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$ with $r$ related to $s$, then there is an $r'$ that is related to $s'$ and we have $\cc{S'}{L'}{r'} \to ^* \texttt{true}$.
 \end{theorem}
 
 \begin{proof}
@@ -747,7 +781,7 @@ The second property we are interested in is called \emph{progress}. This means t
 
 \begin{theorem}
 \label{progress}
-For all statements $S$, reduced states $r$, lists $L$: if $\cc{S}{L}{r} \to ^* \texttt{true}$, then $S = \texttt{skip}$ and $L = \texttt{Nil}$ or we have, for all $s$ related to $r$, $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$ for some statement $S'$, list $L'$ and state $s'$.
+For all program instructions $S$, reduced states $r$, lists $L$: if $\cc{S}{L}{r} \to ^* \texttt{true}$, then $S = \texttt{skip}$ and $L = \texttt{Nil}$ or we have, for all $s$ related to $r$, $\sos{S}{L}{s} \Rightarrow \sos{S'}{L'}{s'}$ for some statement $S'$, list $L'$ and state $s'$.
 \end{theorem}
 
 \begin{proof}
