@@ -194,7 +194,7 @@ For example, take a look at the following program:
 $$\letm{x}{x=y}$$ 
 $y$ has not been given a value (it has not even been declared), so we cannot rightly assign $y$'s value to $x$. 
 
-Note that these rules are important to model Rust in the best possible way. It is not possible to assign to a value that has not been initialized and it is also not possible to assign a value to a non-mutable variable that already has a value. 
+Note that these rules are important to model Rust in the best possible way. It is not possible to assign to a value that has not been declared and it is also not possible to assign a value to a non-mutable variable that already has a value. 
 
 \subsection{Properties of our natural semantics rules}
 In this subsection, we will look at, and prove some interesting properties of our natural semantics. 
@@ -254,7 +254,7 @@ The proof proceeds by induction on the structure of $S$. We distinguish the foll
 
     \item $S$ = \texttt{skip} : if $\ns{\texttt{skip}}{s}{s'}$, then this can only be achieved by \skipns, which means $s=s'$. Therefore if $\letterfunc{A}{y}s = -$ then $\letterfunc{A}{y}s' = -$. 
     
-    \item $S = x = e$ : assume $\ns{x = e}{s}{s'}$. Then the only rule that could have been applied is \assns, so  $s'$ must be $s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$ and $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e}s \neq \perp$ and $\letterfunc{A}{e}s \neq -$. If one of these things had not been the case, we could not have applied any rules, and therefore our assumption `$\ns{S}{s}{s'}$' would be false. So we can assume these things to be true. Now we look at a variable $y$, chosen randomly. We distinguish two cases:
+    \item $S = x = e$ : assume $\ns{x = e}{s}{s'}$. Then the only rule that could have been applied is \assns, so  $s'$ must be $s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]$ and $\letterfunc{A}{x}s = \perp$, $\letterfunc{A}{e}s \neq \perp$ and $\letterfunc{A}{e}s \neq -$. If one of these things had not been the case, we could not have applied any rules, and therefore our assumption `$\ns{S}{s}{s'}$' would be false. So we can assume these things to be true. Now we look at a variable $y$, chosen arbitrarily. We distinguish two cases:
     \begin{itemize}[noitemsep]
         \item $y=x$ : if $\letterfunc{A}{x}s \not = -$ there is nothing to prove. So assume $\letterfunc{A}{x}s = -$. However, this is contradictory to our assumption $\letterfunc{A}{x}s = \perp$. So this is not possible.
         \item $y\not = x$ : we again assume $\letterfunc{A}{y}s = -$, as otherwise there is nothing to prove. Then we can again distinguish two cases: 
@@ -270,7 +270,7 @@ The proof proceeds by induction on the structure of $S$. We distinguish the foll
 \UnaryInfC{$\ns{\letm{x}{S}}{s}{s''[x \mapsto s(x)]}$}
 \DisplayProof$$
 This means $s' = s''[x \mapsto s(x)]$.
-We look at a random variable $y$ and assume $\letterfunc{A}{y}s' = -$ (otherwise we have nothing to prove). We again distinguish two cases:
+We look at an arbitrary variable $y$ and assume $\letterfunc{A}{y}s' = -$ (otherwise we have nothing to prove). We again distinguish two cases:
     \begin{itemize}[noitemsep]
         \item $y=x$ : as $\letterfunc{A}{x}s = -$ and $x$ in $s''$ maps to $s(x)$, we can conclude $\letterfunc{A}{x}s'' = -$
         \item $y\neq x$ : we are now interested in $\letterfunc{A}{y}s''$. We can apply the induction hypothesis to $\ns{S}{s[x\mapsto \perp]}{s''}$ as $\letterfunc{A}{y}s[x\mapsto \perp] = \letterfunc{A}{y}s = -$. So $\letterfunc{A}{y}s'' = -$. As $s' = s''[x \mapsto s(x)]$, the value of $y$ is not changed and we can conclude $\letterfunc{A}{y}s' = -$
@@ -280,7 +280,7 @@ We look at a random variable $y$ and assume $\letterfunc{A}{y}s' = -$ (otherwise
 \AxiomC{$\ns{S_2}{s''}{s'}$}
 \BinaryInfC{$\ns{S_1;S_2}{s}{s'}$}
 \DisplayProof$$
-Now assume $y$ to be a random variable and $\letterfunc{A}{y}s = -$. We can apply the induction hypothesis to $\ns{S_1}{s}{s''}$, so we know $\letterfunc{A}{y}s'' = -$. We can then again apply the induction hypothesis to $\ns{S_2}{s''}{s'}$. So we know $\letterfunc{A}{y}s' = -$, which was what was to be proven.
+Now assume $y$ to be an arbitrary variable and $\letterfunc{A}{y}s = -$. We can apply the induction hypothesis to $\ns{S_1}{s}{s''}$, so we know $\letterfunc{A}{y}s'' = -$. We can then again apply the induction hypothesis to $\ns{S_2}{s''}{s'}$. So we know $\letterfunc{A}{y}s' = -$, which was what was to be proven.
 \end{itemize} 
 This exhausts all possible shapes of our statement $S$, and hence proves the theorem.
 \end{proof}
@@ -376,7 +376,7 @@ For every statement $S$, for every list $L$, for every state $s$, $s'$, if $\sos
 The proof is similar to lemma \ref{breakingdowncomp}. Note that we can actually say some more about the relation between $s''$ and $s'$ because of how the rule \setsos works. 
 \end{proof}
 
-We are now ready to prove that when executing a statement, it is irrelevant what is in the list.  
+We are now ready to prove that when executing a program instruction, it is irrelevant what is in the list.  
 
 \begin{proposition}
 \label{listsdontmatter}
@@ -402,7 +402,7 @@ We know that there must be a derivation from $\sos{S}{L'}{s}$ to $\sos{\texttt{s
     
     \item $S = S_1; S_2$ : assume $\sos{ S_1;S_2}{L'}{ s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'}$. Then by \compsos and lemma \ref{breakingdowncomp}, we have 
     $$\sos{S_1;S_2}{L'}{s} \Rightarrow \sos{S_1}{S_2::L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L'}{s''}$$ $$\Rightarrow \sos{S_2}{L'}{s''} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s'} ~( * )$$
-    Now we look at $\sos{S_1;S_2}{L}{s}$ with $L$ random. We can apply the rule \compsos to see $$\sos{S_1;S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}$$ Now we can apply the induction hypothesis to $\sos{S_1}{S_2::L}{s}$, as we have $\sos{S_1}{L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s''}$ by $( * )$. So we get 
+    Now we look at $\sos{S_1;S_2}{L}{s}$ with $L$ arbitrary. We can apply the rule \compsos to see $$\sos{S_1;S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}$$ Now we can apply the induction hypothesis to $\sos{S_1}{S_2::L}{s}$, as we have $\sos{S_1}{L'}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L'}{s''}$ by $( * )$. So we get 
     $$\sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L}{s''}$$
     Then by \loadsos, 
     $$\sos{\texttt{skip}}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''}$$
@@ -429,7 +429,7 @@ We know that there must be a derivation from $\sos{S}{L'}{s}$ to $\sos{\texttt{s
 This exhausts all possible cases and hence proves the theorem.
 \end{proof}
 
-Intuitively, this makes sense. If we look at the rules, we see that we can only move something from the list to the front if the front only contains a \sk statement, and that thus everything that had been there, must have finished evaluating. 
+Intuitively, this makes sense. If we look at the rules, we see that we can only move something from the list to the front if the front only contains a \sk ~statement, and that thus everything that had been there, must have finished evaluating. 
 
 We will now do a simple proof to show that in a composition, the execution of $S_1$ does not depend on what $S_2$ entails. 
 
@@ -440,7 +440,7 @@ For every statement $S_1$, $S_2$, for every list $L$, for every state $s$, $s'$,
 \begin{proof}
 Assume $\sos{S_1}{L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s}$ and look at $\sos{S_1;S_2}{L}{s}$. Then by \compsos
 $$\sos{S_1;S_2}{L}{s} \Rightarrow  \sos{S_1}{S_2::L}{s}$$
-Now by \ref{listsdontmatter} and that $\sos{S_1}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s}$, we know $\sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\sk}{S_2::L}{s}$. Then from \loadsos
+Now by \ref{listsdontmatter} and the fact that $\sos{S_1}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s}$, we know $\sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\sk}{S_2::L}{s}$. Then from \loadsos
 $$\sos{\sk}{S_2::L}{s} \Rightarrow \sos{S_2}{L}{s}$$
 Therefore, we get
 $$\sos{S_1;S_2}{L}{s} \Rightarrow ^{*} \sos{S_2}{L}{s}$$
@@ -498,7 +498,7 @@ This concludes our section on the small step semantics. We saw that they are sim
 \section{Compile time check}
 As mentioned before, all checks are done compile time. However, a semantic description is a description of what is supposed to happen run time. In the natural semantics section we combined the two, but to really model Rust properly, it is necessary to separate the two. 
 
-In this section, we look at a compile time checker derivation system to model what happens in the Rust compiler. The checker will always result in either \tr or \fa to indicate whether the program is correct according to Rust's rules. This checker will have a lot of similarities to the semantics, but will not perform actual computations. 
+In this section, we look at a compile time checker derivation system to model what happens in the Rust compiler. The checker will always result in either \tr ~or \fa ~to indicate whether the program is correct according to Rust's rules. This checker will have a lot of similarities to the semantics, but will not perform actual computations. 
 
 First, we will introduce some new definitions, then give the derivation system and lastly prove some properties of the system and of the system in combination with the semantics of the previous section. 
 
@@ -594,7 +594,7 @@ As every one of these steps shows a decrease in the length, we can conclude that
 
 
 \subsection{Equivalence with our small step semantics}
-Now we have both a big step semantics and a small step semantics, one would hope these two to be equivalent. First of all, one should notice that the big step semantics has the compile check rules embedded in the semantics, while the small step semantics has them separated in the form of the compile time check. That makes that in the proof, we will prove the big step semantics to be equivalent to the small step semantics + the compile time checker. 
+Now we have both a big step semantics and a small step semantics, one would hope these two to be equivalent. First of all, one should notice that the big step semantics has the compile check rules embedded in the semantics, while the small step semantics has them separated in the form of the compile time check. That makes that in the proof, we will prove the big step semantics to be equivalent to the small step semantics combined with the compile time checker. 
 
 In order to prove the equivalence, we will first prove that one implies the other, and then prove that the other implies the first. 
 
@@ -706,7 +706,7 @@ This proves our Lemma.
 
 \begin{lemma}
 \label{relationsoscc}
-For all program instructions $S$, $S'$, lists $L$, $L'$, statements $s$, $s'$: if $\sos{S}{L}{s} \Rightarrow ^{*} \sos{S'}{L'}{s'}$ and $\cc{S}{L}{r} \to ^{*} \tr$, then $\cc{S}{L}{r} \to^{*} \cc{S'}{L'}{r'}$ for exactly one $r'$ related to $s'$. 
+For all program instructions $S$, $S'$, lists $L$, $L'$, states $s$, $s'$: if $\sos{S}{L}{s} \Rightarrow ^{*} \sos{S'}{L'}{s'}$ and $\cc{S}{L}{r} \to ^{*} \tr$, then $\cc{S}{L}{r} \to^{*} \cc{S'}{L'}{r'}$ for exactly one $r'$ related to $s'$. 
 \end{lemma}
 
 \begin{proof}
@@ -715,7 +715,7 @@ By induction on the result from \ref{relationsosccstep}.
 
 \begin{lemma}
 \label{sosimpns}
-For all statements $S$, for all states $s$, $s'$, for all reduced states $r$, with $r$ related to $s$: if $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s'}$ and $\cc{S}{L}{r} \to^{*} \tr$, then $\ns{S}{s}{s'}$. Note that $S$ is a statement here, and not a program instruction. 
+For all statements $S$ and lists $L$, for all states $s$, $s'$, for all reduced states $r$, with $r$ related to $s$: if $\sos{S}{L}{s} \Rightarrow ^{*} \sos{\sk}{L}{s'}$ and $\cc{S}{L}{r} \to^{*} \tr$, then $\ns{S}{s}{s'}$. Note that $S$ is a statement here, and not a program instruction. 
 \end{lemma}
 \begin{proof}
 We do some form of induction. We will look at the possible forms of $S$.
@@ -777,7 +777,7 @@ This proves our theorem.
 \end{proof}
 
 \subsubsection{Progress}
-The second property we are interested in is called \emph{progress}. This means that if the program passes through the compile time checker, we can always do a step in the semantics (or we are already in the \sk state). 
+The second property we are interested in is called \emph{progress}. This means that if the program passes through the compile time checker, we can always do a step in the semantics (or we are already in the \sk ~state). 
 
 \begin{theorem}
 \label{progress}

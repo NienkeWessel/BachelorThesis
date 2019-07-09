@@ -96,7 +96,7 @@ It is important to note that there should be no immutable assignment within a lo
 
 As mentioned before, we add a counter to the tuple that will be incremented once we enter a while loop and decremented once we exit the while loop. If the compile time checker comes accross an immutable assignment when the counter is strictly larger than zero, it should reject the program. 
 
-The compile time checker pushes a decrease opertaion to our stack/list to make sure that after the while loop finishes, the counter will be reduced by one. 
+The compile time checker pushes a decrease operation to our stack/list to make sure that after the while loop finishes, the counter will be reduced by one. 
 
 We need a counter and cannot simply do with for example a boolean, as there might be multiple nested while loops. After the inner while loop, you might naively put the boolean to false when you finish, but then this would not be correct as you are still in the outer while loops. You could make an extra program instruction with the value of the boolean when you enter the loop to keep track of what it was, but this is extra bookkeeping and more difficult than our proposed solution.
 
@@ -130,7 +130,7 @@ While we proved some minor properties of our compile time checker in the previou
 However, a more thorough investigation could certainly be useful. 
 
 \section{Conclusion}
-In the previous chapters we looked at a small but interesting part of Rust. After a walk through of the interesting features of Rust in Chapter 2, we started out with a big step semantics of only the moving feature. Later on, we moved on to a small step semantics, where we separated the checks the Rust compiler does from the semantic rules. 
+In the previous chapters we looked at a small but interesting part of Rust. After a walkthrough of the interesting features of Rust in Chapter 2, we started out with a big step semantics describing the moving behaviour. Later on, we moved on to a small step semantics, where we separated the checks the Rust compiler does from the semantic rules. 
 
 In the chapter after that, we added more features to the subset under consideration: borrowing and mutability. In both chapters, we proved safety by proving progress and preservation. We also looked at other properties of our semantic rules and compile check, such as determinism. 
 

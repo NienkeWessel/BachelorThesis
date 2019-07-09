@@ -139,7 +139,7 @@ This concludes the section on borrowing. We will look at some more examples in C
 \section{Lifetimes}
 The final important concept in Rust's ownership system is that of \textbf{lifetimes}. While this thesis does not use the lifetimes in the semantic rules, a description of Rust's system would not be complete without a section on lifetimes. 
 
-Lifetimes are often used by the compiler to keep track of what mentioned above, when simple scopes are not sufficient. Before we look at the theory of lifetimes, we first take a look at what lifetimes are and what they look like in Rust.
+Lifetimes are often used by the compiler to keep track of what was mentioned above, when simple scopes are not sufficient. Before we look at the theory of lifetimes, we first take a look at what lifetimes are and what they look like in Rust.
  
 In all code mentioned before, we did not write down the lifetimes explicitly. This is because the Rust compiler is able to deduce the rules in `trivial' cases. Later on, there will be a bit of an explanation on what makes a case trivial for the compiler.
 
@@ -156,7 +156,7 @@ Strictly speaking, lifetimes are a form of generics, which is why they have gene
 To see when lifetimes are useful, we can take a look at a more interesting case. 
 
 \begin{minted}[linenos, frame=lines]{rust}
-fn function(v : &Vec<i32>, w : &Vec<i32>) -> &Vec<i32>{
+fn function(v : &Vec<i32>, w : &Vec<i32>) -> &Vec<i32> {
     if v[0] == 37 {
         v
     }
@@ -171,7 +171,7 @@ let f = function(&vector, &another_vector);
 println!("f[0] + f[1] = {}", f[0] + f[1]);
 \end{minted}
 
-This program defines two vectors and passes them to a function. That function then returns one of them. The result is used to print something. Even though this looks like a good program, the Rust compiler will reject it. It will give an error asking for lifetime parameters: \texttt{error: missing lifetime specifier}. It is saying that the function's return type contains a borrowed value, but the signature doesn't say what is was borrowed from. The problem here is that rust does not know how the lifetimes of the input and the output are related to each other. The borrow checker now cannot make sure that the rules mentioned above are enforced. 
+This program defines two vectors and passes them to a function. That function then returns one of them. The result is used to print something. Even though this looks like a good program, the Rust compiler will reject it. It will give an error asking for lifetime parameters: \texttt{error: missing lifetime specifier}. It is saying that the function's return type contains a borrowed value, but the signature doesn't say what it was borrowed from. The problem here is that rust does not know how the lifetimes of the input and the output are related to each other. The borrow checker now cannot make sure that the rules mentioned above are enforced. 
 
 It is important to realize that by adding lifetime notations you cannot actually change the lifetime of any variable. They are a way of telling the compiler how the lifetimes of variables are related. We are basically saying to the Rust compiler that any variables passed to a function that do not adhere to the rules should result in an error. 
 
@@ -357,11 +357,11 @@ The compiler will reject the program, but for completely different reasons. It d
     'b: {
         // 'b is as big as we need this borrow to be
         // (just need to get to `println!`)
-        let x: &'b i32 = Index::index::<'b>(&'b vector, 0);
+        let x: &'b i32 = Index::index<'b>(&'b vector, 0);
         'c: {
             // Temporary scope because we don't need the
             // &mut to last any longer.
-            Vec::push(&'c mut vector, 4);
+            Vec::push<'c>(&'c mut vector, 4);
         }
         println!("{}", x);
     }
