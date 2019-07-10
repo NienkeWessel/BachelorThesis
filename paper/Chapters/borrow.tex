@@ -90,7 +90,7 @@ let x: Int in
         let y: &Int in
 \end{minted}
 
-Now \verb|z| has been initiazed. So we have $s(x) = 0$ and $s(z) = \perp$. For all other variables $v$, we have $s(v) = -$ after line 3. After line 4, we also have $s(y) = \perp$.
+Now \verb|z| has been declared. So we have $s(x) = 0$ and $s(z) = \perp$. For all other variables $v$, we have $s(v) = -$ after line 3. After line 4, we also have $s(y) = \perp$.
 
 \begin{minted}[linenos, frame=lines]{rust}
 let x: Int in (
@@ -127,7 +127,7 @@ let x: Int in (
 )
 \end{minted} 
 
-After the second \}, nothing happens, as $s(y)$ already was $-$. After the last bracket, $x$ is also again set to $-$. 
+After the second bracket, nothing happens, as $s(y)$ already was $-$. After the last bracket, $x$ is also again set to $-$. 
 
 \subsection{Mutable borrow}
 
@@ -324,7 +324,7 @@ The evaluation function $\mathcal{A}: \textbf{Exp} \times \textbf{State} \to \ma
 \\ \letterfunc{A}{\&\mut~x}s       &= \letterfunc{A}{x}s &
 \end{align*}
 \end{definition}
-Notice it is the same as in the previous chapter, except for the added last line. 
+Notice it is the same as in the previous chapter, except for the added last lines. 
 
 \section{Semantics: Small step}
 In this chapter, we will move to the small step semantics right away and skip the big step semantics. This is because the latter, as mentioned in the previous chapter, allows for better separation in a semantic derivation system and a compile time check system. The semantic rules are of similar form to the previous chapter, except that we have rules of the form $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$.
@@ -493,11 +493,11 @@ This proves our theorem.
 
 \begin{theorem}
 \label{progressb}
-For all program instructions $S$, reduced states $r$, lists $L$, and for all $\mathcal{M}$'s: if $\ccb{S}{L}{r}{M} ->^* \texttt{true}$, then $S = \texttt{skip}$ and $L = \texttt{Nil}$ or we have $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$ for some $S'$, $L'$, $s'$ and $M'$, and every $s$ related to $r$.
+For all program instructions $S$, reduced states $r$, lists $L$, and for all $\mathcal{M}$'s: if $\ccb{S}{L}{r}{M} \to^* \texttt{true}$, then $S = \texttt{skip}$ and $L = \texttt{Nil}$ or we have $\sosb{S}{L}{s}{M} \Rightarrow \sosb{S'}{L'}{s'}{M'}$ for some $S'$, $L'$, $s'$ and $M'$, and every $s$ related to $r$.
 \end{theorem}
 
 \begin{proof}
-We assume $\ccb{S}{L}{r}{M} ->^* \texttt{true}$. We look at the possible derivation steps that could have led to this form. 
+We assume $\ccb{S}{L}{r}{M} \to^* \texttt{true}$. We look at the possible derivation steps that could have led to this form. 
 \begin{itemize}[noitemsep]
     \item $\ccb{\texttt{skip}}{\texttt{Nil}}{r}{M} \to \texttt{true}$. This means $S = \texttt{skip}$ and $L = \texttt{Nil}$ and that means we are done.
     \item $\ccb{\texttt{skip}}{P::L}{r}{M} \to \ccb{P}{L}{r}{M}$. This means we have $\sosb{\texttt{skip}}{P::L}{s}{M}$ with $s$ any state related to $r$. We can then apply the rule [load$_{\textrm{os}}$], to get $\sosb{\texttt{skip}}{P::L}{s}{M} \Rightarrow \sosb{P}{L}{s}{M}$, which means we are done.
