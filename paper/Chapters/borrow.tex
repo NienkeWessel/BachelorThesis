@@ -500,7 +500,7 @@ For all program instructions $S$, reduced states $r$, lists $L$, and for all $\m
 We assume $\ccb{S}{L}{r}{M} \to^* \texttt{true}$. We look at the possible derivation steps that could have led to this form. 
 \begin{itemize}[noitemsep]
     \item $\ccb{\texttt{skip}}{\texttt{Nil}}{r}{M} \to \texttt{true}$. This means $S = \texttt{skip}$ and $L = \texttt{Nil}$ and that means we are done.
-    \item $\ccb{\texttt{skip}}{P::L}{r}{M} \to \ccb{P}{L}{r}{M}$. This means we have $\sosb{\texttt{skip}}{P::L}{s}{M}$ with $s$ any state related to $r$. We can then apply the rule [load$_{\textrm{os}}$], to get $\sosb{\texttt{skip}}{P::L}{s}{M} \Rightarrow \sosb{P}{L}{s}{M}$, which means we are done.
+    \item $\ccb{\texttt{skip}}{P::L}{r}{M} \to \ccb{P}{L}{r}{M}$. This means we have $\sosb{\texttt{skip}}{P::L}{s}{M}$ with $s$ any state related to $r$. We can then apply the rule \loadsos, to get $\sosb{\texttt{skip}}{P::L}{s}{M} \Rightarrow \sosb{P}{L}{s}{M}$, which means we are done.
     \item The other cases are similar and therefore omitted.
 \end{itemize}
 This proves our theorem

@@ -288,7 +288,7 @@ This exhausts all possible shapes of our statement $S$, and hence proves the the
 Note that this means that after a program terminates, none of the results are available anymore. To make use of the data, you would have to write it to a file or some other IO device. This is a significant break from the exposition of \cite{nielson1992semantics} where the state of a terminated program shows the values of the variables at the end and you can thus `access' the results of the calculations. However, this is not how a computer normally works: after a program terminates, all memory will have to be freed. 
 
 \subsection{Conclusion}
-This concludes our section of the big step semantics. As these semantics are rather crude, we will shift our focus to the small step semantics from now on. In the end, we will prove that the two are equivalent.
+This concludes our section of the big step semantics. As these semantics are rather coarse-grained, we will shift our focus to the small step semantics from now on. In the end, we will prove that the two are equivalent.
 
 
 \section{Semantics: Small step}
@@ -325,21 +325,21 @@ We define the following semantic derivation rules (name on the left):
 \loadsos &
 \centering$\sos{\texttt{skip}}{I::L}{s} \Rightarrow \sos{I}{L}{s}$ & \medskip\\
 
-[comp$_{\textrm{os}}$] &
+\compsos &
 \centering$\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}$ & \medskip\\
 
-[ass$_{\textrm{os}}$] &
+\asssos &
 \centering $\sos{x = e}{L}{s} \Rightarrow \sos{\texttt{skip}}{L}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$ & \medskip\\
 
-[let$_{\textrm{os}}$] &
+\letsos &
 \centering $\sos{\letm{x}{S}}{L}{s} \Rightarrow \sos{S}{(x,s(x))::L}{s[x\mapsto \perp]}$ & \medskip\\
 
-[set$_{\textrm{os}}$] &
+\setsos &
 \centering$\sos{(x,v)}{L}{s} \Rightarrow \sos{\texttt{skip}}{L}{s[x\mapsto v]}$ & \medskip\\
 \end{tabular} 
 Where $\mathcal{V}(e)\mapsto-$ is an abbreviation for `for all $x \in \mathcal{V}(e)$, $x \mapsto -$'.
 \end{definition} 
-Note that we cannot take a step anymore when in $\sos{\texttt{skip}}{\texttt{Nil}}{s}$; this is the/an end state. 
+Note that we cannot take a step anymore when in $\sos{\texttt{skip}}{\texttt{Nil}}{s}$; this is the end state. 
 
 The \loadsos ~rule is used to pop an instruction from the stack. The \compsos ~rule pushes the second part of the composition to the list. The idea is that you can then freely execute the first part and pop the second part when the first part finishes. The \asssos ~rule changes the state in a similar way as was done in the natural semantics. The \letsos ~rule changes the state to reflect that $x$ now has been declared. It also pushes a tuple onto the list stack. After the body of the \texttt{let} terminates, $x$ should be reset to what it was before the \texttt{let}-statement. Pushing this tuple to the stack is a way to make that happen. When that tuple is popped from the list, the \setsos ~rule resets the value in the state. 
 
@@ -362,7 +362,7 @@ For every statement $S_1$, $S_2$, for every list $L$, for every state $s$, $s'$,
 \end{lemma}
 
 \begin{proof}
-Assume $\sos{S_1; S_2}{L}{s } \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$. Now look at $\sos{S_1; S_2}{L}{s}$. We know there must be a derivation. The only possible rule is \compsos, so we have $\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}$. Now we see that our list has grown by one item. However we know there is a derivation and it ends with the list $L$, instead of $S_2::L$. So at some point in the derivation this should be removed from the list. The only possible rule that could have done that is [load$_{\textrm{os}}$]. So we must have $\sos{\texttt{skip}}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''}$ at some point in the derivation. Therefore we have $\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$, which was to be proven.
+Assume $\sos{S_1; S_2}{L}{s } \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$. Now look at $\sos{S_1; S_2}{L}{s}$. We know there must be a derivation. The only possible rule is \compsos, so we have $\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s}$. Now we see that our list has grown by one item. However we know there is a derivation and it ends with the list $L$, instead of $S_2::L$. So at some point in the derivation this should be removed from the list. The only possible rule that could have done that is \loadsos. So we must have $\sos{\texttt{skip}}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''}$ at some point in the derivation. Therefore we have $\sos{S_1; S_2}{L}{s} \Rightarrow \sos{S_1}{S_2::L}{s} \Rightarrow ^{*} \sos{\texttt{skip}}{S_2::L}{s''} \Rightarrow \sos{S_2}{L}{s''} \Rightarrow ^{*} \sos{\texttt{skip}}{L}{s'}$, which was to be proven.
 \end{proof}
 
 We have a similar lemma to the \texttt{let}-statement. We will not be proving that one as rigorously, as the proof is very similar to the one of the previous lemma. 
@@ -422,7 +422,7 @@ We know that there must be a derivation from $\sos{S}{L'}{s}$ to $\sos{\texttt{s
     $$\sos{\letm{x}{S'}}{L}{s} \Rightarrow \sos{S}{(x,s(x))::L}{s[x\mapsto v]}$$
     We can now apply the induction hypothesis to $\sos{S}{(x,s(x))::L}{s[x\mapsto v]}$, as we know $\sos{S}{(x,s(x))::L'}{s[x\mapsto v]} \Rightarrow ^{*} \sos{\texttt{skip}}{(x,s(x))::L'}{s''}$ by $( * )$. We get
     $$\sos{S}{(x,s(x))::L}{s[x\mapsto v]} \Rightarrow ^{*} \sos{\texttt{skip}}{(x,s(x))::L}{s''}$$
-    By the rules [load$_{\textrm{os}}$] and [set$_{\textrm{os}}$], we get 
+    By the rules \loadsos ~and \setsos, we get 
     $$\sos{\texttt{skip}}{(x,s(x))::L}{s''} \Rightarrow \sos{(x,s(x))}{L}{s''} \Rightarrow \sos{\texttt{skip}}{L}{s''[x \mapsto v]}$$
     This is of the desired form and has the right $s'$. This proves this case.
 \end{itemize}
@@ -788,7 +788,7 @@ For all program instructions $S$, reduced states $r$, lists $L$: if $\cc{S}{L}{r
 We assume $\cc{S}{L}{r} \to ^* \texttt{true}$. Since it must derive to \tr, we know that derivation steps must be taken. We walk through all the possible derivation steps. 
 \begin{itemize}[noitemsep]
     \item $\cc{\sk}{\nil}{r} \to ^* \texttt{true}$. This means $S = \sk$ and $L = \texttt{Nil}$ and that means we are done.
-    \item $\cc{\sk} {P::L}{ r} \to \tr$. This means we want to say something about $\sos{\texttt{skip}}{P::L}{s}$ for any $s$ related to $r$. We can apply the rule [load$_{\textrm{os}}$]. This gives us $\sos{\texttt{skip}}{P::L}{s} \Rightarrow \sos{P}{L}{s}$, which proves this case. 
+    \item $\cc{\sk} {P::L}{ r} \to \tr$. This means we want to say something about $\sos{\texttt{skip}}{P::L}{s}$ for any $s$ related to $r$. We can apply the rule \loadsos. This gives us $\sos{\texttt{skip}}{P::L}{s} \Rightarrow \sos{P}{L}{s}$, which proves this case. 
     \item $\cc{x=e}{L}{r} \to ^{*} \tr$. This means we want to say something about $\sos{x=e}{L}{s}$ for any $s$ related to $r$. We can apply \asssos to get $\sos{x=e}{L}{s} \Rightarrow \sos{\texttt{skip}}{L}{s[x \mapsto \letterfunc{A}{e}s][\mathcal{V}(e)\mapsto-]}$, which proves this case. 
      \item The other cases are similar and therefore omitted. 
 \end{itemize}
